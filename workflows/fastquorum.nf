@@ -69,14 +69,28 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
-include { ALIGN_BAM                         as ALIGN_RAW_BAM               } from '../modules/local/align_bam/main'
-include { ALIGN_BAM                         as ALIGN_CONSENSUS_BAM         } from '../modules/local/align_bam/main'
+include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam_mod/main'
+include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam_mod/main'
+include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam_mod/main'
+
+include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMDUPLEX               } from '../modules/local/clipbam/main'
+
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
+
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/local/fgbio/groupreadsbyumi/main'
+include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/local/fgbio/groupreadsbyumi/main'
+
 include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/local/fgbio/callmolecularconsensusreads/main'
-include { FGBIO_CALLDDUPLEXCONSENSUSREADS   as CALLDDUPLEXCONSENSUSREADS   } from '../modules/local/fgbio/callduplexconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/local/fgbio/callduplexconsensusreads/main'
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX  } from '../modules/local/fgbio/filterconsensusreads/main'
+
+include { CALLING_VARDICT                   as CALLINGVARDICT              } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } from '../modules/local/calling_vardict/main'
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,9 +101,21 @@ include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } fro
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
-include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { FASTQC                      } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+
+include { FGBIO_SORTBAM                        as SORTBAM                     } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMCONS                 } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS           } from '../modules/nf-core/fgbio/sortbam/main'
+// include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
+// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+// include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/fgbio/callmolecularconsensusreads/main'
+// include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
+// include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
+// include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
+
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,55 +150,105 @@ workflow FASTQUORUM {
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
+
     //
     // MODULE: Run fgbio FastqToBam
     //
     FASTQTOBAM(INPUT_CHECK.out.reads)
+    
+    // This is the unmapped BAM file: FASTQTOBAM.out.bam
+    
 
     //
     // MODULE: Align with bwa mem
     //
-    grouped_sort = true
-    ALIGN_RAW_BAM(FASTQTOBAM.out.bam, ch_ref_index_dir, grouped_sort)
+    ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+
+    SORTBAM(ALIGNRAWBAM.out.bam)
+
+
+
+    
+    // if (params.duplex_seq) {
+
+    // }
+
+    // if (params.umi_only) {
+
+    // }
 
     //
+    // Run fgbio UMI-aware pipeline
+    //
+
     // MODULE: Run fgbio GroupReadsByUmi
-    //
-    GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
+    // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
+    GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency", params.groupreadsbyumi_edits)
 
-    // TODO: duplex_seq can be inferred from the read structure, but that's out of scope for now
-    if (params.duplex_seq) {
-        //
-        // MODULE: Run fgbio CallDuplexConsensusReads
-        //
-        CALLDDUPLEXCONSENSUSREADS(GROUPREADSBYUMI.out.bam, call_min_reads, params.call_min_baseq)
+    // MODULE: Run fgbio CallMolecularConsensusReads
+    CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
 
-        //
-        // MODULE: Run fgbio CollecDuplexSeqMetrics
-        //
-        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMI.out.bam)
-
-        // Add the consensus BAM to the channel for downstream processing
-        CALLDDUPLEXCONSENSUSREADS.out.bam.set { ch_consensus_bam }
-    } else {
-        //
-        // MODULE: Run fgbio CallMolecularConsensusReads
-        //
-        CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, call_min_reads, params.call_min_baseq)
-
-        // Add the consensus BAM to the channel for downstream processing
-        CALLMOLECULARCONSENSUSREADS.out.bam.set { ch_consensus_bam }
-    }
-
-    //
     // MODULE: Align with bwa mem
-    //
-    ALIGN_CONSENSUS_BAM(ch_consensus_bam, ch_ref_index_dir, false)
+    ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
+
+    // MODULE: Clip BAM file
+    CLIPBAM(ALIGNCONSENSUSBAM.out.bam, ch_ref_fasta)
+    
+    // MODULE: Run fgbio FilterConsensusReads
+    // here we could filter the consensus reads, but we chose to use all the reads
+    //  and later on filter mutations to keep only those occuring in at least 3 different molecules
+
+    // MODULE: Sort BAM file
+    SORTBAMCONS(CLIPBAM.out.bam)
+
+    // Mutation calling for non-duplex reads
+    CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.index,
+                    params.targetsfile,
+                    ch_ref_fasta, ch_ref_index_dir)
+
 
     //
-    // MODULE: Run fgbio FilterConsensusReads
+    // Run fgbio Duplex consensus pipeline
     //
-    FILTERCONSENSUSREADS(ALIGN_CONSENSUS_BAM.out.bam, ch_ref_fasta, filter_min_reads, params.filter_min_baseq, params.filter_max_base_error_rate)
+
+    // MODULE: Run fgbio GroupReadsByUmi
+    // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
+    GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired", params.groupreadsbyumi_edits)
+    
+    // MODULE: Run fgbio CallDuplexConsensusReads
+    CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
+    // call_min_reads
+    // we should be more strict here and require only duplex, 1 1 0
+
+
+    // MODULE: Run fgbio CollecDuplexSeqMetrics
+    COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+        
+    // MODULE: Align with bwa mem
+    ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
+
+    // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+    CLIPBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+
+    // MODULE: Run fgbio FilterConsensusReads
+    FILTERCONSENSUSREADSDUPLEX(CLIPBAMDUPLEX.out.bam, ch_ref_fasta, filter_min_reads, params.filter_min_baseq, params.filter_max_base_error_rate)
+
+    // MODULE: Sort BAM file
+    SORTBAMDUPLEXCONS(FILTERCONSENSUSREADSDUPLEX.out.bam)
+
+    // Mutation calling for duplex reads
+    CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.index,
+                        params.targetsfile,
+                        ch_ref_fasta, ch_ref_index_dir)
+    
+
+    // Mutation calling for non-duplex reads
+    // https://github.com/nf-core/sarek/blob/master/subworkflows/local/bam_variant_calling_tumor_only_mutect2/main.nf
+    //  we could use this + force calling the mutations found in the duplex reads
+    //      this needs to wait for the calling of duplex mutations to finish so that it can then know the positions to force call
+    //      this should be easy to do just by passing as an argument the VCF file obtained from the duplex calling step.
+
+
 
     //
     // MODULE: MultiQC

@@ -15,8 +15,8 @@ process FGBIO_FILTERCONSENSUSREADS {
     val(max_base_error_rate)
 
     output:
-    tuple val(meta), path("*.cons.filtered.bam")       , emit: bam
-    path "versions.yml"                                , emit: versions
+    tuple val(meta), path("*.filtered.bam")       , emit: bam
+    path "versions.yml"                           , emit: versions
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''
@@ -28,25 +28,35 @@ process FGBIO_FILTERCONSENSUSREADS {
     } else {
         mem_gb = task.memory.giga
     }
-
+    // sort = false
+    // if (sort) {
+    //     fgbio_zipper_bams_output = "/dev/stdout"
+    //     fgbio_zipper_bams_compression = 0 // do not compress if samtools is consuming it
+    //     extra_command = " | samtools sort "
+    //     extra_command += samtools_sort_args
+    //     extra_command += " --template-coordinate"
+    //     extra_command += " --threads "+ task.cpus
+    //     extra_command += " -o " + prefix + ".filtered.bam##idx##"+ prefix + ".filtered.bam.bai"
+    //     extra_command += " --write-index"
+    //     extra_command += samtools_args
+    // } else {
+    fgbio_zipper_bams_output = prefix + ".filtered.bam"
+    fgbio_zipper_bams_compression = 1
+    extra_command = ""
+    // }
     """
     fgbio \\
         -Xmx${mem_gb}g \\
         --tmp-dir=. \\
-        --compression=0 \\
+        --compression=${fgbio_zipper_bams_compression} \\
         FilterConsensusReads \\
         --input $grouped_bam \\
-        --output /dev/stdout \\
         --ref ${fasta} \\
         --min-reads ${min_reads} \\
         --min-base-quality ${min_baseq} \\
         --max-base-error-rate ${max_base_error_rate} \\
-        $fgbio_args \\
-        | samtools sort \\
-        --threads ${task.cpus} \\
-        -o ${prefix}.cons.filtered.bam##idx##${prefix}.cons.filtered.bam.bai \\
-        --write-index \\
-        $samtools_args;
+        --output ${fgbio_zipper_bams_output} \\
+        $fgbio_args;
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

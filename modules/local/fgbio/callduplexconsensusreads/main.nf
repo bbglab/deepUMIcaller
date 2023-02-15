@@ -1,4 +1,4 @@
-process FGBIO_CALLDDUPLEXCONSENSUSREADS {
+process FGBIO_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
     label 'process_low'
 

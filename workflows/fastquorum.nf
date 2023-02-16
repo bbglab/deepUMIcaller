@@ -108,6 +108,7 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 include { FGBIO_SORTBAM                        as SORTBAM                     } from '../modules/nf-core/fgbio/sortbam/main'
 include { FGBIO_SORTBAM                        as SORTBAMCONS                 } from '../modules/nf-core/fgbio/sortbam/main'
 include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS           } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/fgbio/sortbam/main'
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 // include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
 // include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/fgbio/callmolecularconsensusreads/main'
@@ -169,77 +170,83 @@ workflow FASTQUORUM {
 
 
     
-    // if (params.duplex_seq) {
+    if (params.duplex_seq) {
+        //
+        // Run fgbio Duplex consensus pipeline
+        //
 
-    // }
-
-    // if (params.umi_only) {
-
-    // }
-
-    //
-    // Run fgbio UMI-aware pipeline
-    //
-
-    // MODULE: Run fgbio GroupReadsByUmi
-    // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
-    GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency", params.groupreadsbyumi_edits)
-
-    // MODULE: Run fgbio CallMolecularConsensusReads
-    CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
-
-    // MODULE: Align with bwa mem
-    ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
-
-    // MODULE: Clip BAM file
-    CLIPBAM(ALIGNCONSENSUSBAM.out.bam, ch_ref_fasta)
-    
-    // MODULE: Run fgbio FilterConsensusReads
-    // here we could filter the consensus reads, but we chose to use all the reads
-    //  and later on filter mutations to keep only those occuring in at least 3 different molecules
-
-    // MODULE: Sort BAM file
-    SORTBAMCONS(CLIPBAM.out.bam)
-
-    // Mutation calling for non-duplex reads
-    CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.index,
-                    params.targetsfile,
-                    ch_ref_fasta, ch_ref_index_dir)
-
-
-    //
-    // Run fgbio Duplex consensus pipeline
-    //
-
-    // MODULE: Run fgbio GroupReadsByUmi
-    // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
-    GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired", params.groupreadsbyumi_edits)
-    
-    // MODULE: Run fgbio CallDuplexConsensusReads
-    CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
-    // call_min_reads
-    // we should be more strict here and require only duplex, 1 1 0
-
-
-    // MODULE: Run fgbio CollecDuplexSeqMetrics
-    COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+        // MODULE: Run fgbio GroupReadsByUmi
+        GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired", params.groupreadsbyumi_edits)
         
-    // MODULE: Align with bwa mem
-    ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
+        // MODULE: Run fgbio CallDuplexConsensusReads
+        CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
 
-    // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-    CLIPBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+        // MODULE: Run fgbio CollecDuplexSeqMetrics
+        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+            
+        // MODULE: Align with bwa mem
+        ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
 
-    // MODULE: Run fgbio FilterConsensusReads
-    FILTERCONSENSUSREADSDUPLEX(CLIPBAMDUPLEX.out.bam, ch_ref_fasta, filter_min_reads, params.filter_min_baseq, params.filter_max_base_error_rate)
+        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+        CLIPBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
-    // MODULE: Sort BAM file
-    SORTBAMDUPLEXCONS(FILTERCONSENSUSREADSDUPLEX.out.bam)
+        //
+        // ONLY DUPLEX READS
+        //
+        // MODULE: Run fgbio FilterConsensusReads
+        FILTERCONSENSUSREADSDUPLEX(CLIPBAMDUPLEX.out.bam, ch_ref_fasta,
+                                    filter_min_reads, params.filter_min_baseq,
+                                    params.filter_max_base_error_rate)
 
-    // Mutation calling for duplex reads
-    CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.index,
+        // MODULE: Sort BAM file
+        SORTBAMDUPLEXCONSFILT(FILTERCONSENSUSREADSDUPLEX.out.bam)
+
+        // Mutation calling for duplex reads
+        CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.index,
+                            params.targetsfile,
+                            ch_ref_fasta, ch_ref_index_dir)
+
+
+        //
+        // ALL READS
+        //
+        // MODULE: Sort BAM file
+        SORTBAMDUPLEXCONS(CLIPBAMDUPLEX.out.bam)
+
+        // Mutation calling for all reads
+        CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.index,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
+        
+
+    } else if (params.umi_only) {
+        //
+        // Run fgbio UMI-aware pipeline
+        //
+
+        // MODULE: Run fgbio GroupReadsByUmi
+        // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
+        GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency", params.groupreadsbyumi_edits)
+
+        // MODULE: Run fgbio CallMolecularConsensusReads
+        CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
+
+        // MODULE: Align with bwa mem
+        ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
+
+        // MODULE: Clip BAM file
+        CLIPBAM(ALIGNCONSENSUSBAM.out.bam, ch_ref_fasta)
+        
+        // MODULE: Sort BAM file
+        SORTBAMCONS(CLIPBAM.out.bam)
+
+        // Mutation calling for non-duplex reads
+        CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.index,
+                        params.targetsfile,
+                        ch_ref_fasta, ch_ref_index_dir)
+    }
+
+
     
 
     // Mutation calling for non-duplex reads
@@ -262,7 +269,7 @@ workflow FASTQUORUM {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it[1]}.collect())
+    // ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
     MULTIQC (
         ch_multiqc_files.collect()

@@ -28,6 +28,7 @@ process FGBIO_GROUPREADSBYUMI {
         --tmp-dir=. \\
         GroupReadsByUmi \\
         $args \\
+        --strategy ${strategy} \\
         --input $taggedbam \\
         --output ${prefix}_umi-grouped.bam \\
         --family-size-histogram ${prefix}_umi_histogram.txt

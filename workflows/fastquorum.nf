@@ -87,8 +87,8 @@ include { FGBIO_CLIPBAM                     as CLIPBAMDUPLEX               } fro
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
-include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/local/fgbio/groupreadsbyumi/main'
-include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/local/fgbio/groupreadsbyumi/main'
+// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/local/fgbio/groupreadsbyumi/main'
+// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/local/fgbio/groupreadsbyumi/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
@@ -112,12 +112,15 @@ include { FASTQC                      } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
-include { FGBIO_SORTBAM                        as SORTBAM                     } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMCONS                 } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS           } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAM                  } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMCONS              } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS        } from '../modules/nf-core/fgbio/sortbam/main'
+include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONSFILT    } from '../modules/nf-core/fgbio/sortbam/main'
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
-// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+
+include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+
 include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/fgbio/callmolecularconsensusreads/main'
 include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
 // include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
@@ -180,7 +183,7 @@ workflow FASTQUORUM {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
-        GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired", params.groupreadsbyumi_edits)
+        GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
         
         // MODULE: Run fgbio CallDuplexConsensusReads
         // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
@@ -230,8 +233,7 @@ workflow FASTQUORUM {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
-        // GROUPREADSBYUMI(ALIGN_RAW_BAM.out.bam, groupreadsbyumi_strategy, params.groupreadsbyumi_edits)
-        GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency", params.groupreadsbyumi_edits)
+        GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency")
 
         // MODULE: Run fgbio CallMolecularConsensusReads
         // CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)

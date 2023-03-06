@@ -24,15 +24,13 @@ process FGBIO_GROUPREADSBYUMI {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
-
     fgbio \\
         --tmp-dir=. \\
         GroupReadsByUmi \\
-        -s $strategy \\
         $args \\
-        -i $taggedbam \\
-        -o ${prefix}_umi-grouped.bam \\
-        -f ${prefix}_umi_histogram.txt
+        --input $taggedbam \\
+        --output ${prefix}_umi-grouped.bam \\
+        --family-size-histogram ${prefix}_umi_histogram.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

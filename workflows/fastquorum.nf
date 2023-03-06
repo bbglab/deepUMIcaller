@@ -36,7 +36,6 @@ if (params.duplex_seq) {
     log.error "config groupreadsbyumi_strategy must be 'Paired' for duplex-sequencing data"
     exit 1
   }
-  if (!params.call_min_reads) { call_min_reads = '1 1 0' } else { call_min_reads = params.call_min_reads }
   if (!params.filter_min_reads) { filter_min_reads = '3 1 1' } else { filter_min_reads = params.filter_min_reads }
 } else {
   if (!params.groupreadsbyumi_strategy) { groupreadsbyumi_strategy = 'Adjacency' }
@@ -46,7 +45,16 @@ if (params.duplex_seq) {
   } else {
 	  groupreadsbyumi_strategy = params.groupreadsbyumi_strategy
   }
-  if (!params.call_min_reads) { call_min_reads = '1' } else { call_min_reads = params.call_min_reads }
+//   // here we should verify that both min reads parameters only have a single value inside a string
+//   //     and are not for duplex reads
+//   if (!params.call_min_reads IS A SINGLE NUMBER IN STRING FORMAT) {
+//     log.error "config call_min_reads must be a single value in string format for non-duplex sequencing data"
+//     exit 1 
+//     }
+//   if (!params.filter_min_reads IS A SINGLE NUMBER IN STRING FORMAT) {
+//     log.error "config filter_min_reads must be a single value in string format for non-duplex sequencing data"
+//     exit 1 
+//     }
   if (!params.filter_min_reads) { filter_min_reads = '3' } else { filter_min_reads = params.filter_min_reads }
 }
 
@@ -82,8 +90,6 @@ include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } fro
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/local/fgbio/groupreadsbyumi/main'
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/local/fgbio/groupreadsbyumi/main'
 
-include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/local/fgbio/callmolecularconsensusreads/main'
-// include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/local/fgbio/callduplexconsensusreads/main'
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/local/fgbio/filterconsensusreads/main'
@@ -112,7 +118,7 @@ include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS           } 
 include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/fgbio/sortbam/main'
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 // include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
-// include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/fgbio/callmolecularconsensusreads/main'
+include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } from '../modules/nf-core/fgbio/callmolecularconsensusreads/main'
 include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
 // include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
 // include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
@@ -228,7 +234,8 @@ workflow FASTQUORUM {
         GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency", params.groupreadsbyumi_edits)
 
         // MODULE: Run fgbio CallMolecularConsensusReads
-        CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
+        // CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
+        CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
 
         // MODULE: Align with bwa mem
         ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)

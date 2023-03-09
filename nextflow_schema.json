@@ -57,8 +57,14 @@
                 "duplex_seq": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable when the input is duplex sequenecing.",
+                    "description": "Enable when the input is duplex sequencing.",
                     "help_text": "With this parameter flags in various tools are set for duplex sequencing data."
+                },
+                "umi_only": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable when the input is not duplex sequencing.",
+                    "help_text": "With this parameter, the workflow adapts to simple UMIs data."
                 }
             }
         },
@@ -88,17 +94,23 @@
             "fa_icon": "fas fa-dna",
             "description": "Options for when creating consensus reads",
             "properties": {
-                "call_min_reads": {
-                    "type": "string",
-                    "description": "Minimum reads to call a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to call a consensus for fgbio's CallMolecularConsensusReads/CallDuplexConsensusReads."
-                },
                 "call_min_baseq": {
                     "type": "integer",
                     "description": "Minimum input base quality",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum input base quality to use when calling a consensus for fgbio's CallMolecularConsensusReads/CallDuplexConsensusReads."
+                },
+                "call_min_reads": {
+                    "type": "string",
+                    "description": "Minimum reads to call a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to call a consensus for fgbio's CallMolecularConsensusReads."
+                },
+                "call_min_reads_duplex": {
+                    "type": "string",
+                    "description": "Minimum reads to call a consensus when using duplex reads",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to call a consensus for fgbio's CallDuplexConsensusReads."
                 }
             }
         },
@@ -163,6 +175,18 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                },
+                "vep_assembly": {
+                    "type": "string",
+                    "description": "Genome assembly for Ensembl VEP.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "For the latest human genome assembly this should be: GRCh38."
+                },
+                "vep_species": {
+                    "type": "string",
+                    "description": "Species to use for Ensembl VEP.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Use `homo_sapiens` when working with human data."
                 }
             }
         },

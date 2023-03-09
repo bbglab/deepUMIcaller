@@ -31,8 +31,15 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ## Pipeline summary
 
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
+### Usage
+```
+nextflow run main.nf -profile singularity --input assets/duplex_test_B5.csv
+            --ref_fasta /workspace/datasafe/prominent/refs/gatk/Homo_sapiens_assembly38.fasta
+            --targetsfile /workspace/projects/prominent/PILOT/refs/beds/xgen-exome-hyb-panel-v2-targets-hg38.bed
+            --outdir results/sample_run
+```
 
+<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Fastq to BAM, extracting UMIs ([`fgbio FastqToBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FastqToBam.html))
 3. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgbio ZipperBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/ZipperBam.html)), and template-coordinate sort ([`samtools sort`](http://www.htslib.org/doc/samtools.html))

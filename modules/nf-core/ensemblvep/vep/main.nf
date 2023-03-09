@@ -20,8 +20,8 @@ process ENSEMBLVEP_VEP {
     tuple val(meta), path("*.vcf.gz")  , optional:true, emit: vcf
     tuple val(meta), path("*.tab.gz")  , optional:true, emit: tab
     tuple val(meta), path("*.json.gz") , optional:true, emit: json
-    path "*.summary.html"                  , emit: report
-    path "versions.yml"                    , emit: versions
+    path "*.summary.html"              , optional:true, emit: report
+    path "versions.yml"                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -35,8 +35,13 @@ process ENSEMBLVEP_VEP {
     def reference = fasta ? "--fasta $fasta" : ""
 
     """
+    # this is to ensure that we will be able to match the tab and vcf files afterwards
+    # the structure of the ID is the following:
+    # chr:pos_ref>alt
+    cat <(grep '#' $vcf) <(grep -v '#' $vcf | awk -F'\t' '{OFS="\t"; \$3=\$1":"\$2"_"\$4">"\$5; print}') > $vcf.4vep.vcf
+
     vep \\
-        -i $vcf \\
+        -i $vcf.4vep.vcf \\
         -o ${prefix}.${file_extension}.gz \\
         $args \\
         $compress_cmd \\
@@ -46,8 +51,7 @@ process ENSEMBLVEP_VEP {
         --cache \\
         --cache_version $cache_version \\
         --dir_cache $dir_cache \\
-        --fork $task.cpus \\
-        --stats_file ${prefix}.summary.html \\
+        --fork $task.cpus
 
 
     cat <<-END_VERSIONS > versions.yml

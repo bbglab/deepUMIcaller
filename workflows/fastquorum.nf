@@ -31,20 +31,26 @@ ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 
 // Set various consensus calling and filtering parameters if not given
 if (params.duplex_seq) {
-  if (!params.groupreadsbyumi_strategy) { groupreadsbyumi_strategy = 'Paired' }
-  else if (params.groupreadsbyumi_strategy != 'Paired') {
-    log.error "config groupreadsbyumi_strategy must be 'Paired' for duplex-sequencing data"
-    exit 1
-  }
-  if (!params.filter_min_reads) { filter_min_reads = '3 1 1' } else { filter_min_reads = params.filter_min_reads }
+    if (!params.groupreadsbyumi_strategy) {
+        groupreadsbyumi_strategy = 'Paired'
+    } else if (params.groupreadsbyumi_strategy != 'Paired') {
+        log.error "config groupreadsbyumi_strategy must be 'Paired' for duplex-sequencing data"
+        exit 1
+    }
+    if (!params.filter_min_reads) {
+        filter_min_reads = '3 1 1'
+    } else {
+        filter_min_reads = params.filter_min_reads
+    }
 } else {
-  if (!params.groupreadsbyumi_strategy) { groupreadsbyumi_strategy = 'Adjacency' }
-  else if (params.groupreadsbyumi_strategy == 'Paired') {
-    log.error "config groupreadsbyumi_strategy cannot be 'Paired' for non-duplex-sequencing data"
-    exit 1
-  } else {
-	  groupreadsbyumi_strategy = params.groupreadsbyumi_strategy
-  }
+    if (!params.groupreadsbyumi_strategy) {
+        groupreadsbyumi_strategy = 'Adjacency'
+    } else if (params.groupreadsbyumi_strategy == 'Paired') {
+        log.error "config groupreadsbyumi_strategy cannot be 'Paired' for non-duplex-sequencing data"
+        exit 1
+    } else {
+        groupreadsbyumi_strategy = params.groupreadsbyumi_strategy
+}
 //   // here we should verify that both min reads parameters only have a single value inside a string
 //   //     and are not for duplex reads
 //   if (!params.call_min_reads IS A SINGLE NUMBER IN STRING FORMAT) {
@@ -55,7 +61,11 @@ if (params.duplex_seq) {
 //     log.error "config filter_min_reads must be a single value in string format for non-duplex sequencing data"
 //     exit 1 
 //     }
-  if (!params.filter_min_reads) { filter_min_reads = '3' } else { filter_min_reads = params.filter_min_reads }
+    if (!params.filter_min_reads) {
+        filter_min_reads = '3'
+    } else {
+        filter_min_reads = params.filter_min_reads
+    }
 }
 
 /*
@@ -83,20 +93,20 @@ include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } fro
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam_mod/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMDUPLEX               } from '../modules/local/clipbam/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
-// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/local/fgbio/groupreadsbyumi/main'
-// include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/local/fgbio/groupreadsbyumi/main'
-
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+
+// include { PLOTDUPLEXMETRICS                 as PLOTDUPLEXMETRICS           } from '../modules/local/duplexfamilymetrics/main'
+// include { FAMILYMETRICS                     as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX  } from '../modules/local/fgbio/filterconsensusreads/main'
 
 include { CALLING_VARDICT                   as CALLINGVARDICT              } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } from '../modules/local/calling_vardict/main'
+
 
 
 /*
@@ -108,9 +118,9 @@ include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } fro
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC                      } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+include { FASTQC                                                           } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 include { FGBIO_SORTBAM                        as SORTBAM                  } from '../modules/nf-core/fgbio/sortbam/main'
 include { FGBIO_SORTBAM                        as SORTBAMCONS              } from '../modules/nf-core/fgbio/sortbam/main'
@@ -125,6 +135,24 @@ include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } fro
 include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
 // include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
 // include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
+
+
+
+
+
+// Download annotation cache if needed
+include { PREPARE_CACHE                                  } from '../subworkflows/local/prepare_cache/main'
+
+
+// Annotation
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATEALL             } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATEALLDUPLEX       } from '../subworkflows/local/vcf_annotate_all/main'
+
+
+
+
+
+
 
 
 
@@ -161,6 +189,24 @@ workflow FASTQUORUM {
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
+    // Download cache if needed
+    // Assuming that if the cache is provided, the user has already downloaded it
+    ensemblvep_info = params.vep_cache ? [] : Channel.of([ [ id:"${params.vep_genome}.${params.vep_cache_version}" ], params.vep_genome, params.vep_species, params.vep_cache_version ])
+    // snpeff_info = params.snpeff_cache ? [] : Channel.of([ [ id:params.snpeff_db ], params.snpeff_genome, params.snpeff_db.minus("${params.snpeff_genome}.") ])
+
+    if (params.download_cache) {
+        // PREPARE_CACHE(ensemblvep_info, snpeff_info)
+        // snpeff_cache       = PREPARE_CACHE.out.snpeff_cache.map{ meta, cache -> [ cache ] }
+        PREPARE_CACHE(ensemblvep_info)
+        vep_cache          = PREPARE_CACHE.out.ensemblvep_cache.map{ meta, cache -> [ cache ] }
+
+        ch_versions = ch_versions.mix(PREPARE_CACHE.out.versions)
+    } else {
+        vep_cache = params.vep_cache
+    }
+    vep_extra_files = []
+
+
 
     //
     // MODULE: Run fgbio FastqToBam
@@ -191,18 +237,23 @@ workflow FASTQUORUM {
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
-            
+
+
+        // GROUPREADSBYUMIDUPLEX.out.histogram
+        // COLLECTDUPLEXSEQMETRICS.out.metrics // the problem here is that there are many files, we only need one
+        // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
+        
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-        CLIPBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+        CLIPBAM(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
         //
         // ONLY DUPLEX READS
         //
         // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSDUPLEX(CLIPBAMDUPLEX.out.bam, ch_ref_fasta,
+        FILTERCONSENSUSREADSDUPLEX(CLIPBAM.out.bam, ch_ref_fasta,
                                     filter_min_reads, params.filter_min_baseq,
                                     params.filter_max_base_error_rate)
 
@@ -213,18 +264,39 @@ workflow FASTQUORUM {
         CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.index,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
-
+        
+        
+        VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
+                            ch_ref_fasta,
+                            // params.tools,
+                            // snpeff_db,
+                            // snpeff_cache,
+                            "GRCh38",
+                            "homo_sapiens", 
+                            "108",
+                            vep_cache,
+                            vep_extra_files)
+        
 
         //
         // ALL READS
         //
         // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONS(CLIPBAMDUPLEX.out.bam)
+        SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
 
         // Mutation calling for all reads
         CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.index,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
+
+        
+        VCFANNOTATEALL(CALLINGVARDICT.out.vcf,
+                        ch_ref_fasta,
+                        "GRCh38",
+                        "homo_sapiens", 
+                        "108",
+                        vep_cache,
+                        vep_extra_files)
         
 
     } else if (params.umi_only) {

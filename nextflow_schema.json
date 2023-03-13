@@ -45,6 +45,12 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                },
+                "targetsfile": {
+                    "type": "string",
+                    "description": "BED file with the targeted regions.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be included in the analysis."
                 }
             }
         },

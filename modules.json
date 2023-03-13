@@ -19,6 +19,20 @@
                             "modules"
                         ]
                     },
+                    "ensemblvep/download": {
+                        "branch": "master",
+                        "git_sha": "bea3ca998816a7f812b1bbbcb27c3a9ffbac0706",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "ensemblvep/vep": {
+                        "branch": "master",
+                        "git_sha": "bea3ca998816a7f812b1bbbcb27c3a9ffbac0706",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "49b18b1639f4f7104187058866a8fab33332bdfe",
@@ -78,6 +92,20 @@
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "90aef30f432332bdf0ce9f4b9004aa5d5c4960bb",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "snpeff/download": {
+                        "branch": "master",
+                        "git_sha": "aeefdd170be4583012816212f1345fbebb61ccd6",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "snpeff/snpeff": {
+                        "branch": "master",
+                        "git_sha": "03eae88f7c30fbad0152b941bbeba48ae8bc3d07",
                         "installed_by": [
                             "modules"
                         ]

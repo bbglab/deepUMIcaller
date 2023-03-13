@@ -11,7 +11,7 @@ WorkflowFgcons.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile  ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 /*
@@ -22,8 +22,8 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 if (params.ref_fasta) { ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect() } else {
-  log.error "No reference FASTA was specified (--ref_fasta)."
-  exit 1
+    log.error "No reference FASTA was specified (--ref_fasta)."
+    exit 1
 }
 
 // The index directory is the directory that contains the FASTA
@@ -38,7 +38,7 @@ if (params.duplex_seq) {
         exit 1
     }
     if (!params.filter_min_reads) {
-        filter_min_reads = '3 1 1'
+        filter_min_reads = '2 1 1'
     } else {
         filter_min_reads = params.filter_min_reads
     }

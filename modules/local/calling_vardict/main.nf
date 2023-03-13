@@ -15,9 +15,10 @@ process CALLING_VARDICT {
     path fasta_dir
 
     output:
-    tuple val(meta), path("*.vcf")                , emit: vcf
-    tuple val(meta), path("*.tsv"), optional: true, emit: tsv
-    path  "versions.yml"                          , emit: versions
+    tuple val(meta), path("*.vcf")                   , emit: vcf
+    tuple val(meta), path("*.vcf.gz"), optional: true, emit: genome_vcf
+    tuple val(meta), path("*.tsv")   , optional: true, emit: tsv
+    path  "versions.yml"                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,16 +33,17 @@ process CALLING_VARDICT {
         -N ${prefix} -b ${bam} \\
         -c 1 -S 2 -E 3 -g 4 \\
         -r 1 -m 8 -P 0 \\
-        -o 1 \\
+        -o 1 -p \\
         -th ${task.cpus} \\
         ${targets_file} > ${prefix}.raw.tsv
 
     cat ${prefix}.raw.tsv \\
         | teststrandbias.R \\
         | var2vcf_valid.pl \\
-        -N ${prefix} -E -f \$AF_THR -p 0 -m 8 -v 2 > ${prefix}.vcf
-
+        -N ${prefix} -E -f \$AF_THR -p 0 -m 8 -v 2 | gzip > ${prefix}.genome.vcf.gz
     
+    zcat ${prefix}.genome.vcf.gz | awk '\$5!="."' > ${prefix}.vcf
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         vardict: 1.8.3

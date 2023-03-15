@@ -9,7 +9,8 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowFgcons.initialise(params, log)
 
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
+// TODO nf-core:
+// Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
 def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile  ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
@@ -162,7 +163,7 @@ workflow FASTQUORUM {
         // PREPARE_CACHE(ensemblvep_info, snpeff_info)
         // snpeff_cache       = PREPARE_CACHE.out.snpeff_cache.map{ meta, cache -> [ cache ] }
         PREPARE_CACHE(ensemblvep_info)
-        vep_cache          = PREPARE_CACHE.out.ensemblvep_cache.map{ meta, cache -> [ cache ] }
+        vep_cache = PREPARE_CACHE.out.ensemblvep_cache.map{ meta, cache -> [ cache ] }
 
         ch_versions = ch_versions.mix(PREPARE_CACHE.out.versions)
     } else {
@@ -211,17 +212,17 @@ workflow FASTQUORUM {
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
 
-        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-        CLIPBAM(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
-
         //
         // ONLY DUPLEX READS
         //
         // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSDUPLEX(CLIPBAM.out.bam, ch_ref_fasta)
+        FILTERCONSENSUSREADSDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+
+        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+        CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
 
         // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONSFILT(FILTERCONSENSUSREADSDUPLEX.out.bam)
+        SORTBAMDUPLEXCONSFILT(CLIPBAM.out.bam)
 
         // Mutation calling for duplex reads
         CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
@@ -236,24 +237,26 @@ workflow FASTQUORUM {
                             "108",
                             vep_cache,
                             vep_extra_files)
-        
+
 
         //
         // ALL READS
         //
-        // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
-
 
         // TODO
-        // add filtering of non-duplex reads
+        // add filtering step
+        //      do not filter for duplex reads, but filter for quality and error rates
+        // add clipping step
+        // add sorting step
+
+        // MODULE: Sort BAM file
+        SORTBAMDUPLEXCONS(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
         // Mutation calling for all reads
         CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
 
-        
         VCFANNOTATEALL(CALLINGVARDICT.out.vcf,
                         ch_ref_fasta,
                         "GRCh38",
@@ -261,7 +264,7 @@ workflow FASTQUORUM {
                         "108",
                         vep_cache,
                         vep_extra_files)
-        
+
         // TODO
         // FGBIO FILTER SOMATIC VARIANTS
         // http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterSomaticVcf.html

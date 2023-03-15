@@ -43,9 +43,6 @@ process FGBIO_CLIPBAM {
             --input /dev/stdin/ \\
             --ref ${fasta} \\
             $args \\
-            --clipping-mode Hard \\
-            --clip-overlapping-reads true \\
-            --clip-bases-past-mate true \\
             --output ${prefix}.clipped.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

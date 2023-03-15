@@ -20,53 +20,19 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else {
+    exit 1, 'Input samplesheet not specified!'
+    }
+
 if (params.ref_fasta) { ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect() } else {
     log.error "No reference FASTA was specified (--ref_fasta)."
     exit 1
-}
+    }
+
 
 // The index directory is the directory that contains the FASTA
 ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 
-// Set various consensus calling and filtering parameters if not given
-if (params.duplex_seq) {
-    if (!params.groupreadsbyumi_strategy) {
-        groupreadsbyumi_strategy = 'Paired'
-    } else if (params.groupreadsbyumi_strategy != 'Paired') {
-        log.error "config groupreadsbyumi_strategy must be 'Paired' for duplex-sequencing data"
-        exit 1
-    }
-    if (!params.filter_min_reads) {
-        filter_min_reads = '2 1 1'
-    } else {
-        filter_min_reads = params.filter_min_reads
-    }
-} else {
-    if (!params.groupreadsbyumi_strategy) {
-        groupreadsbyumi_strategy = 'Adjacency'
-    } else if (params.groupreadsbyumi_strategy == 'Paired') {
-        log.error "config groupreadsbyumi_strategy cannot be 'Paired' for non-duplex-sequencing data"
-        exit 1
-    } else {
-        groupreadsbyumi_strategy = params.groupreadsbyumi_strategy
-}
-//   // here we should verify that both min reads parameters only have a single value inside a string
-//   //     and are not for duplex reads
-//   if (!params.call_min_reads IS A SINGLE NUMBER IN STRING FORMAT) {
-//     log.error "config call_min_reads must be a single value in string format for non-duplex sequencing data"
-//     exit 1 
-//     }
-//   if (!params.filter_min_reads IS A SINGLE NUMBER IN STRING FORMAT) {
-//     log.error "config filter_min_reads must be a single value in string format for non-duplex sequencing data"
-//     exit 1 
-//     }
-    if (!params.filter_min_reads) {
-        filter_min_reads = '3'
-    } else {
-        filter_min_reads = params.filter_min_reads
-    }
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,25 +54,25 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
+include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
+
 include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam_mod/main'
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam_mod/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam_mod/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
 
-include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
-
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
 // include { PLOTDUPLEXMETRICS                 as PLOTDUPLEXMETRICS           } from '../modules/local/duplexfamilymetrics/main'
 // include { FAMILYMETRICS                     as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
 
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX  } from '../modules/local/fgbio/filterconsensusreads/main'
 
 include { CALLING_VARDICT                   as CALLINGVARDICT              } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } from '../modules/local/calling_vardict/main'
 
+// include { BBGPOSTANALYSIS                     as BBGPOSTANALYSIS               } from '../modules/local/BBGPOSTANALYSIS/main'
 
 
 /*
@@ -122,10 +88,11 @@ include { FASTQC                                                           } fro
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
-include { FGBIO_SORTBAM                        as SORTBAM                  } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMCONS              } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONS        } from '../modules/nf-core/fgbio/sortbam/main'
-include { FGBIO_SORTBAM                        as SORTBAMDUPLEXCONSFILT    } from '../modules/nf-core/fgbio/sortbam/main'
+include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
+
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
@@ -135,9 +102,6 @@ include { FGBIO_CALLMOLECULARCONSENSUSREADS as CALLMOLECULARCONSENSUSREADS } fro
 include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
 // include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
 // include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
-
-
-
 
 
 // Download annotation cache if needed
@@ -213,7 +177,7 @@ workflow FASTQUORUM {
     //
     FASTQTOBAM(INPUT_CHECK.out.reads)
     // This is the unmapped BAM file: FASTQTOBAM.out.bam
-    
+
 
     //
     // MODULE: Align with bwa mem
@@ -222,7 +186,7 @@ workflow FASTQUORUM {
 
     SORTBAM(ALIGNRAWBAM.out.bam)
 
-    
+
     if (params.duplex_seq) {
         //
         // Run fgbio Duplex consensus pipeline
@@ -238,7 +202,8 @@ workflow FASTQUORUM {
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
 
-
+        // TODO
+        // add metrics plots module
         // GROUPREADSBYUMIDUPLEX.out.histogram
         // COLLECTDUPLEXSEQMETRICS.out.metrics // the problem here is that there are many files, we only need one
         // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
@@ -253,24 +218,19 @@ workflow FASTQUORUM {
         // ONLY DUPLEX READS
         //
         // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSDUPLEX(CLIPBAM.out.bam, ch_ref_fasta,
-                                    filter_min_reads, params.filter_min_baseq,
-                                    params.filter_max_base_error_rate)
+        FILTERCONSENSUSREADSDUPLEX(CLIPBAM.out.bam, ch_ref_fasta)
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONSFILT(FILTERCONSENSUSREADSDUPLEX.out.bam)
 
         // Mutation calling for duplex reads
-        CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.index,
+        CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
         
         
         VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
                             ch_ref_fasta,
-                            // params.tools,
-                            // snpeff_db,
-                            // snpeff_cache,
                             "GRCh38",
                             "homo_sapiens", 
                             "108",
@@ -284,8 +244,12 @@ workflow FASTQUORUM {
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
 
+
+        // TODO
+        // add filtering of non-duplex reads
+
         // Mutation calling for all reads
-        CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.index,
+        CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
 
@@ -298,6 +262,10 @@ workflow FASTQUORUM {
                         vep_cache,
                         vep_extra_files)
         
+        // TODO
+        // FGBIO FILTER SOMATIC VARIANTS
+        // http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterSomaticVcf.html
+
 
     } else if (params.umi_only) {
         //
@@ -321,19 +289,10 @@ workflow FASTQUORUM {
         SORTBAMCONS(CLIPBAM.out.bam)
 
         // Mutation calling for non-duplex reads
-        CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.index,
+        CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.csi,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
     }
-
-
-    
-
-    // Mutation calling for non-duplex reads
-    // https://github.com/nf-core/sarek/blob/master/subworkflows/local/bam_variant_calling_tumor_only_mutect2/main.nf
-    //  we could use this + force calling the mutations found in the duplex reads
-    //      this needs to wait for the calling of duplex mutations to finish so that it can then know the positions to force call
-    //      this should be easy to do just by passing as an argument the VCF file obtained from the duplex calling step.
 
 
 
@@ -356,6 +315,9 @@ workflow FASTQUORUM {
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)
+
+
+
 }
 
 /*

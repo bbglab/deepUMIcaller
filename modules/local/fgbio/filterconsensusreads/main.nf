@@ -10,9 +10,6 @@ process FGBIO_FILTERCONSENSUSREADS {
     input:
     tuple val(meta), path(grouped_bam)
     path fasta
-    val(min_reads)
-    val(min_baseq)
-    val(max_base_error_rate)
 
     output:
     tuple val(meta), path("*.filtered.bam")       , emit: bam
@@ -52,9 +49,6 @@ process FGBIO_FILTERCONSENSUSREADS {
         FilterConsensusReads \\
         --input $grouped_bam \\
         --ref ${fasta} \\
-        --min-reads ${min_reads} \\
-        --min-base-quality ${min_baseq} \\
-        --max-base-error-rate ${max_base_error_rate} \\
         --output ${fgbio_zipper_bams_output} \\
         $fgbio_args;
 
@@ -64,3 +58,34 @@ process FGBIO_FILTERCONSENSUSREADS {
     END_VERSIONS
     """
 }
+
+// --max-base-error-rate ${max_base_error_rate} \\
+
+// min-reads	M	Int	The minimum number of reads supporting a consensus base/read.	Required	3	 
+// min-base-quality	N	PhredScore	Mask (make N) consensus bases with quality less than this threshold.	Required	1	 
+// max-base-error-rate	e	Double	The maximum error rate for a single consensus base.	Required	3	0.1
+
+// min-reads 3 1 1 
+// min-base-quality 10
+// max-base-error-rate 0.1
+
+// min-reads	M	Int	The minimum number of reads supporting a consensus base/read.	Required	3	 
+// min-base-quality	N	PhredScore	Mask (make N) consensus bases with quality less than this threshold.	Required	1	 
+// max-read-error-rate	E	Double	The maximum raw-read error rate across the entire consensus read.	Required	3	0.025
+// max-base-error-rate	e	Double	The maximum error rate for a single consensus base.	Required	3	0.1
+// max-no-call-fraction	n	Double	Maximum fraction of no-calls in the read after filtering.	Optional	1	0.2
+// min-mean-base-quality	q	PhredScore	The minimum mean base quality across the consensus read.	Optional	1	 
+// require-single-strand-agreement	s	Boolean	Mask (make N) consensus bases where the AB and BA consensus reads disagree (for duplex-sequencing only).	Optional	1	false
+
+// min-reads                3 1 1
+// min-base-quality         10
+// max-read-error-rate      0.025
+// max-base-error-rate      0.1 0.3 0.3
+// max-no-call-fraction     0.2
+// min-mean-base-quality    20 // 
+// require-single-strand-agreement	true
+
+
+// --min-reads ${min_reads} \\
+// --min-base-quality ${min_baseq} \\
+// --max-base-error-rate 0.2 0.05 0.4 \\

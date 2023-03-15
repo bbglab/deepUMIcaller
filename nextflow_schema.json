@@ -139,11 +139,30 @@
                     "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
                 },
                 "filter_max_base_error_rate": {
-                    "type": "number",
+                    "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
                     "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_read_error_rate": {
+                    "type": "string",
+                    "description": "The maximum error rate for a consensus read",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a consensus read to be kept when filtering using fgbio's FilterConsensusReads."
+                },
+                "maxN_prop_per_read": {
+                    "type": "number",
+                    "description": "The maximum proportion of Ns in a consensus read",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
+                },
+                "filter_strand_agreement": {
+                    "type": "boolean",
+                    "description": "Require agreement of both strands in duplex consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Require agreement of both strands to define each base of the duplex consensus."
                 }
+                
             }
         },
         "reference_genome_options": {

@@ -25,7 +25,10 @@ if (params.input) { ch_input = file(params.input) } else {
     exit 1, 'Input samplesheet not specified!'
     }
 
-if (params.ref_fasta) { ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect() } else {
+if (params.ref_fasta) {
+    ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
+
+} else {
     log.error "No reference FASTA was specified (--ref_fasta)."
     exit 1
     }
@@ -33,6 +36,10 @@ if (params.ref_fasta) { ch_ref_fasta = Channel.fromPath(params.ref_fasta).collec
 
 // The index directory is the directory that contains the FASTA
 ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
+// TODO
+// check if the index file for the reference genome is present
+// if (ch_ref_index_dir) { file("${file(params.ref_fasta).parent}/${file(params.ref_fasta).name}.amb", checkIfExists: true) }
+
 
 
 /*
@@ -75,6 +82,8 @@ include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } fro
 
 // include { BBGPOSTANALYSIS                     as BBGPOSTANALYSIS               } from '../modules/local/BBGPOSTANALYSIS/main'
 
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } from '../modules/local/sigprofiler/matrixgenerator/main'
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,6 +94,7 @@ include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } fro
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { FASTP                                                            } from '../modules/nf-core/fastp/main'
 include { FASTQC                                                           } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -142,11 +152,15 @@ workflow FASTQUORUM {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    FASTP(INPUT_CHECK.out.reads,
+                    [], // we are not using any adapter fastas at the moment
+                    false,
+                    false)
     //
     // MODULE: Run FastQC
     //
     FASTQC (
-        INPUT_CHECK.out.reads
+        FASTP.out.reads
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
@@ -172,12 +186,15 @@ workflow FASTQUORUM {
     vep_extra_files = []
 
 
-
     //
     // MODULE: Run fgbio FastqToBam
     //
-    FASTQTOBAM(INPUT_CHECK.out.reads)
+    FASTQTOBAM(FASTP.out.reads)
     // This is the unmapped BAM file: FASTQTOBAM.out.bam
+
+
+    //TODO
+    // add step to check if the bwa index is present otherwise create it
 
 
     //
@@ -237,8 +254,10 @@ workflow FASTQUORUM {
                             "108",
                             vep_cache,
                             vep_extra_files)
-
-
+        
+        CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files }
+        
+        SIGPROFPLOT(mutation_files.collect())
         //
         // ALL READS
         //

@@ -16,7 +16,7 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process SIGPROFILER_MATRIXGENERATOR {
-    tag "$prefix"
+    tag "1"
     label 'process_single'
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
@@ -27,8 +27,6 @@ process SIGPROFILER_MATRIXGENERATOR {
     container 'ferriolcalvet/sigprofiler:human'
 
     input:
-    // TODO nf-core: Where applicable please provide/convert compressed files as input/output
-    //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
     path (vcf)
 
     output:
@@ -46,12 +44,7 @@ process SIGPROFILER_MATRIXGENERATOR {
     def args = task.ext.args ?: ''
     // def prefix = task.ext.prefix ?: "${meta.id}"
     def prefix = task.ext.prefix ?: "samples"
-    // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
-    //               If the software is unable to output a version number on the command-line then it can be manually specified
-    //               e.g. https://github.com/nf-core/modules/blob/master/modules/nf-core/homer/annotatepeaks/main.nf
-    //               Each software used MUST provide the software name and version number in the YAML version file (versions.yml)
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
-    // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
     #!/usr/bin/env python3
 
@@ -80,9 +73,9 @@ process SIGPROFILER_MATRIXGENERATOR {
                                             $args
                                             )
     version_file = open("versions.yml", "w")
-    version_file.write("${task.process}")
-    version_file.write(f"    python: {sys.version.split(' ')[0]}")
-    version_file.write("    sigprofiler: 1.2.1")
+    version_file.write("${task.process}\\n")
+    version_file.write(f"    python: {sys.version.split(' ')[0]}\\n")
+    version_file.write("    sigprofiler: 1.2.1\\n")
     version_file.close()
     """
 }

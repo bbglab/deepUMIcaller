@@ -96,6 +96,7 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } fro
 //
 include { FASTP                                                            } from '../modules/nf-core/fastp/main'
 include { FASTQC                                                           } from '../modules/nf-core/fastqc/main'
+
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
@@ -144,34 +145,29 @@ workflow FASTQUORUM {
 
     ch_versions = Channel.empty()
 
-    //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
     INPUT_CHECK (
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    // MODULE: Run FASTP
     FASTP(INPUT_CHECK.out.reads,
                     [], // we are not using any adapter fastas at the moment
                     false,
                     false)
-    //
+    ch_versions = ch_versions.mix(FASTP.out.versions.first())
+
+
     // MODULE: Run FastQC
-    //
     FASTQC (
         FASTP.out.reads
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
-
     // Download cache if needed
     // Assuming that if the cache is provided, the user has already downloaded it
     ensemblvep_info = params.vep_cache ? [] : Channel.of([ [ id:"${params.vep_genome}.${params.vep_cache_version}" ], params.vep_genome, params.vep_species, params.vep_cache_version ])
-    // snpeff_info = params.snpeff_cache ? [] : Channel.of([ [ id:params.snpeff_db ], params.snpeff_genome, params.snpeff_db.minus("${params.snpeff_genome}.") ])
 
     if (params.download_cache) {
         // PREPARE_CACHE(ensemblvep_info, snpeff_info)
@@ -190,6 +186,7 @@ workflow FASTQUORUM {
     // MODULE: Run fgbio FastqToBam
     //
     FASTQTOBAM(FASTP.out.reads)
+    ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
     // This is the unmapped BAM file: FASTQTOBAM.out.bam
 
 
@@ -201,8 +198,10 @@ workflow FASTQUORUM {
     // MODULE: Align with bwa mem
     //
     ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+    // ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
     SORTBAM(ALIGNRAWBAM.out.bam)
+    // ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
 
     if (params.duplex_seq) {
@@ -212,13 +211,16 @@ workflow FASTQUORUM {
 
         // MODULE: Run fgbio GroupReadsByUmi
         GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
+        // ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         
         // MODULE: Run fgbio CallDuplexConsensusReads
         // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
+        // ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+        // ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
         // TODO
         // add metrics plots module
@@ -227,16 +229,18 @@ workflow FASTQUORUM {
         // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
         
         // MODULE: Align with bwa mem
-        ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)   
+        ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
         //
         // ONLY DUPLEX READS
         //
         // MODULE: Run fgbio FilterConsensusReads
         FILTERCONSENSUSREADSDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+        // ch_versions = ch_versions.mix(FILTERCONSENSUSREADSDUPLEX.out.versions.first())
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
         CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
+        // ch_versions = ch_versions.mix(CLIPBAM.out.versions.first())
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONSFILT(CLIPBAM.out.bam)
@@ -245,6 +249,7 @@ workflow FASTQUORUM {
         CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
+        // ch_versions = ch_versions.mix(CALLINGVARDICTDUPLEX.out.versions.first())
         
         
         VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
@@ -254,10 +259,12 @@ workflow FASTQUORUM {
                             "108",
                             vep_cache,
                             vep_extra_files)
+        // ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
         
         CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files }
         
         SIGPROFPLOT(mutation_files.collect())
+        // ch_versions = ch_versions.mix(SIGPROFPLOT.out.versions.first())
         //
         // ALL READS
         //
@@ -317,6 +324,9 @@ workflow FASTQUORUM {
     }
 
 
+    CUSTOM_DUMPSOFTWAREVERSIONS (
+        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    )
 
     //
     // MODULE: MultiQC
@@ -330,7 +340,7 @@ workflow FASTQUORUM {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-    // ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
     MULTIQC (
         ch_multiqc_files.collect()

@@ -82,6 +82,7 @@ include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } fro
 
 // include { BBGPOSTANALYSIS                     as BBGPOSTANALYSIS               } from '../modules/local/BBGPOSTANALYSIS/main'
 
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTDUPLEX           } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
@@ -261,9 +262,9 @@ workflow FASTQUORUM {
                             vep_extra_files)
         // ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
         
-        CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files }
+        CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
         
-        SIGPROFPLOT(mutation_files.collect())
+        SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOT.out.versions.first())
         //
         // ALL READS
@@ -290,6 +291,9 @@ workflow FASTQUORUM {
                         "108",
                         vep_cache,
                         vep_extra_files)
+        
+        CALLINGVARDICT.out.vcf.map{it -> it[1]}.set { mutation_files }
+        SIGPROFPLOT(mutation_files.collect())
 
         // TODO
         // FGBIO FILTER SOMATIC VARIANTS

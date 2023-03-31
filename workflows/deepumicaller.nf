@@ -199,10 +199,10 @@ workflow DEEPUMICALLER {
     // MODULE: Align with bwa mem
     //
     ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
-    // ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+    ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
     SORTBAM(ALIGNRAWBAM.out.bam)
-    // ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+    ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
 
     if (params.duplex_seq) {
@@ -212,16 +212,16 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio GroupReadsByUmi
         GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
-        // ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         
         // MODULE: Run fgbio CallDuplexConsensusReads
         // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
-        // ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+        ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
-        // ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
+        ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
         // TODO
         // add metrics plots module
@@ -237,11 +237,11 @@ workflow DEEPUMICALLER {
         //
         // MODULE: Run fgbio FilterConsensusReads
         FILTERCONSENSUSREADSDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
-        // ch_versions = ch_versions.mix(FILTERCONSENSUSREADSDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(FILTERCONSENSUSREADSDUPLEX.out.versions.first())
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
         CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
-        // ch_versions = ch_versions.mix(CLIPBAM.out.versions.first())
+        ch_versions = ch_versions.mix(CLIPBAM.out.versions.first())
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONSFILT(CLIPBAM.out.bam)
@@ -250,7 +250,7 @@ workflow DEEPUMICALLER {
         CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
-        // ch_versions = ch_versions.mix(CALLINGVARDICTDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(CALLINGVARDICTDUPLEX.out.versions.first())
         
         
         VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
@@ -260,12 +260,13 @@ workflow DEEPUMICALLER {
                             "108",
                             vep_cache,
                             vep_extra_files)
-        // ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
         
         CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
         
         SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
-        // ch_versions = ch_versions.mix(SIGPROFPLOT.out.versions.first())
+        // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
+
         //
         // ALL READS
         //

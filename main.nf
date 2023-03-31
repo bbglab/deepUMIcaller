@@ -33,14 +33,14 @@ WorkflowMain.initialise(workflow, params, log)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQUORUM } from './workflows/fastquorum'
+include { DEEPUMICALLER } from './workflows/deepumicaller'
 
 //
 // WORKFLOW: Run main nf-core/fastquorum analysis pipeline
 //
-workflow NFCORE_FASTQUORUM {
-    FASTQUORUM ()
-}
+//workflow NFCORE_FASTQUORUM {
+//    FASTQUORUM ()
+//}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,7 +53,7 @@ workflow NFCORE_FASTQUORUM {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NFCORE_FASTQUORUM ()
+    DEEPUMICALLER ()
 }
 
 /*

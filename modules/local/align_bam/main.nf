@@ -56,7 +56,7 @@ process ALIGN_BAM {
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
 
     samtools fastq ${samtools_fastq_args} ${unmapped_bam} \\
-        | bwa mem ${bwa_args} -t $task.cpus -p -K 150000000 -Y \$FASTA - \\
+        | bwa mem ${bwa_args} -t $task.cpus -p -5 -L 1,1 -K 100000000 -Y \$FASTA - \\
         | fgbio -Xmx${fgbio_mem_gb}g \\
             --compression ${fgbio_zipper_bams_compression} \\
             --async-io=true \\

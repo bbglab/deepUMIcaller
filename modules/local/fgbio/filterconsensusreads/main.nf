@@ -12,8 +12,8 @@ process FGBIO_FILTERCONSENSUSREADS {
     path fasta
 
     output:
-    tuple val(meta), path("*.filtered.bam")       , emit: bam
-    path "versions.yml"                           , emit: versions
+    tuple val(meta), path("*.filtered.bam")  , emit: bam
+    path "versions.yml"                      , emit: versions
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''

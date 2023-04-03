@@ -2,18 +2,18 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
     label 'process_low'
 
-    conda (params.enable_conda ? "bioconda::fgbio=2.0.2" : null)
+    conda (params.enable_conda ? "bioconda::fgbio=2.1.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/fgbio:2.0.2--hdfd78af_0' :
-        'quay.io/biocontainers/fgbio:2.0.2--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
+        'quay.io/biocontainers/fgbio:2.1.0--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(grouped_bam)
-    // TODO: --min-ab-reads, --min-ba-reads, --intervals
 
     output:
-    tuple val(meta), path("*duplex_seq_metrics*.txt"), emit: metrics
-    path "versions.yml"                              , emit: versions
+    tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
+    tuple val(meta), path("*.pdf")                  , optional: true, emit: report
+    path "versions.yml"                                             , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -33,7 +33,6 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
         CollectDuplexSeqMetrics \\
         --input $grouped_bam \\
         --output ${prefix}.duplex_seq_metrics \\
-        --duplex-umi-counts=true \\
         $args;
 
     cat <<-END_VERSIONS > versions.yml

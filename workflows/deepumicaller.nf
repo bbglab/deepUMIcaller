@@ -64,9 +64,9 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
-include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam_mod/main'
-include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam_mod/main'
-include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam_mod/main'
+include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
+include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
+include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
 
@@ -228,7 +228,7 @@ workflow DEEPUMICALLER {
         // GROUPREADSBYUMIDUPLEX.out.histogram
         // COLLECTDUPLEXSEQMETRICS.out.metrics // the problem here is that there are many files, we only need one
         // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
-        
+
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
@@ -267,34 +267,36 @@ workflow DEEPUMICALLER {
         SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
-        //
-        // ALL READS
-        //
+        if (params.duplex_low_conf){
+            //
+            // ALL READS
+            //
 
-        // TODO
-        // add filtering step
-        //      do not filter for duplex reads, but filter for quality and error rates
-        // add clipping step
-        // add sorting step
+            // TODO
+            // add filtering step
+            //      do not filter for duplex reads, but filter for quality and error rates
+            // add clipping step
+            // add sorting step
 
-        // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONS(ALIGNDUPLEXCONSENSUSBAM.out.bam)
+            // MODULE: Sort BAM file
+            SORTBAMDUPLEXCONS(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
-        // Mutation calling for all reads
-        CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
-                        params.targetsfile,
-                        ch_ref_fasta, ch_ref_index_dir)
+            // Mutation calling for all reads
+            CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
+                            params.targetsfile,
+                            ch_ref_fasta, ch_ref_index_dir)
 
-        VCFANNOTATEALL(CALLINGVARDICT.out.vcf,
-                        ch_ref_fasta,
-                        "GRCh38",
-                        "homo_sapiens", 
-                        "108",
-                        vep_cache,
-                        vep_extra_files)
-        
-        CALLINGVARDICT.out.vcf.map{it -> it[1]}.set { mutation_files }
-        SIGPROFPLOT(mutation_files.collect())
+            VCFANNOTATEALL(CALLINGVARDICT.out.vcf,
+                            ch_ref_fasta,
+                            "GRCh38",
+                            "homo_sapiens", 
+                            "108",
+                            vep_cache,
+                            vep_extra_files)
+            
+            CALLINGVARDICT.out.vcf.map{it -> it[1]}.set { mutation_files }
+            SIGPROFPLOT(mutation_files.collect())
+        }
 
         // TODO
         // FGBIO FILTER SOMATIC VARIANTS

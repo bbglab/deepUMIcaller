@@ -3,10 +3,9 @@ process ALIGN_BAM {
     label 'process_high'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" : null)
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //     'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
-    //     'quay.io/biocontainers/fgbio:2.1.0--hdfd78af_0' }"
-
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
+        'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
+        'quay.io/biocontainers/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' }"
 
     input:
     tuple val(meta), path(unmapped_bam)
@@ -56,11 +55,12 @@ process ALIGN_BAM {
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
 
     samtools fastq ${samtools_fastq_args} ${unmapped_bam} \\
-        | bwa mem ${bwa_args} -t $task.cpus -p -5 -L 1,1 -K 100000000 -Y \$FASTA - \\
+        | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgbio -Xmx${fgbio_mem_gb}g \\
             --compression ${fgbio_zipper_bams_compression} \\
             --async-io=true \\
             ZipperBams \\
+            --input /dev/stdin \\
             --unmapped ${unmapped_bam} \\
             --ref \$FASTA \\
             --output ${fgbio_zipper_bams_output} \\

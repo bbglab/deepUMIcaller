@@ -63,8 +63,11 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
+include { FGBIO_FASTQTOBAM                  as TRIMMEDFASTQTOBAM           } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
+include { ALIGN_FASTQ                       as ALIGNFASTQ                  } from '../modules/local/align_fastq/main'
+
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
@@ -95,8 +98,12 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } fro
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTP                                                            } from '../modules/nf-core/fastp/main'
-include { FASTQC                                                           } from '../modules/nf-core/fastqc/main'
+include { FASTP                             as FASTP                       } from '../modules/nf-core/fastp/main'
+
+include { FASTQC                            as FASTQC                      } from '../modules/nf-core/fastqc/main'
+// include { FASTQC                            as POSTTRIMQC                  } from '../modules/nf-core/fastqc/main'
+
+include { BAMUTIL_TRIMBAM                   as TRIMBAM                     } from '../modules/nf-core/bamutil/trimbam/main'
 
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -107,6 +114,8 @@ include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } fro
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
+// include { SAMTOOLS_FASTQ                    as BAM2FASTQ                   } from '../modules/nf-core/samtools/fastq/main.nf'
+
 
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
@@ -151,7 +160,7 @@ workflow DEEPUMICALLER {
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-
+    
     // MODULE: Run FASTP
     FASTP(INPUT_CHECK.out.reads,
                     [], // we are not using any adapter fastas at the moment
@@ -185,21 +194,57 @@ workflow DEEPUMICALLER {
 
     //
     // MODULE: Run fgbio FastqToBam
+    // to get the UMIs out of the reads and into the tag
     //
     FASTQTOBAM(FASTP.out.reads)
     ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
     // This is the unmapped BAM file: FASTQTOBAM.out.bam
 
+    // 
+    // Remove 4bp from the 5' end of the reads
+    // (left side)
+    TRIMBAM(FASTQTOBAM.out.bam, 4, 0)
+    ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
+    // This is still an unmapped BAM file: TRIMBAM.out.bam
 
-    //TODO
-    // add step to check if the bwa index is present otherwise create it
 
+    // // Take BAMs back to FASTQs, preserving all the tags (see ext.args)
+    // BAM2FASTQ(FASTQTOBAM.out.bam, false)
+    // ch_versions = ch_versions.mix(BAM2FASTQ.out.versions.first())
+
+
+    // // MODULE: Run FASTP to remove
+    // // - adapter contamination
+    // // - the first bases of the 5' end for ligation errors
+    // // tune parameters
+    // FASTP(BAM2FASTQ.out.fastq,
+    //                 [], // we are not using any adapter fastas at the moment
+    //                 false,
+    //                 false)
+
+    // //TODO
+    // // add step to check if the bwa index is present otherwise create it
+    
+    // // Run QC again to see how much did the sequences change throughout the process
+    // POSTTRIMQC(
+    //     FASTP.out.reads
+    // )
+
+    // // https://nf-co.re/modules/picard_collectmultiplemetrics
+    // // https://nf-co.re/modules/qualimap_bamqc
+
+
+    // // Take the trimmed FASTQ back to BAM format
+    // TRIMMEDFASTQTOBAM(FASTP.out.reads)
 
     //
     // MODULE: Align with bwa mem
     //
-    ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+    ALIGNRAWBAM(TRIMBAM.out.bam, ch_ref_index_dir, false)
     ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+    // ALIGNFASTQ(FASTP.out.reads, FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+    // ch_versions = ch_versions.mix(ALIGNFASTQ.out.versions.first())
+
 
     SORTBAM(ALIGNRAWBAM.out.bam)
     ch_versions = ch_versions.mix(SORTBAM.out.versions.first())

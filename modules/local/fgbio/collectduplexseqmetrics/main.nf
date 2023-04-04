@@ -12,8 +12,8 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
 
     output:
     tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
-    tuple val(meta), path("*.pdf")                  , optional: true, emit: report
-    path "versions.yml"                                             , emit: versions
+    tuple val(meta), path("*.pdf")                   , optional: true, emit: report
+    path "versions.yml"                                              , emit: versions
 
     script:
     def args = task.ext.args ?: ''

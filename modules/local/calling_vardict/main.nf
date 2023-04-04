@@ -32,7 +32,7 @@ process CALLING_VARDICT {
         -f \$AF_THR \\
         -N ${prefix} -b ${bam} \\
         -c 1 -S 2 -E 3 -g 4 \\
-        -r 1 -m 20 -P 0 \\
+        -r 1 -m 9999 -P 0 \\
         -p -z 0 -o 0.5 \\
         -th ${task.cpus} \\
         ${targets_file} > ${prefix}.raw.tsv
@@ -51,29 +51,5 @@ process CALLING_VARDICT {
     """
 }
 
-// vardict-java -G ${fasta_dir}/${fasta} \\
-//         -f \$AF_THR \\
-//         -N ${prefix} -b ${bam} \\
-//         -c 1 -S 2 -E 3 -g 4 \\
-//         -r 1 -m 8 -P 0 \\
-//         -th ${task.cpus} \\
-//         ${targets_file} \\
-//         | teststrandbias.R \\
-//         | var2vcf_valid.pl \\
-//         -N ${prefix} -E -f \$AF_THR -p 0 -m 8 -v 2 > ${prefix}.vcf
 
-
-    // vardict-java -G ${fasta_dir}/${fasta} \\
-    //     -f \$AF_THR \\
-    //     -N ${prefix} -b ${bam} \\
-    //     -c 1 -S 2 -E 3 -g 4 \\
-    //     -r 1 -m 8 -P 0 -D \\
-    //     -o 1 \\
-    //     -th ${task.cpus} \\
-    //     ${targets_file} > ${prefix}.raw.vcf
-
-    // cat ${prefix}.raw.vcf \\
-    //     | teststrandbias.R \\
-    //     | var2vcf_valid.pl \\
-    //     -N ${prefix} -E -f \$AF_THR -p 0 -m 8 -v 2 > ${prefix}.vcf
 

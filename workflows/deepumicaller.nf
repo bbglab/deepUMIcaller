@@ -63,7 +63,6 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
-include { FGBIO_FASTQTOBAM                  as TRIMMEDFASTQTOBAM           } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
 include { ALIGN_FASTQ                       as ALIGNFASTQ                  } from '../modules/local/align_fastq/main'
@@ -72,6 +71,7 @@ include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } fro
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMLOWCONF              } from '../modules/local/clipbam/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
@@ -155,25 +155,6 @@ workflow DEEPUMICALLER {
 
     ch_versions = Channel.empty()
 
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    INPUT_CHECK (
-        ch_input
-    )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    
-    // MODULE: Run FASTP
-    FASTP(INPUT_CHECK.out.reads,
-                    [], // we are not using any adapter fastas at the moment
-                    false,
-                    false)
-    ch_versions = ch_versions.mix(FASTP.out.versions.first())
-
-
-    // MODULE: Run FastQC
-    FASTQC (
-        FASTP.out.reads
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     // Download cache if needed
     // Assuming that if the cache is provided, the user has already downloaded it
@@ -190,60 +171,72 @@ workflow DEEPUMICALLER {
         vep_cache = params.vep_cache
     }
     vep_extra_files = []
+    
+    
+    
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    INPUT_CHECK (
+        ch_input
+    )
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    
+    if (params.trim_fastq){
+        // MODULE: Run FASTP
+        FASTP(INPUT_CHECK.out.reads,
+                        [], // we are not using any adapter fastas at the moment
+                        false,
+                        false)
+        ch_versions = ch_versions.mix(FASTP.out.versions.first())
 
 
-    //
-    // MODULE: Run fgbio FastqToBam
-    // to get the UMIs out of the reads and into the tag
-    //
-    FASTQTOBAM(FASTP.out.reads)
-    ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
-    // This is the unmapped BAM file: FASTQTOBAM.out.bam
+        // MODULE: Run FastQC
+        FASTQC (
+            FASTP.out.reads
+        )
+        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+        // MODULE: Run fgbio FastqToBam
+        // to get the UMIs out of the reads and into the tag
+        //
+        FASTQTOBAM(FASTP.out.reads)
+        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
+        // This is the unmapped BAM file: FASTQTOBAM.out.bam
+    } else {
+
+        // MODULE: Run FastQC
+        FASTQC (
+            INPUT_CHECK.out.reads
+        )
+        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+
+
+        // MODULE: Run fgbio FastqToBam
+        // to get the UMIs out of the reads and into the tag
+        //
+        FASTQTOBAM(INPUT_CHECK.out.reads)
+        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
+        // This is the unmapped BAM file: FASTQTOBAM.out.bam
+    }
+    
+
+
+    
 
     // 
     // Remove 4bp from the 5' end of the reads
     // (left side)
-    TRIMBAM(FASTQTOBAM.out.bam, 4, 0)
+    TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
     ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
     // This is still an unmapped BAM file: TRIMBAM.out.bam
 
-
-    // // Take BAMs back to FASTQs, preserving all the tags (see ext.args)
-    // BAM2FASTQ(FASTQTOBAM.out.bam, false)
-    // ch_versions = ch_versions.mix(BAM2FASTQ.out.versions.first())
-
-
-    // // MODULE: Run FASTP to remove
-    // // - adapter contamination
-    // // - the first bases of the 5' end for ligation errors
-    // // tune parameters
-    // FASTP(BAM2FASTQ.out.fastq,
-    //                 [], // we are not using any adapter fastas at the moment
-    //                 false,
-    //                 false)
-
-    // //TODO
-    // // add step to check if the bwa index is present otherwise create it
-    
-    // // Run QC again to see how much did the sequences change throughout the process
-    // POSTTRIMQC(
-    //     FASTP.out.reads
-    // )
-
-    // // https://nf-co.re/modules/picard_collectmultiplemetrics
-    // // https://nf-co.re/modules/qualimap_bamqc
-
-
-    // // Take the trimmed FASTQ back to BAM format
-    // TRIMMEDFASTQTOBAM(FASTP.out.reads)
+    // https://nf-co.re/modules/picard_collectmultiplemetrics
+    // https://nf-co.re/modules/qualimap_bamqc
 
     //
     // MODULE: Align with bwa mem
     //
     ALIGNRAWBAM(TRIMBAM.out.bam, ch_ref_index_dir, false)
     ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
-    // ALIGNFASTQ(FASTP.out.reads, FASTQTOBAM.out.bam, ch_ref_index_dir, false)
-    // ch_versions = ch_versions.mix(ALIGNFASTQ.out.versions.first())
 
 
     SORTBAM(ALIGNRAWBAM.out.bam)
@@ -270,7 +263,6 @@ workflow DEEPUMICALLER {
 
         // TODO
         // add metrics plots module
-        // GROUPREADSBYUMIDUPLEX.out.histogram
         // COLLECTDUPLEXSEQMETRICS.out.metrics // the problem here is that there are many files, we only need one
         // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
 
@@ -328,8 +320,12 @@ workflow DEEPUMICALLER {
             // add clipping step
             // add sorting step
 
+            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+            CLIPBAMLOWCONF(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(CLIPBAMLOWCONF.out.versions.first())
+
             // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONS(ALIGNDUPLEXCONSENSUSBAM.out.bam)
+            SORTBAMDUPLEXCONS(CLIPBAMLOWCONF.out.bam)
 
             // Mutation calling for all reads
             CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,

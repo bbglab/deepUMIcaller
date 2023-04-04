@@ -35,13 +35,6 @@ WorkflowMain.initialise(workflow, params, log)
 
 include { DEEPUMICALLER } from './workflows/deepumicaller'
 
-//
-// WORKFLOW: Run main nf-core/fastquorum analysis pipeline
-//
-//workflow NFCORE_FASTQUORUM {
-//    FASTQUORUM ()
-//}
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN ALL WORKFLOWS

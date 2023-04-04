@@ -267,6 +267,11 @@ workflow DEEPUMICALLER {
         SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
+        // TODO
+        // add a module that plots the signature, with the correct normalization
+        // use bgsignature, and the input targets file
+
+
         if (params.duplex_low_conf){
             //
             // ALL READS

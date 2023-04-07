@@ -28,6 +28,11 @@ if (params.input) { ch_input = file(params.input) } else {
 if (params.ref_fasta) {
     ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
 
+    // define additional fasta file names
+    ch_ref_fasta_file = file(params.ref_fasta, checkIfExists: true)
+    ch_ref_fasta_fai_index = file("${ch_ref_fasta_file}.fai", checkIfExists: true)
+    ch_ref_fasta_dict = file("${ch_ref_fasta_file.parent/ch_ref_fasta_file.baseName}.dict", checkIfExists: true)
+
 } else {
     log.error "No reference FASTA was specified (--ref_fasta)."
     exit 1
@@ -65,11 +70,11 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
-include { ALIGN_FASTQ                       as ALIGNFASTQ                  } from '../modules/local/align_fastq/main'
 
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
+include { FGBIO_TRUNCATEBAM                 as FGTRUNCATEBAM               } from '../modules/local/truncate_bam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMLOWCONF              } from '../modules/local/clipbam/main'
 
@@ -109,9 +114,23 @@ include { MULTIQC                                                          } fro
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMNAMES                } from '../modules/nf-core/samtools/sort/main'
+
+include { SAMTOOLS_SORT                     as SORTBAMFIXED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
+
+include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
+include { PICARD_FILTERSAMREADS             as FILTERSAMREADS              } from '../modules/nf-core/picard/filtersamreads/main'
+include { PICARD_SORTSAM                    as PICARDSORT                  } from '../modules/nf-core/picard/sortsam/main'
+include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } from '../modules/nf-core/picard/bedtointervallist/main'
+
+
+
+include { SAMTOOLS_VIEW                     as TRUNCATEBAM                 } from '../modules/nf-core/samtools/view/main'
+include { SAMTOOLS_FIXMATE                  as FIXMATES                    } from '../modules/nf-core/samtools/fixmate/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 // include { SAMTOOLS_FASTQ                    as BAM2FASTQ                   } from '../modules/nf-core/samtools/fastq/main.nf'
@@ -220,8 +239,6 @@ workflow DEEPUMICALLER {
     
 
 
-    
-
     // 
     // Remove 4bp from the 5' end of the reads
     // (left side)
@@ -242,6 +259,42 @@ workflow DEEPUMICALLER {
     SORTBAM(ALIGNRAWBAM.out.bam)
     ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
+    COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
+    ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
+
+    // TODO
+    // bed files to interval list
+    if (params.targetsfile){
+        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
+        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
+    // // TODO
+    // // collect metrics for on target vs off target reads
+    // PICARDSORT(ALIGNRAWBAM.out.bam, "queryname")
+    // FILTERSAMREADS(PICARDSORT.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]}, "includePairedIntervals")
+
+
+    // // truncate BAM to keep only the reads that are on target
+    // TRUNCATEBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, [])
+    
+    // SORTBAMNAMES(TRUNCATEBAM.out.bam)
+
+    // FIXMATES(SORTBAMNAMES.out.bam)
+
+    // SORTFIXEDBAM(TRUNCATEBAM.out.bam)
+
+    // truncate BAM to keep only the reads that are on target
+    FGTRUNCATEBAM(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]})
+
+    // SORTBAMNAMES(TRUNCATEBAM.out.bam)
+
+    // FIXMATES(SORTBAMNAMES.out.bam)
+
+    SORTBAMFIXED(FGTRUNCATEBAM.out.bam)
+
+    }
+    
+    // Compute depth of the "raw" reads aligned to the genome
+    COMPUTEDEPTH(SORTBAMFIXED.out.bam)
 
     if (params.duplex_seq) {
         //
@@ -249,7 +302,7 @@ workflow DEEPUMICALLER {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
-        GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
+        GROUPREADSBYUMIDUPLEX(SORTBAMFIXED.out.bam, "Paired")
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         
         // MODULE: Run fgbio CallDuplexConsensusReads

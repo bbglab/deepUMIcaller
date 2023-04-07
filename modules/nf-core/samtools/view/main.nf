@@ -14,13 +14,13 @@ process SAMTOOLS_VIEW {
     path qname
 
     output:
-    tuple val(meta), path("*.bam"),  emit: bam,     optional: true
+    tuple val(meta), path("*.bam") , emit: bam ,    optional: true
     tuple val(meta), path("*.cram"), emit: cram,    optional: true
-    tuple val(meta), path("*.sam"),  emit: sam,     optional: true
-    tuple val(meta), path("*.bai"),  emit: bai,     optional: true
-    tuple val(meta), path("*.csi"),  emit: csi,     optional: true
+    tuple val(meta), path("*.sam") , emit: sam ,    optional: true
+    tuple val(meta), path("*.bai") , emit: bai ,    optional: true
+    tuple val(meta), path("*.csi") , emit: csi ,    optional: true
     tuple val(meta), path("*.crai"), emit: crai,    optional: true
-    path  "versions.yml",            emit: versions
+    path  "versions.yml"           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,14 +36,13 @@ process SAMTOOLS_VIEW {
                     args.contains("--output-fmt cram") ? "cram" :
                     input.getExtension()
     if ("$input" == "${prefix}.${file_type}") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
-        // ${reference} \\
-        // ${readnames} \\
-
     """
     samtools \\
         view \\
         --threads ${task.cpus-1} \\
         $args \\
+        ${reference} \\
+        ${readnames} \\
         -o ${prefix}.${file_type} \\
         $input \\
         $args2

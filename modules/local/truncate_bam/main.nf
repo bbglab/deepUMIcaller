@@ -1,7 +1,9 @@
 process FGBIO_TRUNCATEBAM {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_medium_mem'
 
+    // TODO
+    // update with only fgbio and samtools
     conda (params.enable_conda ? "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
         'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
@@ -12,7 +14,7 @@ process FGBIO_TRUNCATEBAM {
     path regions
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
+    tuple val(meta), path("*.txt"), emit: read_names
     path "versions.yml"           , emit: versions
 
     when:
@@ -60,8 +62,6 @@ process FGBIO_TRUNCATEBAM {
         --output /dev/stdout \\
         --remove-duplicates false \\
         | samtools view -F 0x4 - | cut -f1 > read_ids.txt
-
-    samtools view -h -b ${bam} --qname-file read_ids.txt > ${prefix}.region_filtered.bam
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

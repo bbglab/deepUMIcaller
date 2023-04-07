@@ -65,7 +65,7 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { INPUT_CHECK                                                      } from '../subworkflows/local/input_check'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
@@ -74,7 +74,7 @@ include { ALIGN_BAM                         as ALIGNRAWBAM                 } fro
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
-include { FGBIO_TRUNCATEBAM                 as FGTRUNCATEBAM               } from '../modules/local/truncate_bam/main'
+include { FGBIO_TRUNCATEBAM                 as FGSELECTREADS               } from '../modules/local/truncate_bam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMLOWCONF              } from '../modules/local/clipbam/main'
 
@@ -114,27 +114,19 @@ include { MULTIQC                                                          } fro
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMNAMES                } from '../modules/nf-core/samtools/sort/main'
-
 include { SAMTOOLS_SORT                     as SORTBAMFIXED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
 
-include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
-include { PICARD_FILTERSAMREADS             as FILTERSAMREADS              } from '../modules/nf-core/picard/filtersamreads/main'
-include { PICARD_SORTSAM                    as PICARDSORT                  } from '../modules/nf-core/picard/sortsam/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
+include { SAMTOOLS_VIEW                     as FILTERBAM                   } from '../modules/nf-core/samtools/view/main'
+
 include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } from '../modules/nf-core/picard/bedtointervallist/main'
 
-
-
-include { SAMTOOLS_VIEW                     as TRUNCATEBAM                 } from '../modules/nf-core/samtools/view/main'
-include { SAMTOOLS_FIXMATE                  as FIXMATES                    } from '../modules/nf-core/samtools/fixmate/main'
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
+include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
-// include { SAMTOOLS_FASTQ                    as BAM2FASTQ                   } from '../modules/nf-core/samtools/fastq/main.nf'
-
 
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI             } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
 include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
@@ -146,7 +138,7 @@ include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } fro
 
 
 // Download annotation cache if needed
-include { PREPARE_CACHE                                  } from '../subworkflows/local/prepare_cache/main'
+include { PREPARE_CACHE                                                   } from '../subworkflows/local/prepare_cache/main'
 
 
 // Annotation
@@ -216,10 +208,29 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio FastqToBam
         // to get the UMIs out of the reads and into the tag
-        //
         FASTQTOBAM(FASTP.out.reads)
         ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
         // This is the unmapped BAM file: FASTQTOBAM.out.bam
+
+        if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
+            // Remove 4bp from the 5' end of the reads
+            // (left side)
+            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
+            ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
+            // This is still an unmapped BAM file: TRIMBAM.out.bam
+
+            // MODULE: Align with bwa mem
+            ALIGNRAWBAM(TRIMBAM.out.bam, ch_ref_index_dir, false)
+            ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+        } else {
+
+            // MODULE: Align with bwa mem
+            ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+            ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+
+        }
+
+
     } else {
 
         // MODULE: Run FastQC
@@ -228,32 +239,21 @@ workflow DEEPUMICALLER {
         )
         ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
-
         // MODULE: Run fgbio FastqToBam
         // to get the UMIs out of the reads and into the tag
-        //
         FASTQTOBAM(INPUT_CHECK.out.reads)
         ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
         // This is the unmapped BAM file: FASTQTOBAM.out.bam
+
+        // MODULE: Align with bwa mem
+        ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
+        ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+
     }
     
 
-
-    // 
-    // Remove 4bp from the 5' end of the reads
-    // (left side)
-    TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
-    ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
-    // This is still an unmapped BAM file: TRIMBAM.out.bam
-
     // https://nf-co.re/modules/picard_collectmultiplemetrics
     // https://nf-co.re/modules/qualimap_bamqc
-
-    //
-    // MODULE: Align with bwa mem
-    //
-    ALIGNRAWBAM(TRIMBAM.out.bam, ch_ref_index_dir, false)
-    ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
 
     SORTBAM(ALIGNRAWBAM.out.bam)
@@ -262,39 +262,30 @@ workflow DEEPUMICALLER {
     COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
     ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
-    // TODO
-    // bed files to interval list
     if (params.targetsfile){
+
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-    // // TODO
-    // // collect metrics for on target vs off target reads
-    // PICARDSORT(ALIGNRAWBAM.out.bam, "queryname")
-    // FILTERSAMREADS(PICARDSORT.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]}, "includePairedIntervals")
+        ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
 
 
-    // // truncate BAM to keep only the reads that are on target
-    // TRUNCATEBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, [])
-    
-    // SORTBAMNAMES(TRUNCATEBAM.out.bam)
+        // TODO
+        // collect metrics for on target vs off target reads
 
-    // FIXMATES(SORTBAMNAMES.out.bam)
+        // truncate BAM to keep only the reads that are on target
+        FGSELECTREADS(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]})
+        FILTERBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it[1]},  [], FGSELECTREADS.out.read_names.map{it -> it[1]} )
+        SORTBAMFIXED(FILTERBAM.out.bam)
 
-    // SORTFIXEDBAM(TRUNCATEBAM.out.bam)
+        // Compute depth of the "raw" reads aligned to the genome
+        COMPUTEDEPTH(SORTBAMFIXED.out.bam)
 
-    // truncate BAM to keep only the reads that are on target
-    FGTRUNCATEBAM(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]})
-
-    // SORTBAMNAMES(TRUNCATEBAM.out.bam)
-
-    // FIXMATES(SORTBAMNAMES.out.bam)
-
-    SORTBAMFIXED(FGTRUNCATEBAM.out.bam)
-
+    } else {
+        // Compute depth of the "raw" reads aligned to the genome
+        COMPUTEDEPTH(SORTBAM.out.bam)
     }
-    
-    // Compute depth of the "raw" reads aligned to the genome
-    COMPUTEDEPTH(SORTBAMFIXED.out.bam)
+
+
 
     if (params.duplex_seq) {
         //
@@ -302,9 +293,13 @@ workflow DEEPUMICALLER {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
-        GROUPREADSBYUMIDUPLEX(SORTBAMFIXED.out.bam, "Paired")
+        if (params.targetsfile){
+            GROUPREADSBYUMIDUPLEX(SORTBAMFIXED.out.bam, "Paired")
+        } else {
+            GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
+        }
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
-        
+
         // MODULE: Run fgbio CallDuplexConsensusReads
         // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
@@ -341,8 +336,8 @@ workflow DEEPUMICALLER {
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
         ch_versions = ch_versions.mix(CALLINGVARDICTDUPLEX.out.versions.first())
-        
-        
+
+
         VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
                             ch_ref_fasta,
                             "GRCh38",
@@ -351,9 +346,9 @@ workflow DEEPUMICALLER {
                             vep_cache,
                             vep_extra_files)
         ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
-        
+
         CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
-        
+
         SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
@@ -392,7 +387,7 @@ workflow DEEPUMICALLER {
                             "108",
                             vep_cache,
                             vep_extra_files)
-            
+
             CALLINGVARDICT.out.vcf.map{it -> it[1]}.set { mutation_files }
             SIGPROFPLOT(mutation_files.collect())
         }

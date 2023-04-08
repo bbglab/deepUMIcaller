@@ -273,7 +273,7 @@ workflow DEEPUMICALLER {
         // collect metrics for on target vs off target reads
 
         // truncate BAM to keep only the reads that are on target
-        FGSELECTREADS(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.map{it -> it [1]})
+        FGSELECTREADS(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
         FILTERBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it[1]},  [], FGSELECTREADS.out.read_names.map{it -> it[1]} )
         SORTBAMFIXED(FILTERBAM.out.bam)
 

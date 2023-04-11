@@ -1,27 +1,14 @@
-name: fgbio_fastqtobam
+name: fgbio_filterbam
 description: |
-  Generates an unmapped BAM (or SAM or CRAM) file from fastq files.
+  Generates a list of names of all the reads that are mapped in the target regions given a BAM (or SAM or CRAM) file and a BED file indicating the regions.
 keywords:
   - fgbio
   - samtools
-  - zipperbams
-  - mem
-  - bwa
-  - alignment
-  - map
-  - fastq
   - bam
   - sam
-  -
+  - filter
+
 tools:
-  - bwa:
-      description: |
-        BWA is a software package for mapping DNA sequences against
-        a large reference genome, such as the human genome.
-      homepage: http://bio-bwa.sourceforge.net/
-      documentation: http://www.htslib.org/doc/samtools.html
-      arxiv: arXiv:1303.3997
-      licence: ["GPL-3.0-or-later"]
   - fgbio:
       description: A set of tools for working with genomic and high throughput sequencing data, including UMIs
       homepage: http://fulcrumgenomics.github.io/fgbio/

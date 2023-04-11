@@ -1,4 +1,4 @@
-process FGBIO_TRUNCATEBAM {
+process FGBIO_FILTERBAM {
     tag "$meta.id"
     label 'process_medium_mem'
 
@@ -38,20 +38,6 @@ process FGBIO_TRUNCATEBAM {
         }
     }
     fgbio_compression = 0
-    // if (sort) {
-    //     fgbio_zipper_bams_output = "/dev/stdout"
-    //     fgbio_zipper_bams_compression = 0 // do not compress if samtools is consuming it
-    //     extra_command = " | samtools sort "
-    //     extra_command += samtools_sort_args
-    //     extra_command += " --template-coordinate"
-    //     extra_command += " --threads "+ task.cpus
-    //     extra_command += " -o " + prefix + ".mapped.bam"
-    // } else {
-    //     fgbio_zipper_bams_output = prefix + ".mapped.bam"
-    //     fgbio_zipper_bams_compression = 1
-    //     extra_command = ""
-    // }
-
     """
     fgbio -Xmx${fgbio_mem_gb}g \\
         --compression ${fgbio_compression} \\
@@ -62,7 +48,7 @@ process FGBIO_TRUNCATEBAM {
         --output /dev/stdout \\
         --remove-duplicates false \\
         | samtools view -F 0x4 - | cut -f1 > read_ids.txt
-
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')

@@ -74,7 +74,7 @@ include { ALIGN_BAM                         as ALIGNRAWBAM                 } fro
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
-include { FGBIO_TRUNCATEBAM                 as FGSELECTREADS               } from '../modules/local/truncate_bam/main'
+include { FGBIO_FILTERBAM                   as FGSELECTREADS               } from '../modules/local/fgbio/filterbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMLOWCONF              } from '../modules/local/clipbam/main'
 
@@ -84,6 +84,7 @@ include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } fro
 // include { FAMILYMETRICS                     as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX  } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOWCONF } from '../modules/local/fgbio/filterconsensusreads/main'
 
 include { CALLING_VARDICT                   as CALLINGVARDICT              } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } from '../modules/local/calling_vardict/main'
@@ -110,21 +111,26 @@ include { FASTQC                            as FASTQC                      } fro
 
 include { BAMUTIL_TRIMBAM                   as TRIMBAM                     } from '../modules/nf-core/bamutil/trimbam/main'
 
+include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } from '../modules/nf-core/picard/bedtointervallist/main'
+
+//  Metrics
+include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
+include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
+
+// Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
+// Sorting
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMFIXED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
 
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_VIEW                     as FILTERBAM                   } from '../modules/nf-core/samtools/view/main'
-
-include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } from '../modules/nf-core/picard/bedtointervallist/main'
-
-include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
@@ -165,18 +171,15 @@ def multiqc_report = []
 workflow DEEPUMICALLER {
 
     ch_versions = Channel.empty()
+    ch_multiqc_files = Channel.empty()
 
 
-    // Download cache if needed
+    // Download Ensembl VEP cache if needed
     // Assuming that if the cache is provided, the user has already downloaded it
     ensemblvep_info = params.vep_cache ? [] : Channel.of([ [ id:"${params.vep_genome}.${params.vep_cache_version}" ], params.vep_genome, params.vep_species, params.vep_cache_version ])
-
     if (params.download_cache) {
-        // PREPARE_CACHE(ensemblvep_info, snpeff_info)
-        // snpeff_cache       = PREPARE_CACHE.out.snpeff_cache.map{ meta, cache -> [ cache ] }
         PREPARE_CACHE(ensemblvep_info)
         vep_cache = PREPARE_CACHE.out.ensemblvep_cache.map{ meta, cache -> [ cache ] }
-
         ch_versions = ch_versions.mix(PREPARE_CACHE.out.versions)
     } else {
         vep_cache = params.vep_cache
@@ -184,90 +187,71 @@ workflow DEEPUMICALLER {
     vep_extra_files = []
     
     
-    
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     INPUT_CHECK (
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    
-    if (params.trim_fastq){
+
+
+    // READ PREPROCESSING
+    if (params.trim_adapters){
         // MODULE: Run FASTP
         FASTP(INPUT_CHECK.out.reads,
                         [], // we are not using any adapter fastas at the moment
                         false,
                         false)
         ch_versions = ch_versions.mix(FASTP.out.versions.first())
-
-
-        // MODULE: Run FastQC
-        FASTQC (
-            FASTP.out.reads
-        )
-        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-
-        // MODULE: Run fgbio FastqToBam
-        // to get the UMIs out of the reads and into the tag
-        FASTQTOBAM(FASTP.out.reads)
-        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
-        // This is the unmapped BAM file: FASTQTOBAM.out.bam
-
-        if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            // Remove 4bp from the 5' end of the reads
-            // (left side)
-            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
-            ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
-            // This is still an unmapped BAM file: TRIMBAM.out.bam
-
-            // MODULE: Align with bwa mem
-            ALIGNRAWBAM(TRIMBAM.out.bam, ch_ref_index_dir, false)
-            ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
-        } else {
-
-            // MODULE: Align with bwa mem
-            ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
-            ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
-
-        }
-
-
+        reads_to_qc = FASTP.out.reads
     } else {
-
-        // MODULE: Run FastQC
-        FASTQC (
-            INPUT_CHECK.out.reads
-        )
-        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-
-        // MODULE: Run fgbio FastqToBam
-        // to get the UMIs out of the reads and into the tag
-        FASTQTOBAM(INPUT_CHECK.out.reads)
-        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
-        // This is the unmapped BAM file: FASTQTOBAM.out.bam
-
-        // MODULE: Align with bwa mem
-        ALIGNRAWBAM(FASTQTOBAM.out.bam, ch_ref_index_dir, false)
-        ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
-
+        reads_to_qc = INPUT_CHECK.out.reads
     }
-    
 
-    // https://nf-co.re/modules/picard_collectmultiplemetrics
-    // https://nf-co.re/modules/qualimap_bamqc
 
+    // MODULE: Run FastQC
+    FASTQC (
+        reads_to_qc
+    )
+    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+
+
+    // MODULE: Run fgbio FastqToBam
+    // to get the UMIs out of the reads and into the tag
+    FASTQTOBAM(reads_to_qc)
+    ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
+    // This is the unmapped BAM file: FASTQTOBAM.out.bam
+
+
+    // Decide whether we clip the beginning and/or end of the reads or nothing
+    if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
+        // params.left_clip = 4     ->      Remove 4bp from the 5' end of the reads
+        TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
+        ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
+        bam_to_align = TRIMBAM.out.bam
+    } else {
+        bam_to_align = FASTQTOBAM.out.bam
+    }
+
+
+    // MODULE: Align with bwa mem
+    ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
+    ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
     SORTBAM(ALIGNRAWBAM.out.bam)
     ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
-    COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
-    ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
+    // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
+    // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
     if (params.targetsfile){
+        QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+        ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
-
 
         // TODO
         // collect metrics for on target vs off target reads
@@ -277,12 +261,15 @@ workflow DEEPUMICALLER {
         FILTERBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it[1]},  [], FGSELECTREADS.out.read_names.map{it -> it[1]} )
         SORTBAMFIXED(FILTERBAM.out.bam)
 
-        // Compute depth of the "raw" reads aligned to the genome
-        COMPUTEDEPTH(SORTBAMFIXED.out.bam)
+        bam_to_group = SORTBAMFIXED.out.bam
 
     } else {
-        // Compute depth of the "raw" reads aligned to the genome
-        COMPUTEDEPTH(SORTBAM.out.bam)
+        QUALIMAPQC(SORTBAM.out.bam, [])
+        ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+
+        bam_to_group = SORTBAM.out.bam
+
     }
 
 
@@ -293,12 +280,10 @@ workflow DEEPUMICALLER {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
-        if (params.targetsfile){
-            GROUPREADSBYUMIDUPLEX(SORTBAMFIXED.out.bam, "Paired")
-        } else {
-            GROUPREADSBYUMIDUPLEX(SORTBAM.out.bam, "Paired")
-        }
+        GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
+        ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
+
 
         // MODULE: Run fgbio CallDuplexConsensusReads
         // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
@@ -331,6 +316,15 @@ workflow DEEPUMICALLER {
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONSFILT(CLIPBAM.out.bam)
 
+        // Compute depth of the "raw" reads aligned to the genome
+        COMPUTEDEPTH(SORTBAMDUPLEXCONSFILT.out.bam)
+
+        // Quality check
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, params.targetsfile)
+        ch_versions = ch_versions.mix(QUALIMAPQCDUPLEX.out.versions.first())
+        // ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+    
+
         // Mutation calling for duplex reads
         CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
                             params.targetsfile,
@@ -357,23 +351,24 @@ workflow DEEPUMICALLER {
         // use bgsignature, and the input targets file
 
 
+        //
+        // ALL READS
+        //
         if (params.duplex_low_conf){
-            //
-            // ALL READS
-            //
 
             // TODO
-            // add filtering step
-            //      do not filter for duplex reads, but filter for quality and error rates
-            // add clipping step
-            // add sorting step
+            // choose filtering step parameters
+            FILTERCONSENSUSREADSLOWCONF(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMLOWCONF(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            CLIPBAMLOWCONF(FILTERCONSENSUSREADSLOWCONF.out.bam, ch_ref_fasta)
             ch_versions = ch_versions.mix(CLIPBAMLOWCONF.out.versions.first())
 
             // MODULE: Sort BAM file
             SORTBAMDUPLEXCONS(CLIPBAMLOWCONF.out.bam)
+
+            // TODO
+            // decide whether we want to add a step to compute metics on the BAM file, either qualimap or depth
 
             // Mutation calling for all reads
             CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
@@ -435,13 +430,11 @@ workflow DEEPUMICALLER {
     workflow_summary    = WorkflowFgcons.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files = Channel.empty()
+    
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
     MULTIQC (
         ch_multiqc_files.collect()

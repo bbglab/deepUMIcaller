@@ -1,3 +1,0 @@
-reports:
-    "**multiqc_report.html":
-        display: "MULTIQC report"

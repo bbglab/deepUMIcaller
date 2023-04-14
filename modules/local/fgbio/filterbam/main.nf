@@ -56,6 +56,9 @@ process FGBIO_FILTERBAM {
     END_VERSIONS
     """
 }
+// TODO
+//  add final step to the process in order to remove the duplicated read names
+
 
 // intervals	l	PathToIntervals	Optionally remove reads not overlapping intervals.	Optional	1	 
 // remove-duplicates	D	Boolean	If true remove all reads that are marked as duplicates.	Optional	1	true

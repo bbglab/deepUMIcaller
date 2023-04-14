@@ -75,24 +75,29 @@ include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } fro
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
 include { FGBIO_FILTERBAM                   as FGSELECTREADS               } from '../modules/local/fgbio/filterbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAM                     } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMLOWCONF              } from '../modules/local/clipbam/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-
 // include { PLOTDUPLEXMETRICS                 as PLOTDUPLEXMETRICS           } from '../modules/local/duplexfamilymetrics/main'
 // include { FAMILYMETRICS                     as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
 
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX  } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOWCONF } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMLOW                  } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMMED                  } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                 } from '../modules/local/clipbam/main'
 
-include { CALLING_VARDICT                   as CALLINGVARDICT              } from '../modules/local/calling_vardict/main'
-include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX        } from '../modules/local/calling_vardict/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW     } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED     } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH    } from '../modules/local/fgbio/filterconsensusreads/main'
+
+include { CALLING_VARDICT                   as CALLINGVARDICTLOW           } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTMED           } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTHIGH          } from '../modules/local/calling_vardict/main'
 
 // include { BBGPOSTANALYSIS                     as BBGPOSTANALYSIS               } from '../modules/local/BBGPOSTANALYSIS/main'
 
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTDUPLEX           } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW              } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED              } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH             } from '../modules/local/sigprofiler/matrixgenerator/main'
+
 
 
 /*
@@ -107,7 +112,7 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                 } fro
 include { FASTP                             as FASTP                       } from '../modules/nf-core/fastp/main'
 
 include { FASTQC                            as FASTQC                      } from '../modules/nf-core/fastqc/main'
-// include { FASTQC                            as POSTTRIMQC                  } from '../modules/nf-core/fastqc/main'
+include { FASTQC                            as PRETRIMQC                   } from '../modules/nf-core/fastqc/main'
 
 include { BAMUTIL_TRIMBAM                   as TRIMBAM                     } from '../modules/nf-core/bamutil/trimbam/main'
 
@@ -116,8 +121,10 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
-include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
+// include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
 
 // Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
@@ -127,8 +134,9 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } fro
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMFIXED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSFILT       } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSLOW        } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSMED        } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSHIGH       } from '../modules/nf-core/samtools/sort/main'
 
 include { SAMTOOLS_VIEW                     as FILTERBAM                   } from '../modules/nf-core/samtools/view/main'
 
@@ -148,8 +156,10 @@ include { PREPARE_CACHE                                                   } from
 
 
 // Annotation
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATEALL             } from '../subworkflows/local/vcf_annotate_all/main'
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATEALLDUPLEX       } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATELOW          } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATEMED          } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATEHIGH         } from '../subworkflows/local/vcf_annotate_all/main'
+
 
 
 
@@ -196,6 +206,9 @@ workflow DEEPUMICALLER {
 
     // READ PREPROCESSING
     if (params.trim_adapters){
+        PRETRIMQC(
+            INPUT_CHECK.out.reads
+        )
         // MODULE: Run FASTP
         FASTP(INPUT_CHECK.out.reads,
                         [], // we are not using any adapter fastas at the moment
@@ -284,9 +297,7 @@ workflow DEEPUMICALLER {
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
-
         // MODULE: Run fgbio CallDuplexConsensusReads
-        // CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam, call_min_reads, params.call_min_baseq)
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
         ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
 
@@ -302,80 +313,80 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
+
         //
-        // ONLY DUPLEX READS
+        // HIGH CONFIDENCE CALLS
         //
+
         // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
-        ch_versions = ch_versions.mix(FILTERCONSENSUSREADSDUPLEX.out.versions.first())
+        FILTERCONSENSUSREADSHIGH(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+        ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-        CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
-        ch_versions = ch_versions.mix(CLIPBAM.out.versions.first())
+        CLIPBAMHIGH(FILTERCONSENSUSREADSHIGH.out.bam, ch_ref_fasta)
+        ch_versions = ch_versions.mix(CLIPBAMHIGH.out.versions.first())
 
         // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONSFILT(CLIPBAM.out.bam)
+        SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
 
-        // Compute depth of the "raw" reads aligned to the genome
-        COMPUTEDEPTH(SORTBAMDUPLEXCONSFILT.out.bam)
+        // Compute depth of the consensus reads aligned to the genome
+        COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
 
         // Quality check
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, params.targetsfile)
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQCDUPLEX.out.versions.first())
         // ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
-    
+
 
         // Mutation calling for duplex reads
-        CALLINGVARDICTDUPLEX(SORTBAMDUPLEXCONSFILT.out.bam, SORTBAMDUPLEXCONSFILT.out.csi,
+        CALLINGVARDICTHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, SORTBAMDUPLEXCONSHIGH.out.csi,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
-        ch_versions = ch_versions.mix(CALLINGVARDICTDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
 
 
-        VCFANNOTATEALLDUPLEX(CALLINGVARDICTDUPLEX.out.vcf,
+        VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
                             ch_ref_fasta,
                             "GRCh38",
                             "homo_sapiens", 
                             "108",
                             vep_cache,
                             vep_extra_files)
-        ch_versions = ch_versions.mix(VCFANNOTATEALLDUPLEX.out.versions.first())
+        ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
 
-        CALLINGVARDICTDUPLEX.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
+        CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
 
-        SIGPROFPLOTDUPLEX(mutation_files_duplex.collect())
+        SIGPROFPLOTHIGH(mutation_files_duplex.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
+
 
         // TODO
         // add a module that plots the signature, with the correct normalization
         // use bgsignature, and the input targets file
 
-
         //
-        // ALL READS
+        // MEDIUM CONFIDENCE CALLS
         //
-        if (params.duplex_low_conf){
+        if (params.duplex_med_conf){
 
-            // TODO
-            // choose filtering step parameters
-            FILTERCONSENSUSREADSLOWCONF(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            FILTERCONSENSUSREADSMED(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMLOWCONF(FILTERCONSENSUSREADSLOWCONF.out.bam, ch_ref_fasta)
-            ch_versions = ch_versions.mix(CLIPBAMLOWCONF.out.versions.first())
+            CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(CLIPBAMMED.out.versions.first())
 
             // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONS(CLIPBAMLOWCONF.out.bam)
+            SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
 
-            // TODO
-            // decide whether we want to add a step to compute metics on the BAM file, either qualimap or depth
+            // Compute depth of the consensus reads aligned to the genome
+            COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
 
             // Mutation calling for all reads
-            CALLINGVARDICT(SORTBAMDUPLEXCONS.out.bam, SORTBAMDUPLEXCONS.out.csi,
+            CALLINGVARDICTMED(SORTBAMDUPLEXCONSMED.out.bam, SORTBAMDUPLEXCONSMED.out.csi,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
 
-            VCFANNOTATEALL(CALLINGVARDICT.out.vcf,
+            VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
                             ch_ref_fasta,
                             "GRCh38",
                             "homo_sapiens", 
@@ -383,13 +394,48 @@ workflow DEEPUMICALLER {
                             vep_cache,
                             vep_extra_files)
 
-            CALLINGVARDICT.out.vcf.map{it -> it[1]}.set { mutation_files }
-            SIGPROFPLOT(mutation_files.collect())
+            CALLINGVARDICTMED.out.vcf.map{it -> it[1]}.set { mutation_files_med }
+            SIGPROFPLOTMED(mutation_files_med.collect())
         }
 
-        // TODO
-        // FGBIO FILTER SOMATIC VARIANTS
-        // http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterSomaticVcf.html
+
+
+        //
+        // Low Confidence mutations
+        //
+        if (params.duplex_low_conf){
+
+            // TODO
+            // choose filtering step parameters
+            FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+
+            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+            CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(CLIPBAMLOW.out.versions.first())
+
+            // MODULE: Sort BAM file
+            SORTBAMDUPLEXCONSLOW(CLIPBAMLOW.out.bam)
+
+            // Compute depth of the consensus reads aligned to the genome
+            COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
+
+            // Mutation calling for all reads
+            CALLINGVARDICTLOW(SORTBAMDUPLEXCONSLOW.out.bam, SORTBAMDUPLEXCONSLOW.out.csi,
+                                params.targetsfile,
+                                ch_ref_fasta, ch_ref_index_dir)
+
+            VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
+                            ch_ref_fasta,
+                            "GRCh38",
+                            "homo_sapiens", 
+                            "108",
+                            vep_cache,
+                            vep_extra_files)
+
+            CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files }
+            SIGPROFPLOTLOW(mutation_files.collect())
+        }
+
 
 
     } else if (params.umi_only) {

@@ -25,13 +25,14 @@ process CALLING_VARDICT {
 
     script:
     def args = task.ext.args ?: ''
+    def filter_args = task.ext.filter_args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    AF_THR=0.0
     vardict-java -G ${fasta_dir}/${fasta} \\
-        -f \$AF_THR \\
         -N ${prefix} -b ${bam} \\
         -c 1 -S 2 -E 3 -g 4 \\
+        $args \\
+        -f 0.0 \\
         -r 1 -m 9999 -P 0 \\
         -p -z 0 -o 0.5 \\
         -th ${task.cpus} \\
@@ -40,7 +41,8 @@ process CALLING_VARDICT {
     cat ${prefix}.raw.tsv \\
         | teststrandbias.R \\
         | var2vcf_valid.pl \\
-        -N ${prefix} -A -E -f \$AF_THR -p 0 -m 20 -v 2 | gzip > ${prefix}.genome.vcf.gz
+        -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 $filter_args \\
+        | gzip > ${prefix}.genome.vcf.gz
     
     zcat ${prefix}.genome.vcf.gz | awk '\$5!="."' > ${prefix}.vcf
 

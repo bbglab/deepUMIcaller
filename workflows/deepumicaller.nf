@@ -67,14 +67,15 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 include { INPUT_CHECK                                                      } from '../subworkflows/local/input_check'
 
+include { BAM_FILTER_READS                                                 } from '../subworkflows/local/bam_filter_reads/main'
+
+
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
 
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
-
-include { FGBIO_FILTERBAM                   as FGSELECTREADS               } from '../modules/local/fgbio/filterbam/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 // include { PLOTDUPLEXMETRICS                 as PLOTDUPLEXMETRICS           } from '../modules/local/duplexfamilymetrics/main'
@@ -111,8 +112,8 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH             } fro
 //
 include { FASTP                             as FASTP                       } from '../modules/nf-core/fastp/main'
 
+include { FASTQC                            as PRETRIMFASTQC               } from '../modules/nf-core/fastqc/main'
 include { FASTQC                            as FASTQC                      } from '../modules/nf-core/fastqc/main'
-include { FASTQC                            as PRETRIMQC                   } from '../modules/nf-core/fastqc/main'
 
 include { BAMUTIL_TRIMBAM                   as TRIMBAM                     } from '../modules/nf-core/bamutil/trimbam/main'
 
@@ -132,13 +133,10 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } fro
 
 // Sorting
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMFIXED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSLOW        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSMED        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSHIGH       } from '../modules/nf-core/samtools/sort/main'
-
-include { SAMTOOLS_VIEW                     as FILTERBAM                   } from '../modules/nf-core/samtools/view/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
@@ -206,7 +204,7 @@ workflow DEEPUMICALLER {
 
     // READ PREPROCESSING
     if (params.trim_adapters){
-        PRETRIMQC(
+        PRETRIMFASTQC(
             INPUT_CHECK.out.reads
         )
         // MODULE: Run FASTP
@@ -248,6 +246,9 @@ workflow DEEPUMICALLER {
 
 
     // MODULE: Align with bwa mem
+    // TODO
+    // test with real samples whether we could change the "false" here into "true"
+    // this would reduce the size of the files stored in the work directory.
     ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
     ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
@@ -266,15 +267,13 @@ workflow DEEPUMICALLER {
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
 
-        // TODO
-        // collect metrics for on target vs off target reads
-
         // truncate BAM to keep only the reads that are on target
-        FGSELECTREADS(SORTBAM.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
-        FILTERBAM(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it[1]},  [], FGSELECTREADS.out.read_names.map{it -> it[1]} )
-        SORTBAMFIXED(FILTERBAM.out.bam)
+        BAM_FILTER_READS(SORTBAM.out.bam,
+                            SORTBAM.out.csi.map{it -> it[1]},
+                            BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
+        ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
 
-        bam_to_group = SORTBAMFIXED.out.bam
+        bam_to_group = BAM_FILTER_READS.out.bam
 
     } else {
         QUALIMAPQC(SORTBAM.out.bam, [])

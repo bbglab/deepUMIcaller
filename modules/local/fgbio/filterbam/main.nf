@@ -21,9 +21,7 @@ process FGBIO_FILTERBAM {
     task.ext.when == null || task.ext.when
 
     script:
-    def samtools_fastq_args = task.ext.samtools_fastq_args ?: ''
-    def samtools_sort_args = task.ext.samtools_sort_args ?: ''
-    def bwa_args = task.ext.bwa_args ?: ''
+    def samtools_args = task.ext.samtools_args ?: ''
     def fgbio_args = task.ext.fgbio_args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def fgbio_mem_gb = 4
@@ -47,7 +45,8 @@ process FGBIO_FILTERBAM {
         --intervals ${regions} \\
         --output /dev/stdout \\
         --remove-duplicates false \\
-        | samtools view -F 0x4 - | cut -f1 > read_ids.txt
+        ${fgbio_args} \\
+        | samtools view -F 0x4 -F 0x8 ${samtools_args} - | cut -f1 > read_ids.txt
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -58,7 +57,9 @@ process FGBIO_FILTERBAM {
 }
 // TODO
 //  add final step to the process in order to remove the duplicated read names
-
+// rev file.txt | sort -u | rev > file_unique.txt
+// the rev trick here allows a faster sorting and duplicate removal by starting to compare the reads from the end
+//  this is more efficient since the beginning of the read name is shared across many more reads than the end
 
 // intervals	l	PathToIntervals	Optionally remove reads not overlapping intervals.	Optional	1	 
 // remove-duplicates	D	Boolean	If true remove all reads that are marked as duplicates.	Optional	1	true

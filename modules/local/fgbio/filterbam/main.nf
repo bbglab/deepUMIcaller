@@ -10,7 +10,7 @@ process FGBIO_FILTERBAM {
         'quay.io/biocontainers/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' }"
 
     input:
-    tuple val(meta), path(bam)
+    tuple val(meta), path(bam), path (index)
     path regions
 
     output:
@@ -46,7 +46,7 @@ process FGBIO_FILTERBAM {
         --output /dev/stdout \\
         --remove-duplicates false \\
         ${fgbio_args} \\
-        | samtools view -F 0x4 -F 0x8 ${samtools_args} - | cut -f1 > read_ids.txt
+        | samtools view -F 0x4 -F 0x8 ${samtools_args} - | cut -f1 > ${prefix}.read_ids.txt
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

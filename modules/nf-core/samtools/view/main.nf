@@ -9,10 +9,9 @@ process SAMTOOLS_VIEW {
         'quay.io/biocontainers/samtools:1.16.1--h6899075_1' }"
 
     input:
-    tuple val(meta), path(input)
-    path index
+    tuple val(meta), path(input), path (index), path (qname)
     path fasta
-    path qname
+
 
     output:
     tuple val(meta), path("*.bam") , emit: bam ,    optional: true

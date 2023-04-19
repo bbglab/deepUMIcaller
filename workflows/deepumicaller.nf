@@ -248,7 +248,9 @@ workflow DEEPUMICALLER {
     // MODULE: Align with bwa mem
     // TODO
     // test with real samples whether we could change the "false" here into "true"
-    // this would reduce the size of the files stored in the work directory.
+    // this would activate sorting the files
+    // and would reduce the size of the files stored in the work directory.
+    // it works with the test samples
     ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
     ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
@@ -267,10 +269,15 @@ workflow DEEPUMICALLER {
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
 
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAM.out.bam
+        .join( SORTBAM.out.csi )
+        .set { bam_n_index }
+
         // truncate BAM to keep only the reads that are on target
-        BAM_FILTER_READS(SORTBAM.out.bam,
-                            SORTBAM.out.csi.map{it -> it[1]},
-                            BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
+        BAM_FILTER_READS(bam_n_index,
+                        BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
         ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
 
         bam_to_group = BAM_FILTER_READS.out.bam
@@ -327,6 +334,13 @@ workflow DEEPUMICALLER {
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
+        
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMDUPLEXCONSHIGH.out.bam
+        .join( SORTBAMDUPLEXCONSHIGH.out.csi )
+        .set { cons_high_bam }
+
 
         // Compute depth of the consensus reads aligned to the genome
         COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
@@ -338,7 +352,7 @@ workflow DEEPUMICALLER {
 
 
         // Mutation calling for duplex reads
-        CALLINGVARDICTHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, SORTBAMDUPLEXCONSHIGH.out.csi,
+        CALLINGVARDICTHIGH(cons_high_bam,
                             params.targetsfile,
                             ch_ref_fasta, ch_ref_index_dir)
         ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
@@ -353,9 +367,9 @@ workflow DEEPUMICALLER {
                             vep_extra_files)
         ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
 
-        CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_duplex }
+        CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_high }
 
-        SIGPROFPLOTHIGH(mutation_files_duplex.collect())
+        SIGPROFPLOTHIGH(mutation_files_high.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
 
@@ -377,13 +391,19 @@ workflow DEEPUMICALLER {
             // MODULE: Sort BAM file
             SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
 
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMDUPLEXCONSMED.out.bam
+            .join( SORTBAMDUPLEXCONSMED.out.csi )
+            .set { cons_med_bam }
+
             // Compute depth of the consensus reads aligned to the genome
             COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
 
             // Mutation calling for all reads
-            CALLINGVARDICTMED(SORTBAMDUPLEXCONSMED.out.bam, SORTBAMDUPLEXCONSMED.out.csi,
-                            params.targetsfile,
-                            ch_ref_fasta, ch_ref_index_dir)
+            CALLINGVARDICTMED(cons_med_bam,
+                                params.targetsfile,
+                                ch_ref_fasta, ch_ref_index_dir)
 
             VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
                             ch_ref_fasta,
@@ -404,8 +424,7 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_low_conf){
 
-            // TODO
-            // choose filtering step parameters
+            // filter the reads with the low conf parameters
             FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
@@ -415,11 +434,17 @@ workflow DEEPUMICALLER {
             // MODULE: Sort BAM file
             SORTBAMDUPLEXCONSLOW(CLIPBAMLOW.out.bam)
 
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMDUPLEXCONSLOW.out.bam
+            .join( SORTBAMDUPLEXCONSLOW.out.csi )
+            .set { cons_low_bam }
+
             // Compute depth of the consensus reads aligned to the genome
             COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
 
             // Mutation calling for all reads
-            CALLINGVARDICTLOW(SORTBAMDUPLEXCONSLOW.out.bam, SORTBAMDUPLEXCONSLOW.out.csi,
+            CALLINGVARDICTLOW(cons_low_bam,
                                 params.targetsfile,
                                 ch_ref_fasta, ch_ref_index_dir)
 
@@ -431,8 +456,8 @@ workflow DEEPUMICALLER {
                             vep_cache,
                             vep_extra_files)
 
-            CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files }
-            SIGPROFPLOTLOW(mutation_files.collect())
+            CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files_low }
+            SIGPROFPLOTLOW(mutation_files_low.collect())
         }
 
 
@@ -457,9 +482,12 @@ workflow DEEPUMICALLER {
         
         // MODULE: Sort BAM file
         SORTBAMCONS(CLIPBAM.out.bam)
+        SORTBAMCONS.out.bam
+        .join(SORTBAMCONS.out.csi)
+        .set {umi_bam}
 
         // Mutation calling for non-duplex reads
-        CALLINGVARDICT(SORTBAMCONS.out.bam, SORTBAMCONS.out.csi,
+        CALLINGVARDICT(umi_bam,
                         params.targetsfile,
                         ch_ref_fasta, ch_ref_index_dir)
     }

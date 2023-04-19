@@ -13,8 +13,7 @@ workflow BAM_FILTER_READS {
 
     take:
 
-    bam                      // channel: [mandatory] [ val(meta), path (bam) ]
-    bamindex                 // channel: [mandatory] path (bamindex)
+    bam_n_index              // channel: [mandatory] [ val(meta), path (bam), path (bamindex) ]
     intervals_file           // channel: [mandatory] path (intervals_file)
 
 
@@ -22,10 +21,17 @@ workflow BAM_FILTER_READS {
 
     ch_versions = Channel.empty()
 
-    FGSELECTREADS(bam, intervals_file)
+    FGSELECTREADS(bam_n_index, intervals_file)
     ch_versions = ch_versions.mix(FGSELECTREADS.out.versions.first())
 
-    FILTERBAM(bam, bamindex,  [], FGSELECTREADS.out.read_names.map{it -> it[1]} )
+    // join the created channel with the filtered reads to have
+    // the ones from the same samples together
+    // SUPER IMPORTANT STEP
+    bam_n_index
+    .join( FGSELECTREADS.out.read_names )
+    .set { ch_bam_bai_reads }
+
+    FILTERBAM(ch_bam_bai_reads,  [])
     ch_versions = ch_versions.mix(FILTERBAM.out.versions.first())
 
     SORTBAMFIXED(FILTERBAM.out.bam)

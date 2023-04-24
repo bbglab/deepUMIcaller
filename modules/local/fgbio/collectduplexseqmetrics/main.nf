@@ -1,6 +1,6 @@
 process FGBIO_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_low_multicpu'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.1.0" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

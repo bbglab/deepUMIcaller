@@ -1,6 +1,6 @@
 process ALIGN_BAM {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_high_cpus'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 

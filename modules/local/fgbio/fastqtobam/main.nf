@@ -1,6 +1,7 @@
 process FGBIO_FASTQTOBAM {
     tag "$meta.id"
     label 'process_low'
+    label 'process_low_memory'
 
     conda (params.enable_conda ? "bioconda::fgbio=2.0.2" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

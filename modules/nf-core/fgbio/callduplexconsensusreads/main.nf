@@ -1,6 +1,6 @@
 process FGBIO_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_low_multicpu'
 
     conda "bioconda::fgbio=2.0.2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

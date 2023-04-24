@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2,read_structure
+CH_pat1,/home/bbg/fcalvet/projects/deepUMIcaller/assets/B5_1_downsampled.fastq.gz,/home/bbg/fcalvet/projects/deepUMIcaller/assets/B5_2_downsampled.fastq.gz,8M1S+T 8M1S+T
+CH_pat2,/home/bbg/fcalvet/projects/deepUMIcaller/assets/G5_1_downsampled.fastq.gz,/home/bbg/fcalvet/projects/deepUMIcaller/assets/G5_2_downsampled.fastq.gz,8M1S+T 8M1S+T
+CH_pat2B,/home/bbg/fcalvet/projects/deepUMIcaller/assets/G5B_1_downsampled.fastq.gz,/home/bbg/fcalvet/projects/deepUMIcaller/assets/G5B_2_downsampled.fastq.gz,8M1S+T 8M1S+T

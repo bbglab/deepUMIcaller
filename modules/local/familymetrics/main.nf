@@ -1,21 +1,27 @@
+// TODO
+// change the execution of this container in such a way that the script.py file is in the bin folder of the directory and then this can run from here
+//  see sample check subworkflow
+
 process FAMILYSIZEMETRICS {
     tag "$meta.id"
     label 'process_medium'
-
-    // create a container with the required python packages, see below
-    // conda (params.enable_conda ? "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" : null)
+    
+    // TODO
+    // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
+    conda "anaconda::seaborn=0.12.2"
+    container "biocontainers/seaborn:0.12.2_cv1"
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-    //         'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
-    //         'quay.io/biocontainers/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' }"
+    //         'https://depot.galaxyproject.org/singularity/seaborn' : 
+    //         'quay.io/biocontainers/seaborn' }"
 
 
     input:
-    tuple val(meta), path(groupby_metrics)
-    tuple val(meta2), path(duplex_metrics)
+    tuple val(meta), path(groupby_metrics), path(duplex_metrics)
 
     output:
     tuple val(meta), path("*.pdf"), emit: pdf
-    path  "versions.yml"          , emit: versions
+
+    // path  "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,6 +30,8 @@ process FAMILYSIZEMETRICS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    #!/usr/bin/env python
+
     import pandas as pd
     import seaborn as sns
     import numpy as np
@@ -33,14 +41,14 @@ process FAMILYSIZEMETRICS {
     def compute_duplicates(sample,
                             file,
                             count_var = "count"):
-        
+
         groupby_umi_families = pd.read_table(file, sep = "\\t", header = 0)
         groupby_umi_families['reads'] = groupby_umi_families[count_var] * groupby_umi_families['family_size']
 
         unique_molecules = groupby_umi_families[count_var].sum()
         total_molecules = groupby_umi_families['reads'].sum()
         duplicated_molecules = total_molecules - unique_molecules
-                
+
         return duplicated_molecules / total_molecules    
 
 
@@ -91,22 +99,18 @@ process FAMILYSIZEMETRICS {
         ax1.set_xlabel("Family size")
         ax1.set_ylabel("Fraction of reads")
         ax1.legend(title = "in duplex\\nfamilies")
-        
+
         ax2.text(0.1, 0.8, f"Duplicates:             {percent_duplicates:.1f}%\\nNon-duplex SSCs:   {total_non_duplex/(total_non_duplex + total_duplex)*100:.1f}%")
         ax2.text(0.1, 0.5, f"Raw reads:   {total_reads:,}\\nSSCS:            {total_scss:,}\\nNon-duplex:  {total_non_duplex:,}\\nDuplex:         {total_duplex:,}" )
         ax2.text(0.1, 0.2, f"Raw/DCS:       {total_reads/total_duplex:.3f}\\nRaw/SSCS:      {total_reads/total_scss:.3f}\\nSSCS/Duplex:  {total_scss/total_duplex:.3f}")
         ax2.axis('off')
-        
+
         fig.suptitle(sample)    
-            
+
         plt.show()
-        
+
         return fig
-            
-        
-    #fastquorum_concat = "/workspace/nobackup/prominent/PROMINENT_05/results/fastquorum"
-    #duplex_metrics = f"{fastquorum_concat}/collectduplexseqmetrics"
-    #groupby_dir = f"{fastquorum_concat}/groupreadsbyumi"
+
 
     sam = "${prefix}"
     groupby_metrics_file = f"${groupby_metrics}"
@@ -120,25 +124,6 @@ process FAMILYSIZEMETRICS {
                                 x_axis_limits)
 
     figure.savefig(output_file, bbox_inches='tight')
-
-
-
-    samtools sort -n -u $bam \
-        | fgbio \\
-            -Xmx${mem_gb}g \\
-            --tmp-dir=. \\
-            ClipBam \\
-            --input /dev/stdin/ \\
-            --ref ${fasta} \\
-            $args \\
-            --clipping-mode Hard \\
-            --clip-overlapping-reads true \\
-            --clip-bases-past-mate true \\
-            --output ${prefix}.clipped.bam
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
-    END_VERSIONS
     """
 }
 

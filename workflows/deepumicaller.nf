@@ -78,8 +78,7 @@ include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } fro
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-// include { PLOTDUPLEXMETRICS                 as PLOTDUPLEXMETRICS           } from '../modules/local/duplexfamilymetrics/main'
-// include { FAMILYMETRICS                     as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
+include { FAMILYSIZEMETRICS                 as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAMLOW                  } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMMED                  } from '../modules/local/clipbam/main'
@@ -311,10 +310,14 @@ workflow DEEPUMICALLER {
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
-        // TODO
-        // add metrics plots module
-        // COLLECTDUPLEXSEQMETRICS.out.metrics // the problem here is that there are many files, we only need one
-        // COLLECTDUPLEXSEQMETRICS.out.specific_metrics
+        // // TODO
+        // // add metrics plots module
+        GROUPREADSBYUMIDUPLEX.out.histogram
+        .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
+        .set {metrics_ch}
+
+        FAMILYMETRICS(metrics_ch)
+
 
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)

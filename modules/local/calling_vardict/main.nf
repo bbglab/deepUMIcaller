@@ -31,16 +31,13 @@ process CALLING_VARDICT {
         -N ${prefix} -b ${bam} \\
         -c 1 -S 2 -E 3 -g 4 \\
         $args \\
-        -f 0.0 \\
-        -r 1 -m 9999 -P 0 \\
-        -p -z 0 -o 0.5 \\
         -th ${task.cpus} \\
         ${targets_file} > ${prefix}.raw.tsv
 
     cat ${prefix}.raw.tsv \\
         | teststrandbias.R \\
         | var2vcf_valid.pl \\
-        -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 $filter_args \\
+        -N ${prefix} $filter_args \\
         | gzip > ${prefix}.genome.vcf.gz
     
     zcat ${prefix}.genome.vcf.gz | awk '\$5!="."' > ${prefix}.vcf

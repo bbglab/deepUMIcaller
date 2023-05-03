@@ -310,12 +310,12 @@ workflow DEEPUMICALLER {
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
-        // // TODO
-        // // add metrics plots module
+        // Join groupby stats and duplex seq metrics files from the same samples
         GROUPREADSBYUMIDUPLEX.out.histogram
         .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
         .set {metrics_ch}
 
+        // Plot the family size metrics
         FAMILYMETRICS(metrics_ch)
 
 

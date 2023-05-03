@@ -23,8 +23,8 @@ process SIGPROFILER_MATRIXGENERATOR {
     // conda "YOUR-TOOL-HERE"
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
     //     'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
-    //     'quay.io/biocontainers/YOUR-TOOL-HERE' }"
-    container 'ferriolcalvet/sigprofiler:human'
+    //     'biocontainers/YOUR-TOOL-HERE' }"
+    container 'docker.io/ferriolcalvet/sigprofiler:human'
 
     input:
     path (vcf)

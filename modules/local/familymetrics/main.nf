@@ -12,7 +12,7 @@ process FAMILYSIZEMETRICS {
     container "biocontainers/seaborn:0.12.2_cv1"
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
     //         'https://depot.galaxyproject.org/singularity/seaborn' : 
-    //         'quay.io/biocontainers/seaborn' }"
+    //         'biocontainers/seaborn' }"
 
 
     input:

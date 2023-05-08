@@ -275,11 +275,16 @@ workflow DEEPUMICALLER {
         .set { bam_n_index }
 
         // truncate BAM to keep only the reads that are on target
-        BAM_FILTER_READS(bam_n_index,
-                        BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
-        ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
+        if (params.remove_offtargets){
+            BAM_FILTER_READS(bam_n_index,
+                            BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
+            ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
 
-        bam_to_group = BAM_FILTER_READS.out.bam
+            bam_to_group = BAM_FILTER_READS.out.bam
+        } else {
+            bam_to_group = SORTBAM.out.bam
+        }
+
 
     } else {
         QUALIMAPQC(SORTBAM.out.bam, [])

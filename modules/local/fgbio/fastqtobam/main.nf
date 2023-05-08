@@ -3,10 +3,10 @@ process FGBIO_FASTQTOBAM {
     label 'process_low'
     label 'process_low_memory'
 
-    conda (params.enable_conda ? "bioconda::fgbio=2.0.2" : null)
+    conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/fgbio:2.0.2--hdfd78af_0' :
-        'biocontainers/fgbio:2.0.2--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
+        'biocontainers/fgbio:2.1.0--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(fastqs)

@@ -4,7 +4,7 @@ process FGBIO_FILTERBAM {
 
     // TODO
     // update with only fgbio and samtools
-    conda (params.enable_conda ? "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" : null)
+    conda "bioconda::fgbio=2.1.0 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
         'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
         'biocontainers/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' }"
@@ -46,7 +46,7 @@ process FGBIO_FILTERBAM {
         --output /dev/stdout \\
         --remove-duplicates false \\
         ${fgbio_args} \\
-        | samtools view -F 0x4 -F 0x8 ${samtools_args} - | cut -f1 > ${prefix}.read_ids.txt
+        | samtools view ${samtools_args} - | cut -f1 > ${prefix}.read_ids.txt
         
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -56,13 +56,14 @@ process FGBIO_FILTERBAM {
     """
 }
 // TODO
-//  add final step to the process in order to remove the duplicated read names
+// add final step to the process in order to remove the duplicated read names
 // rev file.txt | sort -u | rev > file_unique.txt
 // the rev trick here allows a faster sorting and duplicate removal by starting to compare the reads from the end
 //  this is more efficient since the beginning of the read name is shared across many more reads than the end
 
-// intervals	l	PathToIntervals	Optionally remove reads not overlapping intervals.	Optional	1	 
+// intervals	l	PathToIntervals	Optionally remove reads not overlapping intervals.	Optional	1
 // remove-duplicates	D	Boolean	If true remove all reads that are marked as duplicates.	Optional	1	true
+
 // remove-unmapped-reads	U	Boolean	Remove all unmapped reads.	Optional	1	true
 // min-map-q	M	Int	Remove all mapped reads with MAPQ lower than this number.	Optional	1	1
 // remove-single-end-mappings	P	Boolean	Removes non-PE reads and any read whose mate pair is unmapped.	Optional	1	false

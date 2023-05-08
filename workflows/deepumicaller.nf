@@ -120,7 +120,7 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
@@ -230,7 +230,6 @@ workflow DEEPUMICALLER {
     // to get the UMIs out of the reads and into the tag
     FASTQTOBAM(reads_to_qc)
     ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
-    // This is the unmapped BAM file: FASTQTOBAM.out.bam
 
 
     // Decide whether we clip the beginning and/or end of the reads or nothing
@@ -354,9 +353,9 @@ workflow DEEPUMICALLER {
         COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
 
         // Quality check
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
-        ch_versions = ch_versions.mix(QUALIMAPQCDUPLEX.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+        QUALIMAPQCHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
+        ch_versions = ch_versions.mix(QUALIMAPQCHIGH.out.versions.first())
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCHIGH.out.results.map{it[1]}.collect())
 
 
         // Mutation calling for duplex reads

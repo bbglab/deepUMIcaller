@@ -351,7 +351,7 @@ workflow DEEPUMICALLER {
         // Quality check
         QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQCDUPLEX.out.versions.first())
-        // ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
 
 
         // Mutation calling for duplex reads

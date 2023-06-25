@@ -16,7 +16,7 @@ process CALLING_VARDICT {
     output:
     tuple val(meta), path("*.vcf")                   , emit: vcf
     tuple val(meta), path("*.vcf.gz"), optional: true, emit: genome_vcf
-    tuple val(meta), path("*.tsv")   , optional: true, emit: tsv
+    tuple val(meta), path("*.tsv.gz"), optional: true, emit: tsv
     path  "versions.yml"                             , emit: versions
 
     when:
@@ -32,15 +32,18 @@ process CALLING_VARDICT {
         -c 1 -S 2 -E 3 -g 4 \\
         $args \\
         -th ${task.cpus} \\
-        ${targets_file} > ${prefix}.raw.tsv
+        ${targets_file} > ${prefix}.raw.tsv;
 
     cat ${prefix}.raw.tsv \\
         | teststrandbias.R \\
         | var2vcf_valid.pl \\
         -N ${prefix} $filter_args \\
-        | gzip > ${prefix}.genome.vcf.gz
+        > ${prefix}.genome.vcf;
     
-    zcat ${prefix}.genome.vcf.gz | awk '\$5!="."' > ${prefix}.vcf
+    awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf;
+    
+    gzip ${prefix}.raw.tsv;
+    gzip ${prefix}.genome.vcf;
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

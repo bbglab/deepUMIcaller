@@ -133,7 +133,7 @@
             }
         },
         "consensus_filtering": {
-            "title": "Consensus filtering options for the medium confidence mutations",
+            "title": "Consensus filtering options for the high confidence mutations",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads",

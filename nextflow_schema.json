@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "ref_fasta", "outdir"],
+            "required": ["input", "ref_fasta", "outdir", "targetsfile"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -27,6 +27,12 @@
                     "format": "file-path",
                     "description": "The path to the prepared reference FASTA. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-file-fasta"
+                },
+                "targetsfile": {
+                    "type": "string",
+                    "description": "BED file with the targeted regions.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be included in the analysis."
                 },
                 "outdir": {
                     "type": "string",
@@ -46,17 +52,11 @@
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
                 },
-                "targetsfile": {
-                    "type": "string",
-                    "description": "BED file with the targeted regions.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "BED file that contains the regions to be included in the analysis."
-                },
                 "projectname": {
                     "type": "string",
                     "description": "Project name to use for the SigProfiler outputs.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Project name to use for the SigProfiler outputs."
+                    "help_text": "Project name to use for the SigProfiler outputs. Do NOT use spaces in the name."
                 }
             }
         },
@@ -92,12 +92,6 @@
             "fa_icon": "fas fa-dna",
             "description": "Options for when grouping reads by UMI",
             "properties": {
-                "groupreadsbyumi_strategy": {
-                    "type": "string",
-                    "description": "Grouping strategy",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "Grouping strategy for fgbio's GroupReadsByUmi (options: Identity, Edit, Adjacency, Paired)."
-                },
                 "groupreadsbyumi_edits": {
                     "type": "integer",
                     "description": "Maximum number of edits",
@@ -139,7 +133,7 @@
             }
         },
         "consensus_filtering": {
-            "title": "Consensus filtering options",
+            "title": "Consensus filtering options for the medium confidence mutations",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads",
@@ -161,12 +155,6 @@
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
                     "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_max_read_error_rate": {
-                    "type": "string",
-                    "description": "The maximum error rate for a consensus read",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a consensus read to be kept when filtering using fgbio's FilterConsensusReads."
                 },
                 "maxN_prop_per_read": {
                     "type": "number",
@@ -256,7 +244,8 @@
                     "type": "string",
                     "description": "Name of iGenomes reference.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details.",
+                    "hidden": true
                 },
                 "fasta": {
                     "type": "string",
@@ -265,7 +254,8 @@
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
                     "description": "Path to FASTA genome file.",
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code"
+                    "fa_icon": "far fa-file-code",
+                    "hidden": true
                 },
                 "igenomes_base": {
                     "type": "string",
@@ -319,7 +309,69 @@
                     "description": "Additional parameters for running Ensembl VEP.",
                     "fa_icon": "fas fa-book",
                     "help_text": ""
-                }            
+                },
+                "download_cache": {
+                    "type": "boolean",
+                    "description": "Do you want to download the cache? Activate it only if necessary.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Do you want to download the cache? Activate it only if necessary."
+                },
+                "vep_cache": {
+                    "type": "string",
+                    "description": "Location of Ensembl VEP cache.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Define a place to store the Ensembl VEP cache."
+                }
+            }
+        },
+        "read_processing_options": {
+            "title": "FASTP options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Define parameters for the processing of the reads.",
+            "properties": {
+                "right_clip": {
+                    "type": "integer",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                },
+                "left_clip": {
+                    "type": "integer",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                },
+                "trim_nextseq": {
+                    "type": "boolean",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                },
+                "three_prime_clip_r2": {
+                    "type": "integer",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                },
+                "three_prime_clip_r1": {
+                    "type": "integer",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                },
+                "trim_adapters": {
+                    "type": "boolean",
+                    "description": "",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "",
+                    "hidden": true
+                }
             }
         },
         "institutional_config_options": {

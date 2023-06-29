@@ -1,27 +1,28 @@
 # ![nf-core/fastquorum](docs/images/nf-core-fastquorum_logo_light.png#gh-light-mode-only) ![nf-core/fastquorum](docs/images/nf-core-fastquorum_logo_dark.png#gh-dark-mode-only)
 
+<!-- 
 [![GitHub Actions CI Status](https://github.com/nf-core/fastquorum/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/fastquorum/actions?query=workflow%3A%22nf-core+CI%22)
 [![GitHub Actions Linting Status](https://github.com/nf-core/fastquorum/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/fastquorum/actions?query=workflow%3A%22nf-core+linting%22)
 [![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?logo=Amazon%20AWS)](https://nf-co.re/fastquorum/results)
 [![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8)](https://doi.org/10.5281/zenodo.XXXXXXX)
+-->
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg)](https://sylabs.io/docs/)
-[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/nf-core/fastquorum)
+[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/bbglab/deepUMIcaller)
 
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23fastquorum-4A154B?logo=slack)](https://nfcore.slack.com/channels/fastquorum)
-[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?logo=twitter)](https://twitter.com/nf_core)
-[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?logo=youtube)](https://www.youtube.com/c/nf-core)
+[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?logo=twitter)](https://twitter.com/bbglab)
+
 
 ## Introduction
 
 <!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 
-**nf-core/fastquorum** is a bioinformatics best-practice analysis pipeline to produce consensus reads using unique molecular indexes/barcodes (UMIs).
-The pipeline implements the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link].
-fastquorum can produce consensus reads from single or multi UMI reads, and even [Duplex Sequencing][duplex-seq-link] reads.
+**bbglab/deepUMIcaller** is a bioinformatics best-practice analysis pipeline to produce duplex consensus reads and call mutations.
+The pipeline implements the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link], and was developed starting from the nf-core/fastquorum pipeline.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
 
@@ -34,8 +35,8 @@ On release, automated continuous integration tests run the pipeline on a full-si
 ### Usage
 ```
 nextflow run main.nf -profile singularity --input assets/duplex_test_B5.csv
-            --ref_fasta /workspace/datasafe/prominent/refs/gatk/Homo_sapiens_assembly38.fasta
-            --targetsfile /workspace/projects/prominent/PILOT/refs/beds/xgen-exome-hyb-panel-v2-targets-hg38.bed
+            --ref_fasta refs/gatk/Homo_sapiens_assembly38.fasta
+            --targetsfile refs/beds/xgen-exome-hyb-panel-v2-targets-hg38.bed
             --outdir results/sample_run
 ```
 

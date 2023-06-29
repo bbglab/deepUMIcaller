@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/fastquorum/master/nextflow_schema.json",
-    "title": "nf-core/fastquorum pipeline parameters",
-    "description": "fgbio Best Practices FASTQ to Consensus Pipeline",
+    "title": "bbglab/deepUMIcaller pipeline parameters",
+    "description": "Duplex sequencing, consensus building and variant calling pipeline.",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -51,6 +51,12 @@
                     "description": "BED file with the targeted regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be included in the analysis."
+                },
+                "projectname": {
+                    "type": "string",
+                    "description": "Project name to use for the SigProfiler outputs.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Project name to use for the SigProfiler outputs."
                 }
             }
         },
@@ -71,6 +77,12 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Enable when the input is not duplex sequencing.",
                     "help_text": "With this parameter, the workflow adapts to simple UMIs data."
+                },
+                "remove_offtargets": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Choose to remove offtargets",
+                    "help_text": "This will slightly speed up the analysis by focusing on the regions of interest according to the provided BED file"
                 }
             }
         },
@@ -84,13 +96,19 @@
                     "type": "string",
                     "description": "Grouping strategy",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Grouping strategy for fgbio's GroupReadsByUmi."
+                    "help_text": "Grouping strategy for fgbio's GroupReadsByUmi (options: Identity, Edit, Adjacency, Paired)."
                 },
                 "groupreadsbyumi_edits": {
                     "type": "integer",
                     "description": "Maximum number of edits",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Maximum number of allowable edits for fgbio's GroupReadsByUmi (options: Identity, Edit, Adjacency, Paired)."
+                    "help_text": "Maximum number of allowable edits for fgbio's GroupReadsByUmi."
+                },
+                "groupreadsbyumi_min_map_q": {
+                    "type": "integer",
+                    "description": "Minimum mapping quality of reads to be grouped.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Minimum mapping quality of reads to be grouped."
                 }
             }
         },
@@ -126,19 +144,19 @@
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads",
             "properties": {
-                "filter_min_reads": {
+                "filter_min_reads_high": {
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_min_baseq": {
+                "filter_min_baseq_high": {
                     "type": "integer",
                     "description": "Minimum consensus base quality",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_max_base_error_rate": {
+                "filter_max_base_error_rate_high": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
@@ -162,7 +180,70 @@
                     "fa_icon": "fas fa-book",
                     "help_text": "Require agreement of both strands to define each base of the duplex consensus."
                 }
-                
+            }
+        },
+        "consensus_filtering_medium": {
+            "title": "Consensus filtering options for the medium confidence mutations",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering consensus reads for the medium confidence category.",
+            "properties": {
+                "duplex_med_conf": {
+                    "type": "string",
+                    "description": "Activate medium confidence level",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The medium confidence level output will be generated."
+                },
+                "filter_min_reads_med": {
+                    "type": "string",
+                    "description": "Minimum reads to keep a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_min_baseq_med": {
+                    "type": "integer",
+                    "description": "Minimum consensus base quality",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_base_error_rate_med": {
+                    "type": "string",
+                    "description": "The maximum error rate for a single consensus base",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                }
+            }
+        },
+        "consensus_filtering_low": {
+            "title": "Consensus filtering options for the low confidence mutations",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering consensus reads for the low confidence category.",
+            "properties": {
+                "duplex_low_conf": {
+                    "type": "string",
+                    "description": "Activate low confidence level",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The low confidence level output will be generated."
+                },
+                "filter_min_reads_low": {
+                    "type": "string",
+                    "description": "Minimum reads to keep a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_min_baseq_low": {
+                    "type": "integer",
+                    "description": "Minimum consensus base quality",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_base_error_rate_low": {
+                    "type": "string",
+                    "description": "The maximum error rate for a single consensus base",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                }
             }
         },
         "reference_genome_options": {
@@ -200,8 +281,16 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "vep_assembly": {
+                }
+            }
+        },
+        "ensembl_vep_options": {
+            "title": "Ensembl VEP options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "VEP related files required for the annotation.",
+            "properties": {
+                "vep_genome": {
                     "type": "string",
                     "description": "Genome assembly for Ensembl VEP.",
                     "fa_icon": "fas fa-book",
@@ -212,7 +301,25 @@
                     "description": "Species to use for Ensembl VEP.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Use `homo_sapiens` when working with human data."
-                }
+                },
+                "vep_cache_version": {
+                    "type": "string",
+                    "description": "Ensembl VEP cache version.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Make sure to also update the container to use. Otherwise leave 108."
+                },
+                "vep_out_format": {
+                    "type": "string",
+                    "description": "Ensembl VEP output format.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "tab or vcf"
+                },
+                "vep_params": {
+                    "type": "string",
+                    "description": "Additional parameters for running Ensembl VEP.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": ""
+                }            
             }
         },
         "institutional_config_options": {

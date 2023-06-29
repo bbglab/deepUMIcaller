@@ -1,4 +1,4 @@
-# nf-core/fastquorum: Output
+# bbglab/deepUMIcaller: Output
 
 ## Introduction
 

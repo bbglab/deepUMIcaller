@@ -151,6 +151,10 @@ include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } fro
 // Download annotation cache if needed
 include { PREPARE_CACHE                                                   } from '../subworkflows/local/prepare_cache/main'
 
+// Postprocessing of the BAM and the VCF
+include { RECOUNT_MUTS                      as RECOUNTMUTSLOW          } from '../subworkflows/local/recount_muts/main'
+include { RECOUNT_MUTS                      as RECOUNTMUTSMED          } from '../subworkflows/local/recount_muts/main'
+include { RECOUNT_MUTS                      as RECOUNTMUTSHIGH         } from '../subworkflows/local/recount_muts/main'
 
 // Annotation
 include { VCF_ANNOTATE_ALL                  as VCFANNOTATELOW          } from '../subworkflows/local/vcf_annotate_all/main'
@@ -364,6 +368,14 @@ workflow DEEPUMICALLER {
                             ch_ref_fasta, ch_ref_index_dir)
         ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
 
+        // Postprocessing the BAM file to get exact coverage per position and allele
+        //    also get the Ns per position
+        RECOUNTMUTSHIGH(cons_high_bam,
+                        CALLINGVARDICTHIGH.out.vcf,
+                        params.targetsfile,
+                        ch_ref_fasta)
+        ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
+
 
         VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
                             ch_ref_fasta,
@@ -412,6 +424,14 @@ workflow DEEPUMICALLER {
                                 params.targetsfile,
                                 ch_ref_fasta, ch_ref_index_dir)
 
+            // Postprocessing the BAM file to get exact coverage per position and allele
+            //    also get the Ns per position
+            RECOUNTMUTSMED(cons_med_bam,
+                            CALLINGVARDICTMED.out.vcf,
+                            params.targetsfile,
+                            ch_ref_fasta)
+            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+
             VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
                             ch_ref_fasta,
                             "GRCh38",
@@ -454,6 +474,14 @@ workflow DEEPUMICALLER {
             CALLINGVARDICTLOW(cons_low_bam,
                                 params.targetsfile,
                                 ch_ref_fasta, ch_ref_index_dir)
+
+            // Postprocessing the BAM file to get exact coverage per position and allele
+            //    also get the Ns per position
+            RECOUNTMUTSLOW(cons_low_bam,
+                            CALLINGVARDICTLOW.out.vcf,
+                            params.targetsfile,
+                            ch_ref_fasta)
+            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
             VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                             ch_ref_fasta,

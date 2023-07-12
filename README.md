@@ -1,4 +1,4 @@
-# ![nf-core/fastquorum](docs/images/nf-core-fastquorum_logo_light.png#gh-light-mode-only) ![nf-core/fastquorum](docs/images/nf-core-fastquorum_logo_dark.png#gh-dark-mode-only)
+# ![bbglab/deepUMIcaller](docs/images/bbglabLOGO_small.png)
 
 <!-- 
 [![GitHub Actions CI Status](https://github.com/nf-core/fastquorum/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/fastquorum/actions?query=workflow%3A%22nf-core+CI%22)
@@ -14,7 +14,8 @@
 [![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/bbglab/deepUMIcaller)
 
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23fastquorum-4A154B?logo=slack)](https://nfcore.slack.com/channels/fastquorum)
-[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?logo=twitter)](https://twitter.com/bbglab)
+[![Follow on Twitter](http://img.shields.io/badge/twitter-%40bbglab-1DA1F2?logo=twitter)](https://twitter.com/bbglab)
+[![Watch on YouTube](http://img.shields.io/badge/youtube-bbglab-FF0000?logo=youtube)](https://www.youtube.com/@bcnbglab)
 
 
 ## Introduction
@@ -93,17 +94,24 @@ See also:
 
 ## Credits
 
-nf-core/fastquorum was originally written by Nils Homer.
+[nf-core/fastquorum](https://github.com/nf-core/fastquorum) was originally written by [Nils Homer](https://github.com/nh13).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-- [Nils Homer](https://github.com/nh13)
+- [Ferriol Calvet](https://github.com/FerriolCalvet)
+- [Miquel L. Grau](https://github.com/migrau)
 
 # Acknowledgements
 
-<p align="left">
+<p align="center">
 <a href="https://fulcrumgenomics.com">
 <img width="500" height="100" src="docs/images/Fulcrum.svg" alt="Fulcrum Genomics"/>
+</a>
+</p>
+
+<p align="center">
+<a href="http://nf-co.re">
+<img width="500" height="125" src="docs/images/nf-core-logo.png" alt="nf-core"/>
 </a>
 </p>
 

@@ -200,198 +200,209 @@ workflow DEEPUMICALLER {
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     INPUT_CHECK (
-        ch_input
+        ch_input, 
+        params.step
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    if (params.step == 'mapping') {
 
-    // READ PREPROCESSING
-    if (params.trim_adapters){
-        PRETRIMFASTQC(
-            INPUT_CHECK.out.reads
-        )
-        // MODULE: Run FASTP
-        FASTP(INPUT_CHECK.out.reads,
-                        [], // we are not using any adapter fastas at the moment
-                        false,
-                        false)
-        ch_versions = ch_versions.mix(FASTP.out.versions.first())
-        reads_to_qc = FASTP.out.reads
-    } else {
-        reads_to_qc = INPUT_CHECK.out.reads
-    }
-
-
-    // MODULE: Run FastQC
-    FASTQC (
-        reads_to_qc
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
-
-    // MODULE: Run fgbio FastqToBam
-    // to get the UMIs out of the reads and into the tag
-    FASTQTOBAM(reads_to_qc)
-    ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
-
-
-    // Decide whether we clip the beginning and/or end of the reads or nothing
-    if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-        // params.left_clip = 4     ->      Remove 4bp from the 5' end of the reads
-        TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
-        ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
-        bam_to_align = TRIMBAM.out.bam
-    } else {
-        bam_to_align = FASTQTOBAM.out.bam
-    }
-
-
-    // MODULE: Align with bwa mem
-    // TODO
-    // test with real samples whether we could change the "false" here into "true"
-    // this would activate sorting the files
-    // and would reduce the size of the files stored in the work directory.
-    // it works with the test samples
-    ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
-    ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
-
-    SORTBAM(ALIGNRAWBAM.out.bam)
-    ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
-
-    // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
-    // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
-
-    if (params.targetsfile){
-        QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
-        ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
-
-        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
-        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-        ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
-
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAM.out.bam
-        .join( SORTBAM.out.csi )
-        .set { bam_n_index }
-
-        // truncate BAM to keep only the reads that are on target
-        if (params.remove_offtargets){
-            BAM_FILTER_READS(bam_n_index,
-                            BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
-            ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
-
-            bam_to_group = BAM_FILTER_READS.out.bam
+        // READ PREPROCESSING
+        if (params.trim_adapters){
+            PRETRIMFASTQC(
+                INPUT_CHECK.out.reads
+            )
+            // MODULE: Run FASTP
+            FASTP(INPUT_CHECK.out.reads,
+                            [], // we are not using any adapter fastas at the moment
+                            false,
+                            false)
+            ch_versions = ch_versions.mix(FASTP.out.versions.first())
+            reads_to_qc = FASTP.out.reads
         } else {
-            bam_to_group = SORTBAM.out.bam
+            reads_to_qc = INPUT_CHECK.out.reads
         }
 
 
-    } else {
-        QUALIMAPQC(SORTBAM.out.bam, [])
-        ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+        // MODULE: Run FastQC
+        FASTQC (
+            reads_to_qc
+        )
+        ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
-        bam_to_group = SORTBAM.out.bam
 
+        // MODULE: Run fgbio FastqToBam
+        // to get the UMIs out of the reads and into the tag
+        FASTQTOBAM(reads_to_qc)
+        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
+
+
+        // Decide whether we clip the beginning and/or end of the reads or nothing
+        if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
+            // params.left_clip = 4     ->      Remove 4bp from the 5' end of the reads
+            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
+            ch_versions = ch_versions.mix(TRIMBAM.out.versions.first())
+            bam_to_align = TRIMBAM.out.bam
+        } else {
+            bam_to_align = FASTQTOBAM.out.bam
+        }
+
+
+        // MODULE: Align with bwa mem
+        // TODO
+        // test with real samples whether we could change the "false" here into "true"
+        // this would activate sorting the files
+        // and would reduce the size of the files stored in the work directory.
+        // it works with the test samples
+        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
+        ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+
+        SORTBAM(ALIGNRAWBAM.out.bam)
+        ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+
+        // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
+        // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
+
+        if (params.targetsfile){
+            QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+
+            targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
+            BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
+            ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
+
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAM.out.bam
+            .join( SORTBAM.out.csi )
+            .set { bam_n_index }
+
+            // truncate BAM to keep only the reads that are on target
+            if (params.remove_offtargets){
+                BAM_FILTER_READS(bam_n_index,
+                                BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
+                ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
+
+                bam_to_group = BAM_FILTER_READS.out.bam
+            } else {
+                bam_to_group = SORTBAM.out.bam
+            }
+
+
+        } else {
+            QUALIMAPQC(SORTBAM.out.bam, [])
+            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+
+            bam_to_group = SORTBAM.out.bam
+
+        }
     }
-
-
 
     if (params.duplex_seq) {
         //
         // Run fgbio Duplex consensus pipeline
         //
 
-        // MODULE: Run fgbio GroupReadsByUmi
-        GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
-        ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
+        if (params.step in ['mapping', 'groupreadsbyumi']) {
 
-        // MODULE: Run fgbio CallDuplexConsensusReads
-        CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
-        ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+            // MODULE: Run fgbio GroupReadsByUmi
+            GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
+            ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
+            ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
-        // MODULE: Run fgbio CollecDuplexSeqMetrics
-        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
-        ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
+            // MODULE: Run fgbio CollecDuplexSeqMetrics
+            COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+            ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
-        // Join groupby stats and duplex seq metrics files from the same samples
-        GROUPREADSBYUMIDUPLEX.out.histogram
-        .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
-        .set {metrics_ch}
+            // Join groupby stats and duplex seq metrics files from the same samples
+            GROUPREADSBYUMIDUPLEX.out.histogram
+            .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
+            .set {metrics_ch}
 
-        // Plot the family size metrics
-        FAMILYMETRICS(metrics_ch)
-
-
-        // MODULE: Align with bwa mem
-        ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
-
-
-        //
-        // HIGH CONFIDENCE CALLS
-        //
-
-        // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSHIGH(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
-        ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
-
-        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-        CLIPBAMHIGH(FILTERCONSENSUSREADSHIGH.out.bam, ch_ref_fasta)
-        ch_versions = ch_versions.mix(CLIPBAMHIGH.out.versions.first())
-
-        // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
+            // Plot the family size metrics
+            FAMILYMETRICS(metrics_ch)
         
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCONSHIGH.out.bam
-        .join( SORTBAMDUPLEXCONSHIGH.out.csi )
-        .set { cons_high_bam }
+        }
+
+        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+
+            // MODULE: Run fgbio CallDuplexConsensusReads
+            CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
+            ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+
+            // MODULE: Align with bwa mem
+            ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
+
+        }
+
+        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            //
+            // HIGH CONFIDENCE CALLS
+            //
+
+            // MODULE: Run fgbio FilterConsensusReads
+            FILTERCONSENSUSREADSHIGH(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
+
+            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+            CLIPBAMHIGH(FILTERCONSENSUSREADSHIGH.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(CLIPBAMHIGH.out.versions.first())
+
+            // MODULE: Sort BAM file
+            SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
+            
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMDUPLEXCONSHIGH.out.bam
+            .join( SORTBAMDUPLEXCONSHIGH.out.csi )
+            .set { cons_high_bam }
 
 
-        // Compute depth of the consensus reads aligned to the genome
-        COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
+            // Compute depth of the consensus reads aligned to the genome
+            COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
 
-        // Quality check
-        QUALIMAPQCHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
-        ch_versions = ch_versions.mix(QUALIMAPQCHIGH.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCHIGH.out.results.map{it[1]}.collect())
+            // Quality check
+            QUALIMAPQCHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
+            ch_versions = ch_versions.mix(QUALIMAPQCHIGH.out.versions.first())
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCHIGH.out.results.map{it[1]}.collect())
 
+        }
 
-        // Mutation calling for duplex reads
-        CALLINGVARDICTHIGH(cons_high_bam,
+        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+
+            // Mutation calling for duplex reads
+            CALLINGVARDICTHIGH(cons_high_bam,
+                                params.targetsfile,
+                                ch_ref_fasta, ch_ref_index_dir)
+            ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
+
+            // Postprocessing the BAM file to get exact coverage per position and allele
+            //    also get the Ns per position
+            RECOUNTMUTSHIGH(cons_high_bam,
+                            CALLINGVARDICTHIGH.out.vcf,
                             params.targetsfile,
-                            ch_ref_fasta, ch_ref_index_dir)
-        ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
-
-        // Postprocessing the BAM file to get exact coverage per position and allele
-        //    also get the Ns per position
-        RECOUNTMUTSHIGH(cons_high_bam,
-                        CALLINGVARDICTHIGH.out.vcf,
-                        params.targetsfile,
-                        ch_ref_fasta)
-        ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
+                            ch_ref_fasta)
+            ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
 
 
-        VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
-                            ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
-                            vep_cache,
-                            vep_extra_files)
-        ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
+            VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
+                                ch_ref_fasta,
+                                "GRCh38",
+                                "homo_sapiens", 
+                                "108",
+                                vep_cache,
+                                vep_extra_files)
+            ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
 
-        CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_high }
+            CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_high }
 
-        SIGPROFPLOTHIGH(mutation_files_high.collect())
-        // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
+            SIGPROFPLOTHIGH(mutation_files_high.collect())
+            // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
-
+        }
         // TODO
         // add a module that plots the signature, with the correct normalization
         // use bgsignature, and the input targets file
@@ -401,47 +412,52 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_med_conf){
 
-            FILTERCONSENSUSREADSMED(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
-            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
-            ch_versions = ch_versions.mix(CLIPBAMMED.out.versions.first())
+                FILTERCONSENSUSREADSMED(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
-            // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
+                // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+                CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
+                ch_versions = ch_versions.mix(CLIPBAMMED.out.versions.first())
 
-            // join the bam and the bamindex channels to have
-            // the ones from the same samples together
-            SORTBAMDUPLEXCONSMED.out.bam
-            .join( SORTBAMDUPLEXCONSMED.out.csi )
-            .set { cons_med_bam }
+                // MODULE: Sort BAM file
+                SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
 
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
+                // join the bam and the bamindex channels to have
+                // the ones from the same samples together
+                SORTBAMDUPLEXCONSMED.out.bam
+                .join( SORTBAMDUPLEXCONSMED.out.csi )
+                .set { cons_med_bam }
 
-            // Mutation calling for all reads
-            CALLINGVARDICTMED(cons_med_bam,
+                // Compute depth of the consensus reads aligned to the genome
+                COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
+            }
+
+            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+                // Mutation calling for all reads
+                CALLINGVARDICTMED(cons_med_bam,
+                                    params.targetsfile,
+                                    ch_ref_fasta, ch_ref_index_dir)
+
+                // Postprocessing the BAM file to get exact coverage per position and allele
+                //    also get the Ns per position
+                RECOUNTMUTSMED(cons_med_bam,
+                                CALLINGVARDICTMED.out.vcf,
                                 params.targetsfile,
-                                ch_ref_fasta, ch_ref_index_dir)
+                                ch_ref_fasta)
+                ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
-            // Postprocessing the BAM file to get exact coverage per position and allele
-            //    also get the Ns per position
-            RECOUNTMUTSMED(cons_med_bam,
-                            CALLINGVARDICTMED.out.vcf,
-                            params.targetsfile,
-                            ch_ref_fasta)
-            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+                VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
+                                ch_ref_fasta,
+                                "GRCh38",
+                                "homo_sapiens", 
+                                "108",
+                                vep_cache,
+                                vep_extra_files)
 
-            VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
-                            ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
-                            vep_cache,
-                            vep_extra_files)
-
-            CALLINGVARDICTMED.out.vcf.map{it -> it[1]}.set { mutation_files_med }
-            SIGPROFPLOTMED(mutation_files_med.collect())
+                CALLINGVARDICTMED.out.vcf.map{it -> it[1]}.set { mutation_files_med }
+                SIGPROFPLOTMED(mutation_files_med.collect())
+            }
         }
 
 
@@ -451,48 +467,52 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_low_conf){
 
-            // filter the reads with the low conf parameters
-            FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+                // filter the reads with the low conf parameters
+                FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
 
-            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)
-            ch_versions = ch_versions.mix(CLIPBAMLOW.out.versions.first())
+                // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+                CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)
+                ch_versions = ch_versions.mix(CLIPBAMLOW.out.versions.first())
 
-            // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONSLOW(CLIPBAMLOW.out.bam)
+                // MODULE: Sort BAM file
+                SORTBAMDUPLEXCONSLOW(CLIPBAMLOW.out.bam)
 
-            // join the bam and the bamindex channels to have
-            // the ones from the same samples together
-            SORTBAMDUPLEXCONSLOW.out.bam
-            .join( SORTBAMDUPLEXCONSLOW.out.csi )
-            .set { cons_low_bam }
+                // join the bam and the bamindex channels to have
+                // the ones from the same samples together
+                SORTBAMDUPLEXCONSLOW.out.bam
+                .join( SORTBAMDUPLEXCONSLOW.out.csi )
+                .set { cons_low_bam }
 
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
+                // Compute depth of the consensus reads aligned to the genome
+                COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
+            }
 
-            // Mutation calling for all reads
-            CALLINGVARDICTLOW(cons_low_bam,
+            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+                // Mutation calling for all reads
+                CALLINGVARDICTLOW(cons_low_bam,
+                                    params.targetsfile,
+                                    ch_ref_fasta, ch_ref_index_dir)
+
+                // Postprocessing the BAM file to get exact coverage per position and allele
+                //    also get the Ns per position
+                RECOUNTMUTSLOW(cons_low_bam,
+                                CALLINGVARDICTLOW.out.vcf,
                                 params.targetsfile,
-                                ch_ref_fasta, ch_ref_index_dir)
+                                ch_ref_fasta)
+                ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
-            // Postprocessing the BAM file to get exact coverage per position and allele
-            //    also get the Ns per position
-            RECOUNTMUTSLOW(cons_low_bam,
-                            CALLINGVARDICTLOW.out.vcf,
-                            params.targetsfile,
-                            ch_ref_fasta)
-            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+                VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
+                                ch_ref_fasta,
+                                "GRCh38",
+                                "homo_sapiens", 
+                                "108",
+                                vep_cache,
+                                vep_extra_files)
 
-            VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
-                            ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
-                            vep_cache,
-                            vep_extra_files)
-
-            CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files_low }
-            SIGPROFPLOTLOW(mutation_files_low.collect())
+                CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files_low }
+                SIGPROFPLOTLOW(mutation_files_low.collect())
+            }
         }
 
 
@@ -502,29 +522,36 @@ workflow DEEPUMICALLER {
         // Run fgbio UMI-aware pipeline
         //
 
-        // MODULE: Run fgbio GroupReadsByUmi
-        GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency")
+        if (params.step in ['mapping', 'groupreadsbyumi']) {
+            // MODULE: Run fgbio GroupReadsByUmi
+            GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency")
+        }
 
-        // MODULE: Run fgbio CallMolecularConsensusReads
-        // CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
-        CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
+        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+            // MODULE: Run fgbio CallMolecularConsensusReads
+            // CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
+            CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
 
-        // MODULE: Align with bwa mem
-        ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
+            // MODULE: Align with bwa mem
+            ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
-        // MODULE: Clip BAM file
-        CLIPBAM(ALIGNCONSENSUSBAM.out.bam, ch_ref_fasta)
-        
-        // MODULE: Sort BAM file
-        SORTBAMCONS(CLIPBAM.out.bam)
-        SORTBAMCONS.out.bam
-        .join(SORTBAMCONS.out.csi)
-        .set {umi_bam}
+            // MODULE: Clip BAM file
+            CLIPBAM(ALIGNCONSENSUSBAM.out.bam, ch_ref_fasta)
+            
+            // MODULE: Sort BAM file
+            SORTBAMCONS(CLIPBAM.out.bam)
+            SORTBAMCONS.out.bam
+            .join(SORTBAMCONS.out.csi)
+            .set {umi_bam}
 
-        // Mutation calling for non-duplex reads
-        CALLINGVARDICT(umi_bam,
-                        params.targetsfile,
-                        ch_ref_fasta, ch_ref_index_dir)
+        }
+
+        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            // Mutation calling for non-duplex reads
+            CALLINGVARDICT(umi_bam,
+                            params.targetsfile,
+                            ch_ref_fasta, ch_ref_index_dir)
+        }
     }
 
 

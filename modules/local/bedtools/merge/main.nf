@@ -29,7 +29,14 @@ process BEDTOOLS_MERGE {
     grep -v '#' $vcf | \\
         awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\
         sort -k1,1 -k2,3n \\
-        > ${prefix}.vcf_derived.bed
+        > ${prefix}.vcf_derived.many.bed
+
+    bedtools \\
+        merge \\
+        -i ${prefix}.vcf_derived.many.bed \\
+        > ${prefix}.vcf_derived.bed;
+
+    rm ${prefix}.vcf_derived.many.bed;
 
     bedtools \\
         merge \\

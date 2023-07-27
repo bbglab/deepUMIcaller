@@ -325,6 +325,7 @@ workflow DEEPUMICALLER {
 
         // Plot the family size metrics
         FAMILYMETRICS(metrics_ch)
+        ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
 
 
         // MODULE: Align with bwa mem

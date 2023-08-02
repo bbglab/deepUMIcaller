@@ -307,6 +307,11 @@ workflow DEEPUMICALLER {
         //
 
         if (params.step in ['mapping', 'groupreadsbyumi']) {
+            
+            // ASSIGN bam_to_group = to our input bam
+            if (params.step == 'groupreadsbyumi') {
+                bam_to_group = INPUT_CHECK.out.reads
+            }
 
             // MODULE: Run fgbio GroupReadsByUmi
             GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
@@ -322,6 +327,8 @@ workflow DEEPUMICALLER {
             .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
             .set {metrics_ch}
 
+            bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
+
             // Plot the family size metrics
             FAMILYMETRICS(metrics_ch)
         
@@ -329,22 +336,35 @@ workflow DEEPUMICALLER {
 
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
+            // ASSIGN bam_groupreadsbyumi = to our input bam
+            // if (params.step in ['groupreadsbyumi', 'consensus']) {
+            //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
+            // }
+
             // MODULE: Run fgbio CallDuplexConsensusReads
-            CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
+            CALLDUPLEXCONSENSUSREADS(bam_groupreadsbyumi)
             ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
 
             // MODULE: Align with bwa mem
             ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
+            bam_alignduplexconsensus = ALIGNDUPLEXCONSENSUSBAM.out.bam
+
         }
 
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+
+            // ASSIGN bam_alignduplexconsensus = to our input bam
+            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
+            // }
+
             //
             // HIGH CONFIDENCE CALLS
             //
 
             // MODULE: Run fgbio FilterConsensusReads
-            FILTERCONSENSUSREADSHIGH(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            FILTERCONSENSUSREADSHIGH(bam_alignduplexconsensus, ch_ref_fasta)
             ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
@@ -372,6 +392,11 @@ workflow DEEPUMICALLER {
         }
 
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+
+            // ASSIGN cons_high_bam = to our input bam
+            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            //     cons_high_bam = INPUT_CHECK.out.reads
+            // }
 
             // Mutation calling for duplex reads
             CALLINGVARDICTHIGH(cons_high_bam,
@@ -414,7 +439,12 @@ workflow DEEPUMICALLER {
 
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
-                FILTERCONSENSUSREADSMED(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+                // ASSIGN bam_alignduplexconsensus = to our input bam
+                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+                //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
+                // }
+
+                FILTERCONSENSUSREADSMED(bam_alignduplexconsensus, ch_ref_fasta)
 
                 // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
                 CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
@@ -434,6 +464,12 @@ workflow DEEPUMICALLER {
             }
 
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+
+                // ASSIGN cons_med_bam = to our input bam
+                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+                //     cons_med_bam = INPUT_CHECK.out.reads
+                // }
+
                 // Mutation calling for all reads
                 CALLINGVARDICTMED(cons_med_bam,
                                     params.targetsfile,
@@ -468,8 +504,14 @@ workflow DEEPUMICALLER {
         if (params.duplex_low_conf){
 
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+
+                // ASSIGN bam_alignduplexconsensus = to our input bam
+                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+                //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
+                // }
+
                 // filter the reads with the low conf parameters
-                FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+                FILTERCONSENSUSREADSLOW(bam_alignduplexconsensus, ch_ref_fasta)
 
                 // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
                 CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)
@@ -489,6 +531,12 @@ workflow DEEPUMICALLER {
             }
 
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+
+                // ASSIGN cons_low_bam = to our input bam
+                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+                //     cons_low_bam = INPUT_CHECK.out.reads
+                // }
+
                 // Mutation calling for all reads
                 CALLINGVARDICTLOW(cons_low_bam,
                                     params.targetsfile,
@@ -523,14 +571,27 @@ workflow DEEPUMICALLER {
         //
 
         if (params.step in ['mapping', 'groupreadsbyumi']) {
+            // ASSIGN bam_to_group = to our input bam
+            // if (params.step in ['groupreadsbyumi']) {
+            //     bam_to_group = INPUT_CHECK.out.reads
+            // }
+
             // MODULE: Run fgbio GroupReadsByUmi
-            GROUPREADSBYUMI(SORTBAM.out.bam, "Adjacency")
+            GROUPREADSBYUMI(bam_to_group, "Adjacency")
+
+            bam_groupreadbyumiNOduplex = GROUPREADSBYUMI.out.bam
         }
 
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+
+            // ASSIGN bam_groupreadbyumiNOduplex = to our input bam
+            // if (params.step in ['groupreadsbyumi', 'consensus']) {
+            //     bam_groupreadbyumiNOduplex = INPUT_CHECK.out.reads
+            // }
+
             // MODULE: Run fgbio CallMolecularConsensusReads
             // CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam, '1', params.call_min_baseq)
-            CALLMOLECULARCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
+            CALLMOLECULARCONSENSUSREADS(bam_groupreadbyumiNOduplex)
 
             // MODULE: Align with bwa mem
             ALIGNCONSENSUSBAM(CALLMOLECULARCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
@@ -547,6 +608,12 @@ workflow DEEPUMICALLER {
         }
 
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+
+            // ASSIGN umi_bam = to our input bam
+            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            //     umi_bam = INPUT_CHECK.out.reads
+            // }
+
             // Mutation calling for non-duplex reads
             CALLINGVARDICT(umi_bam,
                             params.targetsfile,

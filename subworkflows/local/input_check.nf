@@ -10,7 +10,7 @@ workflow INPUT_CHECK {
     step
 
     main:
-    SAMPLESHEET_CHECK ( samplesheet )
+    SAMPLESHEET_CHECK ( samplesheet, step )
         .csv
         .splitCsv ( header:true, sep:',' )
         .map { create_input_channel(it,step) }
@@ -40,16 +40,25 @@ def create_input_channel(LinkedHashMap row, step) {
         }
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
-
-    // For all the other steps, only bams/indexes are required
+    // For all the calling, only bams/indexes are required
+    else if (step=='calling'){
+        if (!file(row.bam).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
+        }
+        if (!file(row.csi).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
+        }
+        input_meta = [ meta, [ file(row.bam) ], [ file(row.csi) ] ]
+    }
+    // Only the bam is required to the meta map for the other steps (e.g. groupreadsbyumi)
     else{
         if (!file(row.bam).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
         }
-        if (!file(row.bai).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Bai file does not exist!\n${row.bai}"
+        if (!file(row.csi).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
         }
-        input_meta = [ meta, [ file(row.bam), file(row.bai) ] ]
+        input_meta = [ meta, [ file(row.bam) ]]
     }
     return input_meta
 

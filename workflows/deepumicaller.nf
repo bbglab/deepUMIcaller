@@ -337,7 +337,7 @@ workflow DEEPUMICALLER {
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
             // ASSIGN bam_groupreadsbyumi = to our input bam
-            // if (params.step in ['groupreadsbyumi', 'consensus']) {
+            // if (params.step == 'consensus') {
             //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
             // }
 
@@ -355,7 +355,7 @@ workflow DEEPUMICALLER {
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
             // ASSIGN bam_alignduplexconsensus = to our input bam
-            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            // if (params.step == 'filterconsensus') {
             //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
             // }
 
@@ -394,9 +394,9 @@ workflow DEEPUMICALLER {
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
 
             // ASSIGN cons_high_bam = to our input bam
-            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
-            //     cons_high_bam = INPUT_CHECK.out.reads
-            // }
+            if (params.step == 'calling') {
+                cons_high_bam = INPUT_CHECK.out.reads
+            }
 
             // Mutation calling for duplex reads
             CALLINGVARDICTHIGH(cons_high_bam,
@@ -440,7 +440,7 @@ workflow DEEPUMICALLER {
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
                 // ASSIGN bam_alignduplexconsensus = to our input bam
-                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+                // if (params.step == 'filterconsensus') {
                 //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
                 // }
 
@@ -466,9 +466,9 @@ workflow DEEPUMICALLER {
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
 
                 // ASSIGN cons_med_bam = to our input bam
-                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
-                //     cons_med_bam = INPUT_CHECK.out.reads
-                // }
+                if (params.step == 'calling') {
+                    cons_med_bam = INPUT_CHECK.out.reads
+                }
 
                 // Mutation calling for all reads
                 CALLINGVARDICTMED(cons_med_bam,
@@ -506,7 +506,7 @@ workflow DEEPUMICALLER {
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
                 // ASSIGN bam_alignduplexconsensus = to our input bam
-                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus']) {
+                // if (params.step == 'filterconsensus') {
                 //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
                 // }
 
@@ -533,9 +533,9 @@ workflow DEEPUMICALLER {
             if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
 
                 // ASSIGN cons_low_bam = to our input bam
-                // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
-                //     cons_low_bam = INPUT_CHECK.out.reads
-                // }
+                if (params.step == 'calling') {
+                    cons_low_bam = INPUT_CHECK.out.reads
+                }
 
                 // Mutation calling for all reads
                 CALLINGVARDICTLOW(cons_low_bam,
@@ -548,7 +548,7 @@ workflow DEEPUMICALLER {
                                 CALLINGVARDICTLOW.out.vcf,
                                 params.targetsfile,
                                 ch_ref_fasta)
-                ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+                ch_versions = ch_versions.mix(RECOUNTMUTSLOW.out.versions.first())
 
                 VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                                 ch_ref_fasta,
@@ -572,9 +572,9 @@ workflow DEEPUMICALLER {
 
         if (params.step in ['mapping', 'groupreadsbyumi']) {
             // ASSIGN bam_to_group = to our input bam
-            // if (params.step in ['groupreadsbyumi']) {
-            //     bam_to_group = INPUT_CHECK.out.reads
-            // }
+            if (params.step == 'groupreadsbyumi') {
+                bam_to_group = INPUT_CHECK.out.reads
+            }
 
             // MODULE: Run fgbio GroupReadsByUmi
             GROUPREADSBYUMI(bam_to_group, "Adjacency")
@@ -585,7 +585,7 @@ workflow DEEPUMICALLER {
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
             // ASSIGN bam_groupreadbyumiNOduplex = to our input bam
-            // if (params.step in ['groupreadsbyumi', 'consensus']) {
+            // if (params.step == 'consensus') {
             //     bam_groupreadbyumiNOduplex = INPUT_CHECK.out.reads
             // }
 
@@ -610,9 +610,9 @@ workflow DEEPUMICALLER {
         if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
 
             // ASSIGN umi_bam = to our input bam
-            // if (params.step in ['groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
-            //     umi_bam = INPUT_CHECK.out.reads
-            // }
+            if (params.step == 'calling') {
+                umi_bam = INPUT_CHECK.out.reads
+            }
 
             // Mutation calling for non-duplex reads
             CALLINGVARDICT(umi_bam,

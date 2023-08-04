@@ -83,6 +83,13 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Choose to remove offtargets",
                     "help_text": "This will slightly speed up the analysis by focusing on the regions of interest according to the provided BED file"
+                },
+                "step": {
+                    "type": "string",
+                    "description": "Choose from which process start. Options: 'mapping' (default), 'groupreadsbyumi', 'calling'.",
+                    "default": "mapping",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."
                 }
             }
         },

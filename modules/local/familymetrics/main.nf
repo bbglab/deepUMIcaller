@@ -17,6 +17,7 @@ process FAMILYSIZEMETRICS {
     output:
     tuple val(meta), path("*.pdf"), emit: pdf
     path  "versions.yml"          , emit: versions
+    stdout                         emit: log
 
     when:
     task.ext.when == null || task.ext.when

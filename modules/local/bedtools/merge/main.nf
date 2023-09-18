@@ -13,6 +13,7 @@ process BEDTOOLS_MERGE {
 
     output:
     tuple val(meta), path('*.vcf_derived.bed')              , emit: vcf_bed
+    tuple val(meta), path('*.vcf_derived.withID.bed')       , emit: vcf_bed_mut_ids
     tuple val(meta), path('*.regions_n_mutations.bed')      , emit: regions_plus_variants_bed
     path  "versions.yml"                                    , emit: versions
 
@@ -25,11 +26,14 @@ process BEDTOOLS_MERGE {
     def amplify = task.ext.amplify ?: 5             // how many bases do you want to extend the region surrounding the variable
 
     if ("$bed" == "${prefix}.bed") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+    //  awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\
     """
     grep -v '#' $vcf | \\
-        awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\
+        awk '{ sum = length(\$4); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum + $amplify"\\t"\$1";"\$2";"\$4";"\$5}' | \\
         sort -k1,1 -k2,3n \\
-        > ${prefix}.vcf_derived.many.bed
+        > ${prefix}.vcf_derived.withID.bed
+    
+    cut -f-3 ${prefix}.vcf_derived.many.withID.bed > ${prefix}.vcf_derived.many.bed;
 
     bedtools \\
         merge \\

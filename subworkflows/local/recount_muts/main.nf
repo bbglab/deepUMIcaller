@@ -10,6 +10,8 @@ include { NS_X_POSITION        as NSXPOSITION     } from '../../../modules/local
 include { QUERY_TABIX          as QUERYTABIX      } from '../../../modules/local/filtermpileup/main'
 include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
 
+include { FILTER_LOW_COMPLEXITY as FILTERLOWCOMPLEX     } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+
 
 workflow RECOUNT_MUTS {
 
@@ -19,6 +21,7 @@ workflow RECOUNT_MUTS {
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] path (intervals_file)
     reference_fasta          // channel: [mandatory] path (reference_fasta)
+    filter_muts              // value  : [mandatory] true or false
 
 
     main:
@@ -26,8 +29,9 @@ workflow RECOUNT_MUTS {
     ch_versions = Channel.empty()
 
     READJUSTREGIONS(vcf_file, bed_file)
-    // These are the two main outputs
+    // These are the three main outputs
     // READJUSTREGIONS.out.vcf_bed
+    // READJUSTREGIONS.out.vcf_bed_mut_ids
     // READJUSTREGIONS.out.regions_plus_variants_bed
 
     ch_versions = ch_versions.mix(READJUSTREGIONS.out.versions.first())
@@ -68,11 +72,27 @@ workflow RECOUNT_MUTS {
     //   maybe it makes 
     ch_versions = ch_versions.mix(PATCHDP.out.versions.first())
 
+    // FINDMUTATED(ch_pileup_vcf)
+    // FINDMUTATED.out.read_names
+    // FINDMUTATED.out.tags
+    // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
+    PATCHDP.out.patched_vcf
+    .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+    .set { ch_vcf_vcfbed }
+
+    // if (filter_muts) {
+    FILTERLOWCOMPLEX(ch_vcf_vcfbed)
+    // }
+
+
 
     emit:
 
     ns_file        = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
     corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
+
+    filtered_vcf   = FILTERLOWCOMPLEX.out.filtered_vcf    // channel: [ val(meta), [ vcf ] ]
+
 
 }

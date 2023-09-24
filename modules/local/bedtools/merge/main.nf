@@ -13,7 +13,7 @@ process BEDTOOLS_MERGE {
 
     output:
     tuple val(meta), path('*.vcf_derived.bed')              , emit: vcf_bed
-    tuple val(meta), path('*.vcf_derived.withID.bed')       , emit: vcf_bed_mut_ids
+    tuple val(meta), path('*.vcf_derived.many.withID.bed')  , emit: vcf_bed_mut_ids
     tuple val(meta), path('*.regions_n_mutations.bed')      , emit: regions_plus_variants_bed
     path  "versions.yml"                                    , emit: versions
 
@@ -31,7 +31,7 @@ process BEDTOOLS_MERGE {
     grep -v '#' $vcf | \\
         awk '{ sum = length(\$4); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum + $amplify"\\t"\$1";"\$2";"\$4";"\$5}' | \\
         sort -k1,1 -k2,3n \\
-        > ${prefix}.vcf_derived.withID.bed
+        > ${prefix}.vcf_derived.many.withID.bed
     
     cut -f-3 ${prefix}.vcf_derived.many.withID.bed > ${prefix}.vcf_derived.many.bed;
 

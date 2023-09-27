@@ -98,6 +98,8 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW              } fro
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED              } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH             } from '../modules/local/sigprofiler/matrixgenerator/main'
 
+include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERRAW           } from '../modules/local/filter_reads/samtools/main'
+include { ASMINUSXS                         as ASMINUSXSRAW                } from '../modules/local/filter_reads/asminusxs/main'
 
 
 /*
@@ -120,6 +122,7 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQC2                 } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
@@ -259,11 +262,30 @@ workflow DEEPUMICALLER {
     SORTBAM(ALIGNRAWBAM.out.bam)
     ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
+
+    // join the bam and the bamindex channels to have
+    // the ones from the same samples together
+    SORTBAM.out.bam
+    .join( SORTBAM.out.csi )
+    .set { bam_n_index }
+    
+    QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+
+    ASMINUSXSRAW(bam_n_index, 50)
+    SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
+
+
+
+
+
+    // samtools view K_10_1_A_1.sorted.bam -b -h -f 0x2 > K_10_1_A_1.sorted.filtered.0x2.bam
+    // ./filter_bam /workspace/nobackup/prominent/PROMINENT_05/results/deepUMIcaller_150623_offtarget_extendedBed/sortbamduplexconshigh/K_10_1_A_1.sorted.filtered.0x2.bam K_10_1_A_1.sorted.filtered.0x2.AS-XS.bam
+
     // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
     // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
     if (params.targetsfile){
-        QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+        QUALIMAPQC2(SAMTOOLSFILTERRAW.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
@@ -331,6 +353,7 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
+        // samtools view K_10_1_A_1.sorted.bam -b -h -f 0x2 > K_10_1_A_1.sorted.filtered.0x2.bam
 
         //
         // HIGH CONFIDENCE CALLS

@@ -100,6 +100,8 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH             } fro
 
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERRAW           } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXSRAW                } from '../modules/local/filter_reads/asminusxs/main'
+include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX        } from '../modules/local/filter_reads/samtools/main'
+include { ASMINUSXS                         as ASMINUSXSDUPLEX             } from '../modules/local/filter_reads/asminusxs/main'
 
 
 /*
@@ -123,7 +125,10 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQC2                 } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX2           } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
+
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
@@ -135,10 +140,13 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } fro
 
 // Sorting
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMCLEAN                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSLOW        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSMED        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSHIGH       } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEX               } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCLEAN          } from '../modules/nf-core/samtools/sort/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
@@ -271,11 +279,16 @@ workflow DEEPUMICALLER {
     
     QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
 
-    ASMINUSXSRAW(bam_n_index, 50)
+    ASMINUSXSRAW(bam_n_index)
     SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
 
+    SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
 
-
+    // join the bam and the bamindex channels to have
+    // the ones from the same samples together
+    SORTBAMCLEAN.out.bam
+        .join( SORTBAMCLEAN.out.csi )
+        .set { bam_n_index_clean }
 
 
     // samtools view K_10_1_A_1.sorted.bam -b -h -f 0x2 > K_10_1_A_1.sorted.filtered.0x2.bam
@@ -285,7 +298,7 @@ workflow DEEPUMICALLER {
     // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
     if (params.targetsfile){
-        QUALIMAPQC2(SAMTOOLSFILTERRAW.out.bam, params.targetsfile)
+        QUALIMAPQC2(SORTBAMCLEAN.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
@@ -293,30 +306,26 @@ workflow DEEPUMICALLER {
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAM.out.bam
-        .join( SORTBAM.out.csi )
-        .set { bam_n_index }
+
 
         // truncate BAM to keep only the reads that are on target
         if (params.remove_offtargets){
-            BAM_FILTER_READS(bam_n_index,
+            BAM_FILTER_READS(bam_n_index_clean,
                             BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
             ch_versions = ch_versions.mix(BAM_FILTER_READS.out.versions.first())
 
             bam_to_group = BAM_FILTER_READS.out.bam
         } else {
-            bam_to_group = SORTBAM.out.bam
+            bam_to_group = SORTBAMCLEAN.out.bam
         }
 
 
     } else {
-        QUALIMAPQC(SORTBAM.out.bam, [])
+        QUALIMAPQC2(SORTBAMCLEAN.out.bam, [])
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
-        bam_to_group = SORTBAM.out.bam
+        bam_to_group = SORTBAMCLEAN.out.bam
 
     }
 
@@ -353,14 +362,35 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
-        // samtools view K_10_1_A_1.sorted.bam -b -h -f 0x2 > K_10_1_A_1.sorted.filtered.0x2.bam
+        SORTBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam)
+
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMDUPLEX.out.bam
+        .join( SORTBAMDUPLEX.out.csi )
+        .set { bam_n_index_duplex }
+
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEX.out.bam, params.targetsfile)
+
+        ASMINUSXSDUPLEX(bam_n_index_duplex)
+        SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
+        
+        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
+
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMDUPLEXCLEAN.out.bam
+            .join( SORTBAMDUPLEXCLEAN.out.csi )
+            .set { bam_n_index_duplex_clean }
+
+        QUALIMAPQCDUPLEX2(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
 
         //
         // HIGH CONFIDENCE CALLS
         //
 
         // MODULE: Run fgbio FilterConsensusReads
-        FILTERCONSENSUSREADSHIGH(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+        FILTERCONSENSUSREADSHIGH(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
         ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
@@ -428,7 +458,7 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_med_conf){
 
-            FILTERCONSENSUSREADSMED(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            FILTERCONSENSUSREADSMED(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
             CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
@@ -479,7 +509,7 @@ workflow DEEPUMICALLER {
         if (params.duplex_low_conf){
 
             // filter the reads with the low conf parameters
-            FILTERCONSENSUSREADSLOW(ALIGNDUPLEXCONSENSUSBAM.out.bam, ch_ref_fasta)
+            FILTERCONSENSUSREADSLOW(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
             CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)

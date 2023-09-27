@@ -8,6 +8,10 @@ def filter_bam(input_bam, output_bam, threshold):
         header = in_bam.header
         with pysam.AlignmentFile(output_bam, "wb", header=header) as out_bam:
             for read in in_bam:
+                if read.is_secondary:
+                    # Skip secondary alignments
+                    continue
+                
                 as_tag = read.get_tag("AS", with_value_type=False)
                 xs_tag = read.get_tag("XS", with_value_type=False)
                 

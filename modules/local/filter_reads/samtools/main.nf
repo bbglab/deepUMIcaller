@@ -32,8 +32,17 @@ process SAMTOOLS_FILTER {
                     args.contains("--output-fmt cram") ? "cram" :
                     bam.getExtension()
     if ("$bam" == "${prefix}.${file_type}") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+    // TODO fix this into a more formal samtools view module that we call a particular name and provide the arguments in the modules.config
     """
-    samtools view ${bam} -b -h -f 0x2 > ${prefix}.filtered.0x2.bam
+    samtools sort \\
+            --threads ${task.cpus-1} \\
+            -n \\
+            ${bam} \\
+            | samtools fixmate \\
+                    --threads ${task.cpus-1} \\
+                    -r - ${meta.id}.tmp.bam
+
+    samtools view ${meta.id}.tmp.bam ${args} > ${prefix}.bam
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

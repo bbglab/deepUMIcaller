@@ -316,7 +316,7 @@ workflow DEEPUMICALLER {
 
             bam_to_group = BAM_FILTER_READS.out.bam
         } else {
-            bam_to_group = SORTBAMCLEAN.out.bam
+            bam_to_group = SAMTOOLSFILTERRAW.out.bam
         }
 
 
@@ -325,7 +325,7 @@ workflow DEEPUMICALLER {
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
-        bam_to_group = SORTBAMCLEAN.out.bam
+        bam_to_group = SAMTOOLSFILTERRAW.out.bam
 
     }
 

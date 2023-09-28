@@ -1,6 +1,6 @@
 process SAMTOOLS_FILTER {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
     label 'process_medium_high_memory'
 
     conda "bioconda::samtools=1.16.1"
@@ -42,7 +42,7 @@ process SAMTOOLS_FILTER {
                     --threads ${task.cpus-1} \\
                     -r - ${meta.id}.tmp.bam
 
-    samtools view ${meta.id}.tmp.bam ${args} > ${prefix}.bam
+    samtools view --threads ${task.cpus-1} ${meta.id}.tmp.bam ${args} > ${prefix}.bam
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

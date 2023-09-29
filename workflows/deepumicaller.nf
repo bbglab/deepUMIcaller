@@ -281,6 +281,9 @@ workflow DEEPUMICALLER {
     ASMINUSXSRAW(bam_n_index)
     SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
 
+    // try to make it template coordinate sorted so that groupbyumi does not need to sort it.
+    // we should add the follwoing option in the sam command
+    // --template-coordinate
     SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
 
     // join the bam and the bamindex channels to have
@@ -304,6 +307,8 @@ workflow DEEPUMICALLER {
 
 
         // truncate BAM to keep only the reads that are on target
+        // TODO
+        // see how BAMFILTERREADS requires the BAM file sorted....
         if (params.remove_offtargets){
             BAM_FILTER_READS(bam_n_index_clean,
                             BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
@@ -332,6 +337,8 @@ workflow DEEPUMICALLER {
         //
 
         // MODULE: Run fgbio GroupReadsByUmi
+        // requires input template coordinate sorted
+        // --template-coordinate
         GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
@@ -378,6 +385,7 @@ workflow DEEPUMICALLER {
             .join( SORTBAMDUPLEXCLEAN.out.csi )
             .set { bam_n_index_duplex_clean }
 
+        // requires input coordinate sorted
         QUALIMAPQCDUPLEX2(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
 
         //
@@ -385,6 +393,7 @@ workflow DEEPUMICALLER {
         //
 
         // MODULE: Run fgbio FilterConsensusReads
+        // requires input queryname sorted
         FILTERCONSENSUSREADSHIGH(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
         ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
 

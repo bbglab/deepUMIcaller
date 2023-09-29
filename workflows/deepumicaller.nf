@@ -276,7 +276,7 @@ workflow DEEPUMICALLER {
     .join( SORTBAM.out.csi )
     .set { bam_n_index }
 
-    QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+    // QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
 
     ASMINUSXSRAW(bam_n_index)
     SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
@@ -296,7 +296,7 @@ workflow DEEPUMICALLER {
     // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
     if (params.targetsfile){
-        QUALIMAPQC2(SORTBAMCLEAN.out.bam, params.targetsfile)
+        QUALIMAPQC(SORTBAMCLEAN.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
@@ -321,7 +321,7 @@ workflow DEEPUMICALLER {
 
 
     } else {
-        QUALIMAPQC2(SORTBAMCLEAN.out.bam, [])
+        QUALIMAPQC(SORTBAMCLEAN.out.bam, [])
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
@@ -372,7 +372,7 @@ workflow DEEPUMICALLER {
         .join( SORTBAMDUPLEX.out.csi )
         .set { bam_n_index_duplex }
 
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEX.out.bam, params.targetsfile)
+        // QUALIMAPQCDUPLEX(SORTBAMDUPLEX.out.bam, params.targetsfile)
 
         ASMINUSXSDUPLEX(bam_n_index_duplex)
         SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
@@ -386,7 +386,7 @@ workflow DEEPUMICALLER {
             .set { bam_n_index_duplex_clean }
 
         // requires input coordinate sorted
-        QUALIMAPQCDUPLEX2(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
 
         //
         // HIGH CONFIDENCE CALLS

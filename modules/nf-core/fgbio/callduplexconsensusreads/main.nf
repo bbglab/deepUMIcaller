@@ -1,6 +1,6 @@
 process FGBIO_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
-    label 'cpu_low'
+    label 'cpu_lowmed'
     label 'time_low'
     label 'memory_medium'
 

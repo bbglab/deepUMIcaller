@@ -270,13 +270,12 @@ workflow DEEPUMICALLER {
     SORTBAM(ALIGNRAWBAM.out.bam)
     ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
-
     // join the bam and the bamindex channels to have
     // the ones from the same samples together
     SORTBAM.out.bam
     .join( SORTBAM.out.csi )
     .set { bam_n_index }
-    
+
     QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
 
     ASMINUSXSRAW(bam_n_index)
@@ -289,10 +288,6 @@ workflow DEEPUMICALLER {
     SORTBAMCLEAN.out.bam
         .join( SORTBAMCLEAN.out.csi )
         .set { bam_n_index_clean }
-
-
-    // samtools view K_10_1_A_1.sorted.bam -b -h -f 0x2 > K_10_1_A_1.sorted.filtered.0x2.bam
-    // ./filter_bam /workspace/nobackup/prominent/PROMINENT_05/results/deepUMIcaller_150623_offtarget_extendedBed/sortbamduplexconshigh/K_10_1_A_1.sorted.filtered.0x2.bam K_10_1_A_1.sorted.filtered.0x2.AS-XS.bam
 
     // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
     // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
@@ -316,7 +311,7 @@ workflow DEEPUMICALLER {
 
             bam_to_group = BAM_FILTER_READS.out.bam
         } else {
-            bam_to_group = SAMTOOLSFILTERRAW.out.bam
+            bam_to_group = SORTBAMCLEAN.out.bam
         }
 
 
@@ -325,7 +320,7 @@ workflow DEEPUMICALLER {
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
-        bam_to_group = SAMTOOLSFILTERRAW.out.bam
+        bam_to_group = SORTBAMCLEAN.out.bam
 
     }
 

@@ -10,7 +10,9 @@ include { NS_X_POSITION        as NSXPOSITION     } from '../../../modules/local
 include { QUERY_TABIX          as QUERYTABIX      } from '../../../modules/local/filtermpileup/main'
 include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
 
-include { FILTER_LOW_COMPLEXITY as FILTERLOWCOMPLEX     } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX    } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE   } from '../../../modules/local/filter/lowmappability/main.nf'
+include { FILTER_N_RICH        as FILTERNRICH     } from '../../../modules/local/filter/nrich/main.nf'
 
 
 workflow RECOUNT_MUTS {
@@ -82,6 +84,13 @@ workflow RECOUNT_MUTS {
 
     // if (filter_muts) {
     FILTERLOWCOMPLEX(ch_vcf_vcfbed)
+    FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed)
+    
+    FILTERLOWMAPPABLE.out.filtered_vcf
+    .join(NSXPOSITION.out.ns_tsv)
+    .set {ch_vcf_ns}
+
+    FILTERNRICH(ch_vcf_ns)
     // }
 
 
@@ -92,7 +101,7 @@ workflow RECOUNT_MUTS {
     corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
 
-    filtered_vcf   = FILTERLOWCOMPLEX.out.filtered_vcf    // channel: [ val(meta), [ vcf ] ]
+    filtered_vcf   = FILTERNRICH.out.filtered_vcf    // channel: [ val(meta), [ vcf ] ]
 
 
 }

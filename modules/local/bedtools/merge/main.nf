@@ -38,6 +38,7 @@ process BEDTOOLS_MERGE {
     bedtools \\
         merge \\
         -i ${prefix}.vcf_derived.many.bed \\
+        -d 10 \\
         > ${prefix}.vcf_derived.bed;
 
     rm ${prefix}.vcf_derived.many.bed;
@@ -45,6 +46,7 @@ process BEDTOOLS_MERGE {
     bedtools \\
         merge \\
         -i <(cat $bed ${prefix}.vcf_derived.bed | cut -f -3 | sort -k1,1 -k2,3n) \\
+        -d 10 \\
         $args \\
         > ${prefix}.regions_n_mutations.bed
 

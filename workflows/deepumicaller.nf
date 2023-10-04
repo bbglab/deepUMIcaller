@@ -296,7 +296,7 @@ workflow DEEPUMICALLER {
     // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
     if (params.targetsfile){
-        QUALIMAPQC(SORTBAMCLEAN.out.bam, params.targetsfile)
+        QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
@@ -321,7 +321,7 @@ workflow DEEPUMICALLER {
 
 
     } else {
-        QUALIMAPQC(SORTBAMCLEAN.out.bam, [])
+        QUALIMAPQC(SORTBAM.out.bam, [])
         ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 

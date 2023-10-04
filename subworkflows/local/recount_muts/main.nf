@@ -79,7 +79,7 @@ workflow RECOUNT_MUTS {
     // FINDMUTATED.out.tags
     // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
 
-    if (params.filter_muts) {
+    if (params.filter_mutations) {
         if (params.filter_human) {
             PATCHDP.out.patched_vcf
             .join( READJUSTREGIONS.out.vcf_bed_mut_ids )

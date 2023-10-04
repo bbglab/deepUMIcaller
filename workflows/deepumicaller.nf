@@ -438,9 +438,9 @@ workflow DEEPUMICALLER {
 
         VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
                             ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
+                            params.vep_genome,
+                            params.vep_species,
+                            params.vep_cache_version,
                             vep_cache,
                             vep_extra_files)
         ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
@@ -496,9 +496,9 @@ workflow DEEPUMICALLER {
 
             VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
                             ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
+                            params.vep_genome,
+                            params.vep_species,
+                            params.vep_cache_version,
                             vep_cache,
                             vep_extra_files)
 
@@ -550,9 +550,9 @@ workflow DEEPUMICALLER {
 
             VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                             ch_ref_fasta,
-                            "GRCh38",
-                            "homo_sapiens", 
-                            "108",
+                            params.vep_genome,
+                            params.vep_species,
+                            params.vep_cache_version,
                             vep_cache,
                             vep_extra_files)
 

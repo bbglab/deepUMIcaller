@@ -431,9 +431,7 @@ workflow DEEPUMICALLER {
         RECOUNTMUTSHIGH(cons_high_bam,
                         CALLINGVARDICTHIGH.out.vcf,
                         params.targetsfile,
-                        ch_ref_fasta,
-                        params.filter_mutations // another option would be to pass this as a tuple of as many elements
-                                                //      as possible filters so that we can tune which filters are applied
+                        ch_ref_fasta
                         )
         ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
 

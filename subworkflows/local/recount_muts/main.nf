@@ -23,7 +23,7 @@ workflow RECOUNT_MUTS {
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] path (intervals_file)
     reference_fasta          // channel: [mandatory] path (reference_fasta)
-    filter_muts              // value  : [mandatory] true or false
+    // filter_muts              // value  : [mandatory] true or false
 
 
     main:
@@ -78,20 +78,29 @@ workflow RECOUNT_MUTS {
     // FINDMUTATED.out.read_names
     // FINDMUTATED.out.tags
     // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
-    PATCHDP.out.patched_vcf
-    .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
-    .set { ch_vcf_vcfbed }
 
-    // if (filter_muts) {
-    FILTERLOWCOMPLEX(ch_vcf_vcfbed)
-    FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed)
-    
-    FILTERLOWMAPPABLE.out.filtered_vcf
-    .join(NSXPOSITION.out.ns_tsv)
-    .set {ch_vcf_ns}
+    if (params.filter_muts) {
+        if (params.filter_human) {
+            PATCHDP.out.patched_vcf
+            .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+            .set { ch_vcf_vcfbed }
 
-    FILTERNRICH(ch_vcf_ns)
-    // }
+            FILTERLOWCOMPLEX(ch_vcf_vcfbed)
+            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed)
+            
+            FILTERLOWMAPPABLE.out.filtered_vcf
+            .join(NSXPOSITION.out.ns_tsv)
+            .set {ch_vcf_ns}
+        } else {
+            PATCHDP.out.patched_vcf
+            .join(NSXPOSITION.out.ns_tsv)
+            .set {ch_vcf_ns}
+        }
+        FILTERNRICH(ch_vcf_ns)
+        output_vcf = FILTERNRICH.out.filtered_vcf
+    } else {
+        output_vcf = PATCHDP.out.patched_vcf
+    }
 
 
 
@@ -101,7 +110,7 @@ workflow RECOUNT_MUTS {
     corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
 
-    filtered_vcf   = FILTERNRICH.out.filtered_vcf    // channel: [ val(meta), [ vcf ] ]
+    filtered_vcf   = output_vcf                 // channel: [ val(meta), [ vcf ] ]
 
 
 }

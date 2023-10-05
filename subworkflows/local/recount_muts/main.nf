@@ -5,9 +5,10 @@ include { BEDTOOLS_MERGE       as READJUSTREGIONS } from '../../../modules/local
 
 include { SAMTOOLS_MPILEUP     as PILEUPBAM       } from '../../../modules/nf-core/samtools/mpileup/main'
 
-include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
-
 include { NS_X_POSITION        as NSXPOSITION     } from '../../../modules/local/count_ns/main'
+
+include { QUERY_TABIX          as QUERYTABIX      } from '../../../modules/local/filtermpileup/main'
+include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
 
 
 workflow RECOUNT_MUTS {
@@ -44,7 +45,7 @@ workflow RECOUNT_MUTS {
     ch_versions = ch_versions.mix(PILEUPBAM.out.versions.first())
 
 
-    NSXPOSITION(PILEUPBAM.out.mpileup) // we could consider tabixing this file
+    NSXPOSITION(PILEUPBAM.out.mpileup)
     // This is the main output
     // NSXPOSITION.out.ns_per_pos
     ch_versions = ch_versions.mix(NSXPOSITION.out.versions.first())
@@ -53,12 +54,13 @@ workflow RECOUNT_MUTS {
     .join( READJUSTREGIONS.out.vcf_bed )
     .set { ch_pileup_vcfbed }
 
-    ch_pileup_vcfbed
+    QUERYTABIX(ch_pileup_vcfbed)
+
+    QUERYTABIX.out.mutated_tsv
     .join( vcf_file )
-    .set { ch_pileup_vcfbed_vcf }
+    .set { ch_pileup_vcf }
 
-
-    PATCHDP(ch_pileup_vcfbed_vcf)
+    PATCHDP(ch_pileup_vcf)
     // This is the main output
     // PATCHDP.out.patched_vcf
     // think well which is the best way to output this information, if a VCF or a TSV with only the updated depths or what.
@@ -70,7 +72,7 @@ workflow RECOUNT_MUTS {
     emit:
 
     ns_file        = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
-    corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ bam ] ]
+    corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
 
 }

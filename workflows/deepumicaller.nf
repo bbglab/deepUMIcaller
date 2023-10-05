@@ -334,9 +334,9 @@ workflow DEEPUMICALLER {
             ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
             // FAMILYMETRICS.out.log.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
         
-        }
+        // }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
             // ASSIGN bam_groupreadsbyumi = to our input bam
             // if (params.step == 'consensus') {
@@ -353,9 +353,9 @@ workflow DEEPUMICALLER {
 
             bam_alignduplexconsensus = ALIGNDUPLEXCONSENSUSBAM.out.bam
 
-        }
+        // }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
             // ASSIGN bam_alignduplexconsensus = to our input bam
             // if (params.step == 'filterconsensus') {
@@ -394,7 +394,8 @@ workflow DEEPUMICALLER {
 
         }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+        if (params.step in ['mapping', 'groupreadsbyumi', 'calling']) {
 
             // ASSIGN cons_high_bam = to our input bam
             if (params.step == 'calling') {
@@ -440,7 +441,8 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_med_conf){
 
-            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            if (params.step in ['mapping', 'groupreadsbyumi']) {
 
                 // ASSIGN bam_alignduplexconsensus = to our input bam
                 // if (params.step == 'filterconsensus') {
@@ -466,7 +468,8 @@ workflow DEEPUMICALLER {
                 COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
             }
 
-            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            if (params.step in ['mapping', 'groupreadsbyumi', 'calling']) {
 
                 // ASSIGN cons_med_bam = to our input bam
                 if (params.step == 'calling') {
@@ -506,7 +509,8 @@ workflow DEEPUMICALLER {
         //
         if (params.duplex_low_conf){
 
-            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            if (params.step in ['mapping', 'groupreadsbyumi']) {
 
                 // ASSIGN bam_alignduplexconsensus = to our input bam
                 // if (params.step == 'filterconsensus') {
@@ -533,7 +537,8 @@ workflow DEEPUMICALLER {
                 COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
             }
 
-            if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+            if (params.step in ['mapping', 'groupreadsbyumi', 'calling']) {
 
                 // ASSIGN cons_low_bam = to our input bam
                 if (params.step == 'calling') {
@@ -583,9 +588,9 @@ workflow DEEPUMICALLER {
             GROUPREADSBYUMI(bam_to_group, "Adjacency")
 
             bam_groupreadbyumiNOduplex = GROUPREADSBYUMI.out.bam
-        }
+        // }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
             // ASSIGN bam_groupreadbyumiNOduplex = to our input bam
             // if (params.step == 'consensus') {
@@ -610,7 +615,8 @@ workflow DEEPUMICALLER {
 
         }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
+        if (params.step in ['mapping', 'groupreadsbyumi', 'calling']) {
 
             // ASSIGN umi_bam = to our input bam
             if (params.step == 'calling') {

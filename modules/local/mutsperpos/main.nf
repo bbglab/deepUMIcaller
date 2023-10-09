@@ -44,7 +44,11 @@ process MUTS_PER_POS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.readjusted.vcf
+    touch ${prefix}_BasePerPosInclNs.png
+    touch ${prefix}_BasePerPosWithoutNs.png
+    touch ${prefix}_MutsPerCycle.dat.csv
+    touch ${prefix}.mutsPerRead.png
+    touch ${prefix}.no_header.vcf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

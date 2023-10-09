@@ -392,13 +392,6 @@ workflow DEEPUMICALLER {
         SIGPROFPLOTHIGH(mutation_files_high.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
 
-        // Merge the VCF and BAM files of the same samples
-        cons_high_bam
-        .join( CALLINGVARDICTHIGH.out.vcf )
-        .set { cons_high_bam_vcf }
-
-        MUTSXPOS(cons_high_bam_vcf)
-        ch_versions = ch_versions.mix(MUTSXPOS.out.versions.first())
 
         // TODO
         // add a module that plots the signature, with the correct normalization
@@ -489,7 +482,7 @@ workflow DEEPUMICALLER {
                             CALLINGVARDICTLOW.out.vcf,
                             params.targetsfile,
                             ch_ref_fasta)
-            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+            ch_versions = ch_versions.mix(RECOUNTMUTSLOW.out.versions.first())
 
             VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                             ch_ref_fasta,

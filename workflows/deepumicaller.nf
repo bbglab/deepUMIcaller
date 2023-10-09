@@ -124,9 +124,9 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQC2                 } from '../modules/nf-core/qualimap/bamqc/main'
+// include { QUALIMAP_BAMQC                    as QUALIMAPQC2                 } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX2           } from '../modules/nf-core/qualimap/bamqc/main'
+// include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX2           } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
 
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
@@ -276,14 +276,10 @@ workflow DEEPUMICALLER {
     .join( SORTBAM.out.csi )
     .set { bam_n_index }
 
-    // QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
-
     ASMINUSXSRAW(bam_n_index)
     SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
 
-    // try to make it template coordinate sorted so that groupbyumi does not need to sort it.
-    // we should add the follwoing option in the sam command
-    // --template-coordinate
+    // template coordinate sorting for the GroupByUMI
     SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
 
     // join the bam and the bamindex channels to have
@@ -338,7 +334,6 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio GroupReadsByUmi
         // requires input template coordinate sorted
-        // --template-coordinate
         GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
@@ -371,8 +366,6 @@ workflow DEEPUMICALLER {
         SORTBAMDUPLEX.out.bam
         .join( SORTBAMDUPLEX.out.csi )
         .set { bam_n_index_duplex }
-
-        // QUALIMAPQCDUPLEX(SORTBAMDUPLEX.out.bam, params.targetsfile)
 
         ASMINUSXSDUPLEX(bam_n_index_duplex)
         SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
@@ -488,10 +481,8 @@ workflow DEEPUMICALLER {
             RECOUNTMUTSMED(cons_med_bam,
                             CALLINGVARDICTMED.out.vcf,
                             params.targetsfile,
-                            ch_ref_fasta,
-                            params.filter_mutations // another option would be to pass this as a tuple of as many elements
-                                                //      as possible filters so that we can tune which filters are applied
-                                                )
+                            ch_ref_fasta
+                            )
             ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
             VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
@@ -542,11 +533,9 @@ workflow DEEPUMICALLER {
             RECOUNTMUTSLOW(cons_low_bam,
                             CALLINGVARDICTLOW.out.vcf,
                             params.targetsfile,
-                            ch_ref_fasta,
-                            params.filter_mutations // another option would be to pass this as a tuple of as many elements
-                                                //      as possible filters so that we can tune which filters are applied
-                                                )
-            ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
+                            ch_ref_fasta
+                            )
+            ch_versions = ch_versions.mix(RECOUNTMUTSLOW.out.versions.first())
 
             VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                             ch_ref_fasta,

@@ -1,18 +1,18 @@
 
 // Import required modules
 
-include { BEDTOOLS_MERGE       as READJUSTREGIONS } from '../../../modules/local/bedtools/merge/main'
+include { BEDTOOLS_MERGE         as READJUSTREGIONS   } from '../../../modules/local/bedtools/merge/main'
 
-include { SAMTOOLS_MPILEUP     as PILEUPBAM       } from '../../../modules/nf-core/samtools/mpileup/main'
+include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/nf-core/samtools/mpileup/main'
 
-include { NS_X_POSITION        as NSXPOSITION     } from '../../../modules/local/count_ns/main'
+include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/local/count_ns/main'
 
-include { QUERY_TABIX          as QUERYTABIX      } from '../../../modules/local/filtermpileup/main'
-include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
+include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/filtermpileup/main'
+include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
 
-include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX    } from '../../../modules/local/filter/lowcomplexrep/main.nf'
-include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE   } from '../../../modules/local/filter/lowmappability/main.nf'
-include { FILTER_N_RICH        as FILTERNRICH     } from '../../../modules/local/filter/nrich/main.nf'
+include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
+include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
 
 
 workflow RECOUNT_MUTS {
@@ -23,7 +23,6 @@ workflow RECOUNT_MUTS {
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] path (intervals_file)
     reference_fasta          // channel: [mandatory] path (reference_fasta)
-    // filter_muts              // value  : [mandatory] true or false
 
 
     main:

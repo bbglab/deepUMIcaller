@@ -29,17 +29,9 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 <!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
 
-On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/fastquorum/results).
-
 ## Pipeline summary
 
-### Usage
-```
-nextflow run main.nf -profile singularity --input assets/duplex_test_B5.csv
-            --ref_fasta refs/gatk/Homo_sapiens_assembly38.fasta
-            --targetsfile refs/beds/xgen-exome-hyb-panel-v2-targets-hg38.bed
-            --outdir results/sample_run
-```
+![deepUMIcaller_diagram](https://github.com/bbglab/deepUMIcaller/assets/6456499/f04ab401-3237-4e3a-aeb7-5827585d732c)
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
@@ -53,35 +45,85 @@ nextflow run main.nf -profile singularity --input assets/duplex_test_B5.csv
    2. For non-Duplex-Sequencing data:
       1. Call molecular consensus reads ([`fgbio CallMolecularConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallMolecularConsensusReads.html))
 6. Align ([`bwa mem`](https://github.com/lh3/bwa))
-7. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html))
-8. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+7. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from very stringent (HIGH) to very permissive (LOW).
+8. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava))
+9. Variant annotation ([`VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)
+10. Perform mutational signatures. ([`SigProfiler`](https://github.com/AlexandrovLab/SigProfilerMatrixGenerator)) 
+11. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
-## Quick Start
+## Initial requirements
 
 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)
 
 2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) (you can follow [this tutorial](https://singularity-tutorial.github.io/01-installation/)), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(you can use [`Conda`](https://conda.io/miniconda.html) both to install Nextflow itself and also to manage software within pipelines. Please only use it within pipelines as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_.
 
-3. Download the pipeline and test it on a minimal dataset with a single command:
 
-   ```console
-   nextflow run nf-core/fastquorum -profile test,YOURPROFILE --outdir <OUTDIR>
-   ```
+## Running the pipeline
 
-   Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
+DeepUMIcaller allows to start the pipeline from a specific step:
 
-   > - The pipeline comes with config profiles called `docker`, `singularity`, `podman`, `shifter`, `charliecloud` and `conda` which instruct the pipeline to use the named tool for software management. For example, `-profile test,docker`.
-   > - Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
-   > - If you are using `singularity`, please use the [`nf-core download`](https://nf-co.re/tools/#downloading-pipelines-for-offline-use) command to download images first, before running the pipeline. Setting the [`NXF_SINGULARITY_CACHEDIR` or `singularity.cacheDir`](https://www.nextflow.io/docs/latest/singularity.html?#singularity-docker-hub) Nextflow options enables you to store and re-use the images from a central location for future pipeline runs.
-   > - If you are using `conda`, it is highly recommended to use the [`NXF_CONDA_CACHEDIR` or `conda.cacheDir`](https://www.nextflow.io/docs/latest/conda.html) settings to store the environments in a central location for future pipeline runs.
+#### Start with FASTQC-Fastq-to_BAM ([default])
 
-4. Start running your own analysis!
+```console
+nextflow run deepUMIcaller/main.nf \
+  -profile singularity --input input.csv \
+  --ref_fasta refs/dnaNexus/hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ 
+```
 
-   <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
+The input.csv samplesheet must contain the following columns:
+```
+sample, fastq_1, fastq_2, read_structure
+patient1, patient1_R1.fastq.gz, patient1_R2.fastq.gz, 8M1S+T 8M1S+T
+```
+The read structure can change depending your configuration.
 
-   ```console
-   nextflow run bbglab/deepUMIcaller --input samplesheet.csv --outdir <OUTDIR> --genome <GenomeFile> --targetsfile <targets_file> -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
-   ```
+#### Start with GroupByUMI (`groupreadsbyumi`)
+```console
+nextflow run deepUMIcaller/main.nf \
+  -profile singularity --input input.csv \
+  --ref_fasta  refs/dnaNexus/hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step groupreadsbyumi
+```
+In this case, the input.csv samplesheet must contain the following columns:
+```
+sample, bam, csi, read_structure
+patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
+```
+
+#### Start with VarDict Variant Calling (`CALLING_VARDICT`)
+
+By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
+
+```console
+nextflow run deepUMIcaller/main.nf \
+  -profile singularity --input input.csv \
+  --ref_fasta refs/dnaNexus/hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step calling
+```
+
+If you prefer to do it only for HIGH e.g.:
+```console
+nextflow run deepUMIcaller/main.nf \
+  -profile singularity --input input.csv \
+  --ref_fasta refs/dnaNexus/hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step calling \
+  --duplex_med_conf false \
+  --duplex_low_conf false
+```
+
+The input.csv samplesheet must contain the following columns:
+```
+sample, bam, csi, read_structure
+patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
+```
 
 The GenomeFile must contain it's own bwa index in the same directory.
 ## Documentation

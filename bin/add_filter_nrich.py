@@ -31,6 +31,20 @@ def update_filter_field(row, filter_name):
     
     return row
 
+
+def add_filter(old_filt, add_filt, filt_name):
+        """
+        old filt is the current FILTER field value
+        add_filt is a boolean, either True or False
+        filt_name is the name that should be added in the FILTER field in case the add_filt value is True
+        """
+        if add_filt:
+            if old_filt == "PASS":
+                return filt_name
+            old_filt += ";" + filt_name
+        return ";".join( sorted(old_filt.split(";")) )
+
+
 def add_filter_nrich(vcf, ns_position_file, filter_name):
     """
     Adds to a VCF-like dataframe an additional filter
@@ -52,14 +66,14 @@ def add_filter_nrich(vcf, ns_position_file, filter_name):
     # define filter threshold
     ## load file with Ns counts per position along the entire panel (no mutations only)
     ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
-                                names = ["CHROM", "START", "END", "TOTAL_DEPTH", "N_COUNT"]) 
+                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"]) 
 
     ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
     ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,
-                                                                            axis = 1)
+                                                                                axis = 1)
     ## compute threshold over the log-transformed data and pass back to the original scale
     log_data = np.log(ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"])
-    median = np.median(log_data)  
+    median = np.median(log_data)
     std_dev = np.std(log_data)
     threshold = np.exp(median+2*std_dev)
     
@@ -68,32 +82,30 @@ def add_filter_nrich(vcf, ns_position_file, filter_name):
     #(w/ pseudocount to fit with the threshold calculation)
         #NDP: 9th column in last field of VCF (0-based)
         #CDP: 7th column in last field of VCF (0-based)
-    def annot(row, threshold, filter_name):
+    def annot(sample, filter, threshold):
 
         # if there is no_pileup_support, the filter is not annotated because depths are zero
-        if "no_pileup_support" not in row["FILTER"]:
+        if "no_pileup_support" not in filter:
 
-            proportion_ns = (int(row["SAMPLE"].split(":")[9]) / (int(row["SAMPLE"].split(":")[9])+int(row["SAMPLE"].split(":")[7])))+0.0000001
+            proportion_ns = (int(sample.split(":")[9]) / (int(sample.split(":")[9])+int(sample.split(":")[7])))+0.0000001
 
             if proportion_ns > threshold:
-                row[filter_name] = filter_name
+                return True
 
-            else:
-                row[filter_name] = np.nan
-        
-        else:
-            row[filter_name] = np.nan
+        return False
 
-        return row 
+    # compute which mutations have a proportion of ns higher than the threshold
+    vcf[filter_name] = vcf.apply(lambda row: annot(row["SAMPLE"], row["FILTER"], threshold), axis = 1)
 
-    vcf = vcf.apply(lambda row: annot(row, threshold, filter_name), axis = 1)
     # add new value to FILTER column when needed
-    updated_vcf = vcf.apply(lambda row: update_filter_field(row, filter_name), axis = 1)
+    vcf["FILTER"] = vcf[["FILTER",filter_name]].apply(
+                                                        lambda x: add_filter(x["FILTER"], x[filter_name], filter_name),
+                                                        axis = 1
+                                                        )
 
     # remove unneeded column from vcf
-    updated_vcf = updated_vcf.drop([filter_name], axis = 1)
+    return vcf.drop([filter_name], axis = 1), threshold
 
-    return updated_vcf, threshold
 
 def main(vcf_file, ns_position_file, output_filename, filter_name):
     """

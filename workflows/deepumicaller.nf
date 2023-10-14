@@ -341,11 +341,11 @@ workflow DEEPUMICALLER {
                 bam_to_group = INPUT_CHECK.out.reads
             }
 
-        // MODULE: Run fgbio GroupReadsByUmi
-        // requires input template coordinate sorted
-        GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
-        ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
-        ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
+            // MODULE: Run fgbio GroupReadsByUmi
+            // requires input template coordinate sorted
+            GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
+            ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
+            ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
 
             // MODULE: Run fgbio CollecDuplexSeqMetrics
@@ -358,23 +358,23 @@ workflow DEEPUMICALLER {
             .set {metrics_ch}
 
 
-        // Plot the family size metrics
-        FAMILYMETRICS(metrics_ch)
-        ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
-        FAMILYMETRICS.out.log.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+            // Plot the family size metrics
+            FAMILYMETRICS(metrics_ch)
+            ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
+            FAMILYMETRICS.out.log.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
-        bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
+            bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
 
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
 
-            // ASSIGN bam_groupreadsbyumi = to our input bam
-            // if (params.step == 'consensus') {
-            //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
-            // }
+                // ASSIGN bam_groupreadsbyumi = to our input bam
+                // if (params.step == 'consensus') {
+                //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
+                // }
 
-        // MODULE: Run fgbio CallDuplexConsensusReads
-        CALLDUPLEXCONSENSUSREADS(bam_groupreadsbyumi)
-        ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+            // MODULE: Run fgbio CallDuplexConsensusReads
+            CALLDUPLEXCONSENSUSREADS(bam_groupreadsbyumi)
+            ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
 
             // MODULE: Align with bwa mem
             ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
@@ -382,43 +382,43 @@ workflow DEEPUMICALLER {
 
                 // }
 
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
+            // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
 
-            // ASSIGN bam_alignduplexconsensus = to our input bam
-            // if (params.step == 'filterconsensus') {
-            //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
-            // }
+                // ASSIGN bam_alignduplexconsensus = to our input bam
+                // if (params.step == 'filterconsensus') {
+                //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
+                // }
 
-        SORTBAMDUPLEX(bam_alignduplexconsensus)
+            SORTBAMDUPLEX(bam_alignduplexconsensus)
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEX.out.bam
-        .join( SORTBAMDUPLEX.out.csi )
-        .set { bam_n_index_duplex }
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMDUPLEX.out.bam
+            .join( SORTBAMDUPLEX.out.csi )
+            .set { bam_n_index_duplex }
 
-        ASMINUSXSDUPLEX(bam_n_index_duplex)
-        SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
-        
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
+            ASMINUSXSDUPLEX(bam_n_index_duplex)
+            SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
+            
+            SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCLEAN.out.bam
-            .join( SORTBAMDUPLEXCLEAN.out.csi )
-            .set { bam_n_index_duplex_clean }
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMDUPLEXCLEAN.out.bam
+                .join( SORTBAMDUPLEXCLEAN.out.csi )
+                .set { bam_n_index_duplex_clean }
 
-        // requires input coordinate sorted
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+            // requires input coordinate sorted
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
 
             //
             // HIGH CONFIDENCE CALLS
             //
 
-        // MODULE: Run fgbio FilterConsensusReads
-        // requires input queryname sorted
-        FILTERCONSENSUSREADSHIGH(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
-        ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
+            // MODULE: Run fgbio FilterConsensusReads
+            // requires input queryname sorted
+            FILTERCONSENSUSREADSHIGH(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
+            ch_versions = ch_versions.mix(FILTERCONSENSUSREADSHIGH.out.versions.first())
 
             // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
             CLIPBAMHIGH(FILTERCONSENSUSREADSHIGH.out.bam, ch_ref_fasta)
@@ -499,7 +499,7 @@ workflow DEEPUMICALLER {
                 //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
                 // }
 
-            FILTERCONSENSUSREADSMED(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
+                FILTERCONSENSUSREADSMED(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
 
                 // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
                 CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)

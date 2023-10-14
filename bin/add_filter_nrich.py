@@ -45,7 +45,7 @@ def add_filter(old_filt, add_filt, filt_name):
         return ";".join( sorted(old_filt.split(";")) )
 
 
-def add_filter_nrich(vcf, ns_position_file, filter_name):
+def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth = 1000):
     """
     Adds to a VCF-like dataframe an additional filter
     in mutations located at positions which have more 
@@ -67,6 +67,8 @@ def add_filter_nrich(vcf, ns_position_file, filter_name):
     ## load file with Ns counts per position along the entire panel (no mutations only)
     ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
                                 names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"]) 
+
+    ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth].reset_index(drop = True)
 
     ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
     ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,
@@ -107,7 +109,7 @@ def add_filter_nrich(vcf, ns_position_file, filter_name):
     return vcf.drop([filter_name], axis = 1), threshold
 
 
-def main(vcf_file, ns_position_file, output_filename, filter_name):
+def main(vcf_file, ns_position_file, output_filename, filter_name, min_pos_depth):
     """
     Reads a VCF file and adds n_rich value to the
     FILTER field where applicable.
@@ -121,7 +123,6 @@ def main(vcf_file, ns_position_file, output_filename, filter_name):
         Ns per position.
     output_filename: str
         Name path for the resulting updated VCF.
-
     """
 
     ###
@@ -133,7 +134,7 @@ def main(vcf_file, ns_position_file, output_filename, filter_name):
     ###
     # Add filter: mutations in positions with more Ns than expected
     ###
-    updated_vcf, threshold = add_filter_nrich(vcf, ns_position_file, filter_name)
+    updated_vcf, threshold = add_filter_nrich(vcf, ns_position_file, filter_name, min_pos_depth)
 
     ###
     # Read the VCF header
@@ -156,7 +157,7 @@ def main(vcf_file, ns_position_file, output_filename, filter_name):
     # Add your custom header lines
     ###    
     # FILTER field
-    header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a position with more Ns than expected. Threshold in this sample: {round(threshold, 3)}. deepUMIcaller.">')
+    header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a position with more Ns than expected. Threshold in this sample: {round(threshold, 6)}. deepUMIcaller.">')
     
     ###
     # Combine the modified header rows
@@ -180,4 +181,5 @@ if __name__ == '__main__':
     ns_position_file = sys.argv[2]
     output_filename = sys.argv[3]
     filter_name = sys.argv[4]
-    main(vcf_file, ns_position_file, output_filename, filter_name)
+    min_depth = int(sys.argv[5])
+    main(vcf_file, ns_position_file, output_filename, filter_name, min_depth)

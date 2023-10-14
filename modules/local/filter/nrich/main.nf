@@ -25,12 +25,17 @@ process FILTER_N_RICH {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    // TODO
+    // add the depth limit as a parameter, also test how it works
+    // also it would be better to set it dynamically as
+    // a given quantile of depth? (25%?)
     """
     add_filter_nrich.py \\
             ${vcf_file} \\
             ${ns_position_file} \\
             ${prefix}.filtered.vcf \\
-            n_rich;
+            n_rich \\
+            1000
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

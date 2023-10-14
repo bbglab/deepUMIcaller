@@ -1,6 +1,8 @@
 process NS_X_POSITION {
     tag "$meta.id"
-    label 'process_medium'
+    label 'cpu_single'
+    label 'time_low'
+    label 'process_low_memory'
 
     conda "bioconda::tabix=1.11"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

@@ -1,6 +1,8 @@
 process BEDTOOLS_MERGE {
     tag "$meta.id"
-    label 'process_single'
+    label 'cpu_single'
+    label 'time_low'
+    label 'process_low_memory'
 
     conda "bioconda::bedtools=2.31.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

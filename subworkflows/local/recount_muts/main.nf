@@ -7,7 +7,7 @@ include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/n
 
 include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/local/count_ns/main'
 
-include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/filtermpileup/main'
+include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/tabix_mpileup/main'
 include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
 
 include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'

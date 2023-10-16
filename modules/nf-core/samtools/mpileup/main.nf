@@ -1,6 +1,8 @@
 process SAMTOOLS_MPILEUP {
     tag "$meta.id"
-    label 'process_medium'
+    label 'cpu_single'
+    label 'time_low'
+    label 'memory_medium'
 
     conda "bioconda::samtools=1.17"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

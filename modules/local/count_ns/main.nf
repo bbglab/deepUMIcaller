@@ -1,6 +1,8 @@
 process NS_X_POSITION {
     tag "$meta.id"
-    label 'process_medium'
+    label 'cpu_single'
+    label 'time_low'
+    label 'memory_medium'
 
     conda "bioconda::tabix=1.11"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -22,10 +24,10 @@ process NS_X_POSITION {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     zcat $pileup | \\
-            awk 'BEGIN{FS=OFS="\\t"} {print \$1"\\t"\$2"\\t"gsub(/N/,"",\$5)"\\t"gsub(/n/,"",\$5)}' | \\
-            awk '{\$3=\$3+\$4; print \$1"\\t"\$2"\\t"\$3}' | \\
+            awk 'BEGIN{FS=OFS="\\t"} {print \$1"\\t"\$2"\\t"\$4"\\t"gsub(/N/,"",\$5)"\\t"gsub(/n/,"",\$5)}' | \\
+            awk '{\$4=\$4+\$5; print \$1"\\t"\$2"\\t"\$3"\\t"\$4}' | \\
             bgzip \\
-            > ${prefix}.Ns_per_position.tsv.gz
+            > ${prefix}.Ns_per_position.tsv.gz;
     tabix -s 1 -b 2 -e 2 ${prefix}.Ns_per_position.tsv.gz;
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -53,3 +55,8 @@ process NS_X_POSITION {
 //         awk '{\$3=\$3+\$4; print \$1"\\t"\$2"\\t"\$3}' | \\
 //         bgzip | \\
 //         > ${prefix}.Ns_per_position.tsv.gz
+
+// bedtools intersect -u -a <(zcat $MPILEUP_PATH/$SAMPLE.mpileup_out.tsv.gz |
+//                             awk 'BEGIN{FS=OFS="\t"} {print $1"\t"$2"\t"$4"\t"gsub(/N/,"",$5)"\t"gsub(/n/,"",$5)}' |
+//                             awk '{$4=$4+$5; print $1"\t"$2"\t"$2"\t"$3"\t"$4}') -b $BED_FILE |
+//                             gzip > $N_DEPTH_PATH/$SAMPLE.high.Ns_per_position.tsv.gz

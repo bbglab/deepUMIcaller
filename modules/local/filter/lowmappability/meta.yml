@@ -1,14 +1,16 @@
-name: metrics_familysize
-description: Computes family size metrics.
+# TODO
+name: fgbio_sortbam 
+description: Sorts a SAM or BAM file. Several sort orders are available, including coordinate, queryname, random, and randomquery.
 keywords:
-  - metrics
-  - duplex
+  - sort
+  - bam
+  - sam
 tools:
-  - python:
-      description: 
-      homepage: 
-      documentation: 
-      licence: 
+  - fgbio:
+      description: Tools for working with genomic and high throughput sequencing data.
+      homepage: https://github.com/fulcrumgenomics/fgbio
+      documentation: http://fulcrumgenomics.github.io/fgbio/
+      licence: ["MIT"]
 
 input:
   - meta:

@@ -1,6 +1,9 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
     label 'process_low_multicpu'
+    label 'memory_medium'
+    label 'time_medium'
+
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -22,9 +25,20 @@ process FGBIO_GROUPREADSBYUMI {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def mem_gb = 8
+    if (!task.memory) {
+        log.info '[fgbio GroupReadsByUmi] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
+    } else if (mem_gb > task.memory.giga) {
+        if (task.memory.giga < 2) {
+            mem_gb = 1
+        } else {
+            mem_gb = task.memory.giga - 1
+        }
+    }
 
     """
     fgbio \\
+        -Xmx${mem_gb}g \\
         --tmp-dir=. \\
         GroupReadsByUmi \\
         $args \\

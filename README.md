@@ -98,6 +98,7 @@ patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
 
 By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
 
+
 ```console
 nextflow run deepUMIcaller/main.nf \
   -profile singularity --input input.csv \

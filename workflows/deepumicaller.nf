@@ -272,23 +272,24 @@ workflow DEEPUMICALLER {
         SORTBAM(ALIGNRAWBAM.out.bam)
         ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
 
-    // join the bam and the bamindex channels to have
-    // the ones from the same samples together
-    SORTBAM.out.bam
-    .join( SORTBAM.out.csi )
-    .set { bam_n_index }
 
-    ASMINUSXSRAW(bam_n_index)
-    SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAM.out.bam
+        .join( SORTBAM.out.csi )
+        .set { bam_n_index }
 
-    // template coordinate sorting for the GroupByUMI
-    SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
+        ASMINUSXSRAW(bam_n_index)
+        SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
 
-    // join the bam and the bamindex channels to have
-    // the ones from the same samples together
-    SORTBAMCLEAN.out.bam
-        .join( SORTBAMCLEAN.out.csi )
-        .set { bam_n_index_clean }
+        // template coordinate sorting for the GroupByUMI
+        SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
+
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMCLEAN.out.bam
+            .join( SORTBAMCLEAN.out.csi )
+            .set { bam_n_index_clean }
 
         // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
         // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
@@ -328,11 +329,11 @@ workflow DEEPUMICALLER {
         }
     }
 
+
     if (params.duplex_seq) {
         //
         // Run fgbio Duplex consensus pipeline
         //
-
 
         if (params.step in ['mapping', 'groupreadsbyumi']) {
             
@@ -351,6 +352,7 @@ workflow DEEPUMICALLER {
             // MODULE: Run fgbio CollecDuplexSeqMetrics
             COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
             ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
+
 
             // Join groupby stats and duplex seq metrics files from the same samples
             GROUPREADSBYUMIDUPLEX.out.histogram
@@ -411,6 +413,7 @@ workflow DEEPUMICALLER {
             // requires input coordinate sorted
             QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
 
+
             //
             // HIGH CONFIDENCE CALLS
             //
@@ -466,6 +469,7 @@ workflow DEEPUMICALLER {
                             ch_ref_fasta
                         )
             ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
+
 
 
             VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
@@ -552,8 +556,6 @@ workflow DEEPUMICALLER {
             }
         }
 
-
-
         //
         // Low Confidence mutations
         //
@@ -567,8 +569,8 @@ workflow DEEPUMICALLER {
                 //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
                 // }
 
-            // filter the reads with the low conf parameters
-            FILTERCONSENSUSREADSLOW(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
+                // filter the reads with the low conf parameters
+                FILTERCONSENSUSREADSLOW(SAMTOOLSFILTERDUPLEX.out.bam, ch_ref_fasta)
 
                 // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
                 CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)

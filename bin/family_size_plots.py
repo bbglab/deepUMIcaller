@@ -33,7 +33,6 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, limx)
 
     data_duplex_families_small = data_duplex_families[["ab_size", "ba_size", "count", "in_duplex"]]
 
-
     family_size1 = data_duplex_families_small[["ab_size", "count", "in_duplex"]]
     family_size2 = data_duplex_families_small[["ba_size", "count", "in_duplex"]]
     family_size1.columns = ["family_size", "count", "in_duplex"]
@@ -127,6 +126,7 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, limx)
 
     total_scss_duplex = data_scss["count"][data_scss["in_duplex"]].sum()
     total_reads_duplex = data_scss_grouped["count_reads"][data_scss["in_duplex"]].sum()
+
     
     total_scss_nonduplex = data_scss["count"][~data_scss["in_duplex"]].sum()
     total_reads_nonduplex = data_scss_grouped["count_reads"][~data_scss["in_duplex"]].sum()

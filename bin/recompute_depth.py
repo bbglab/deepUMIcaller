@@ -44,12 +44,12 @@ def parse_mpu(x):
             j += 1
         else:
             print('*ERROR* mpileup parser: Unknown char {} in {}[{}]'
-                  .format(reads[i], reads, i), file=sys.stderr)
+                    .format(reads[i], reads, i), file=sys.stderr)
 
     if len(readlist) != len(bqlist):
         print('*ERROR* mpileup parser: length mismatch between BQ string {} '
-              'and reads string {} (breakdown={})'
-              .format(bqlist, reads, ':'.join(readlist)), file=sys.stderr)
+                'and reads string {} (breakdown={})'
+                .format(bqlist, reads, ':'.join(readlist)), file=sys.stderr)
 
     return readlist, bqlist
 

@@ -1,16 +1,22 @@
 
 // Import required modules
 
-include { BEDTOOLS_MERGE       as READJUSTREGIONS } from '../../../modules/local/bedtools/merge/main'
+include { BEDTOOLS_MERGE         as READJUSTREGIONS   } from '../../../modules/local/bedtools/merge/main'
 
-include { SAMTOOLS_MPILEUP     as PILEUPBAM       } from '../../../modules/nf-core/samtools/mpileup/main'
+include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/nf-core/samtools/mpileup/main'
 
-include { NS_X_POSITION        as NSXPOSITION     } from '../../../modules/local/count_ns/main'
+include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/local/count_ns/main'
 
-include { QUERY_TABIX          as QUERYTABIX      } from '../../../modules/local/filtermpileup/main'
-include { PATCH_DEPTH          as PATCHDP         } from '../../../modules/local/patchdepth/main'
+include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/tabix_mpileup/main'
+include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
+
+include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
+include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
+
 include { FILTERMUTATIONS      as FILTERVCF       } from '../../../modules/local/filtervcf/main'
 include { MUTS_PER_POS         as MUTSPERPOS      } from '../../../modules/local/mutsperpos/main'
+
 
 
 workflow RECOUNT_MUTS {
@@ -28,8 +34,9 @@ workflow RECOUNT_MUTS {
     ch_versions = Channel.empty()
 
     READJUSTREGIONS(vcf_file, bed_file)
-    // These are the two main outputs
+    // These are the three main outputs
     // READJUSTREGIONS.out.vcf_bed
+    // READJUSTREGIONS.out.vcf_bed_mut_ids
     // READJUSTREGIONS.out.regions_plus_variants_bed
 
     ch_versions = ch_versions.mix(READJUSTREGIONS.out.versions.first())
@@ -70,7 +77,35 @@ workflow RECOUNT_MUTS {
     //   maybe it makes 
     ch_versions = ch_versions.mix(PATCHDP.out.versions.first())
     
-    FILTERVCF(PATCHDP.out.patched_vcf)
+    // FINDMUTATED(ch_pileup_vcf)
+    // FINDMUTATED.out.read_names
+    // FINDMUTATED.out.tags
+    // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
+
+    if (params.filter_mutations) {
+        if (params.filter_human) {
+            PATCHDP.out.patched_vcf
+            .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+            .set { ch_vcf_vcfbed }
+
+            FILTERLOWCOMPLEX(ch_vcf_vcfbed)
+            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed)
+            
+            FILTERLOWMAPPABLE.out.filtered_vcf
+            .join(NSXPOSITION.out.ns_tsv)
+            .set {ch_vcf_ns}
+        } else {
+            PATCHDP.out.patched_vcf
+            .join(NSXPOSITION.out.ns_tsv)
+            .set {ch_vcf_ns}
+        }
+        FILTERNRICH(ch_vcf_ns)
+        output_vcf = FILTERNRICH.out.filtered_vcf
+    } else {
+        output_vcf = PATCHDP.out.patched_vcf
+    }
+
+    FILTERVCF(output_vcf)
     ch_versions = ch_versions.mix(FILTERVCF.out.versions.first())
 
     bam_n_index
@@ -78,12 +113,14 @@ workflow RECOUNT_MUTS {
     .set { ch_bam_bai_vcf }
     
     MUTSPERPOS(ch_bam_bai_vcf)
-    
 
     emit:
 
     ns_file        = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
-    somatic_vcf    = FILTERVCF.out.vcf          // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
+
+    filtered_vcf   = output_vcf                 // channel: [ val(meta), [ vcf ] ]
+    somatic_vcf    = FILTERVCF.out.vcf          // channel: [ val(meta), [ vcf ] ]
+
 
 }

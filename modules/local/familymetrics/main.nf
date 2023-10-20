@@ -17,6 +17,8 @@ process FAMILYSIZEMETRICS {
     output:
     tuple val(meta), path("*.pdf"), emit: pdf
     path  "versions.yml"          , emit: versions
+    stdout                          emit: log
+
 
     when:
     task.ext.when == null || task.ext.when
@@ -29,7 +31,8 @@ process FAMILYSIZEMETRICS {
                 ${prefix} \\
                 ${groupby_metrics} \\
                 ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt \\
-                ${prefix}.family_sizes_plot_n_stats.pdf
+                ${prefix}.family_sizes_plot_n_stats.pdf \\
+                ${prefix}.family_sizes_plot_n_stats.high.pdf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -40,7 +43,8 @@ process FAMILYSIZEMETRICS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.family_sizes_plot_n_stats.pdf
+    touch ${prefix}.family_sizes_plot_n_stats.pdf \\ 
+            ${prefix}.family_sizes_plot_n_stats.high.pdf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

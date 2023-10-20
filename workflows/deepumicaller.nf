@@ -387,7 +387,7 @@ workflow DEEPUMICALLER {
                             vep_extra_files)
         ch_versions = ch_versions.mix(VCFANNOTATEHIGH.out.versions.first())
 
-        CALLINGVARDICTHIGH.out.vcf.map{it -> it[1]}.set { mutation_files_high }
+        RECOUNTMUTSHIGH.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_high }
 
         SIGPROFPLOTHIGH(mutation_files_high.collect())
         // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
@@ -441,7 +441,7 @@ workflow DEEPUMICALLER {
                             vep_cache,
                             vep_extra_files)
 
-            CALLINGVARDICTMED.out.vcf.map{it -> it[1]}.set { mutation_files_med }
+            RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
             SIGPROFPLOTMED(mutation_files_med.collect())
         }
 
@@ -492,7 +492,7 @@ workflow DEEPUMICALLER {
                             vep_cache,
                             vep_extra_files)
 
-            CALLINGVARDICTLOW.out.vcf.map{it -> it[1]}.set { mutation_files_low }
+            RECOUNTMUTSLOW.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_low }
             SIGPROFPLOTLOW(mutation_files_low.collect())
         }
 

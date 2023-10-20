@@ -67,11 +67,18 @@ process SIGPROFILER_MATRIXGENERATOR {
         else:
             shutil.move(f, f'{input_dir}/{file}')
 
+    if "${params.vep_genome}" in ["GRCh37", "GRCh38", "mm9", "mm10"]:
+        chosen_genome = "${params.vep_genome}"
+    else:
+        print("genome not found, using GRCh38")
+        chosen_genome = "GRCh38"
+
     matGen.SigProfilerMatrixGeneratorFunc("$prefix",
-                                            "GRCh38",
+                                            chosen_genome,
                                             f"{input_dir}",
                                             $args
                                             )
+
     version_file = open("versions.yml", "w")
     version_file.write("${task.process}\\n")
     version_file.write(f"    python: {sys.version.split(' ')[0]}\\n")

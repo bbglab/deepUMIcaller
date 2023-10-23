@@ -14,6 +14,10 @@ include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/l
 include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
 include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
 
+include { FILTERMUTATIONS      as FILTERVCF       } from '../../../modules/local/filtervcf/main'
+include { MUTS_PER_POS         as MUTSPERPOS      } from '../../../modules/local/mutsperpos/main'
+
+
 
 workflow RECOUNT_MUTS {
 
@@ -72,7 +76,7 @@ workflow RECOUNT_MUTS {
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
     ch_versions = ch_versions.mix(PATCHDP.out.versions.first())
-
+    
     // FINDMUTATED(ch_pileup_vcf)
     // FINDMUTATED.out.read_names
     // FINDMUTATED.out.tags
@@ -101,15 +105,22 @@ workflow RECOUNT_MUTS {
         output_vcf = PATCHDP.out.patched_vcf
     }
 
+    FILTERVCF(output_vcf)
+    ch_versions = ch_versions.mix(FILTERVCF.out.versions.first())
 
+    bam_n_index
+    .join( FILTERVCF.out.vcf )
+    .set { ch_bam_bai_vcf }
+    
+    MUTSPERPOS(ch_bam_bai_vcf)
 
     emit:
 
     ns_file        = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
-    corrected_vcf  = PATCHDP.out.patched_vcf    // channel: [ val(meta), [ vcf ] ]
     versions       = ch_versions                // channel: [ versions.yml ]
 
     filtered_vcf   = output_vcf                 // channel: [ val(meta), [ vcf ] ]
+    somatic_vcf    = FILTERVCF.out.vcf          // channel: [ val(meta), [ vcf ] ]
 
 
 }

@@ -90,6 +90,36 @@
                     "default": "mapping",
                     "fa_icon": "fas fa-book",
                     "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."
+                },
+                "filter_human": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
+                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
+                },
+                "filter_mutations": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable for filtering Ns",
+                    "help_text": ""
+                },
+                "low_mappability_file": {
+                    "type": "string",
+                    "description": "BED file with the low mappability regions.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be discarded in the analysis."
+                },,
+                "low_complex_file": {
+                    "type": "string",
+                    "description": "BED file with the low complex regions.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be discarded in the analysis."
+                },
+                "asminusxs_thres": {
+                    "type": "integer",
+                    "description": "Avoid multiple mapping.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": ""
                 }
             }
         },

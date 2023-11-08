@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
 
+##
+# Script extracted from here: https://github.com/Kennedy-Lab-UW/Duplex-Seq-Pipeline/tree/dev
+# credit from this part goes to the developers there
+##
+
+
 from collections import OrderedDict
 import datetime
 import sys

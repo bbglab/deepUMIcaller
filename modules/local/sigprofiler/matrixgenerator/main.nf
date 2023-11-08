@@ -16,7 +16,7 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process SIGPROFILER_MATRIXGENERATOR {
-    tag "1"
+    tag "${task.ext.prefix}"
     label 'process_single'
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
@@ -24,7 +24,7 @@ process SIGPROFILER_MATRIXGENERATOR {
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
     //     'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE':
     //     'biocontainers/YOUR-TOOL-HERE' }"
-    container 'docker.io/ferriolcalvet/sigprofiler:human'
+    container 'docker.io/ferriolcalvet/sigprofiler:latest'
 
     input:
     path (vcf)
@@ -46,43 +46,27 @@ process SIGPROFILER_MATRIXGENERATOR {
     def prefix = task.ext.prefix ?: "samples"
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
     """
-    #!/usr/bin/env python3
+    sigprofiler_matrix_generator.py \\
+                ${prefix} \\
+                ${params.vep_genome}
 
-    import os, sys, glob, gzip, shutil
-    from SigProfilerMatrixGenerator.scripts import SigProfilerMatrixGeneratorFunc as matGen
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+        sigprofiler: 1.2.1
+    END_VERSIONS
+    """
 
-    file_list = glob.glob(f"./*.vcf*")
-    input_dir = "./input_mutations"
-
-    # create dir
-    os.mkdir(input_dir)
-    
-    #print(file_list)
-
-    for f in file_list:
-        file = f.split("/")[-1]
-        if file.endswith(".gz"):
-            with gzip.open(f, 'r') as f_in, open(f'{input_dir}/{file[:-3]}', 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        else:
-            shutil.move(f, f'{input_dir}/{file}')
-
-    if "${params.vep_genome}" in ["GRCh37", "GRCh38", "mm9", "mm10"]:
-        chosen_genome = "${params.vep_genome}"
-    else:
-        print("genome not found, using GRCh38")
-        chosen_genome = "GRCh38"
-
-    matGen.SigProfilerMatrixGeneratorFunc("$prefix",
-                                            chosen_genome,
-                                            f"{input_dir}",
-                                            $args
-                                            )
-
-    version_file = open("versions.yml", "w")
-    version_file.write("${task.process}\\n")
-    version_file.write(f"    python: {sys.version.split(' ')[0]}\\n")
-    version_file.write("    sigprofiler: 1.2.1\\n")
-    version_file.close()
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+        sigprofiler: 1.2.1
+    END_VERSIONS
     """
 }
+
+// touch ${prefix}.family_sizes_plot_n_stats.pdf \\ 
+//             ${prefix}.family_sizes_plot_n_stats.high.pdf

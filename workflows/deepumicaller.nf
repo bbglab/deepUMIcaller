@@ -484,7 +484,7 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSHIGH.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_high }
             SIGPROFPLOTHIGH(mutation_files_high.collect())
-            // ch_versions = ch_versions.mix(SIGPROFPLOTDUPLEX.out.versions.first())
+            ch_versions = ch_versions.mix(SIGPROFPLOTHIGH.out.versions.first())
 
         }
         // TODO

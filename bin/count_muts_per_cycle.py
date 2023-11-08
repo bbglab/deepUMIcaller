@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+##
+# Script extracted from here: https://github.com/Kennedy-Lab-UW/Duplex-Seq-Pipeline/tree/dev
+# credit from this part goes to the developers there
+##
+
 
 import sys
 import math

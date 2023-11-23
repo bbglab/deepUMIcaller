@@ -83,8 +83,7 @@ def vartype(x,
 def count_freq_in_row(elements_in_row, searching_elems):
     dp = 0
     for search in searching_elems:
-        if search in elements_in_row:
-            dp += elements_in_row[search]
+        dp += elements_in_row.get(search, 0)
     return dp
 
 
@@ -137,7 +136,8 @@ def recompute_depth(vcf,
                 elements_in_row = Counter(mpileup_row["SPLIT_bases"])
                 count_ns = count_freq_in_row(elements_in_row, ["N"])
                 ref_dp = count_freq_in_row(elements_in_row, [",", "."])
-                total_dp = mpileup_row["DEPTH"] - count_ns
+                deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
+                total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
                 info_vcf.append(
                             (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}")
@@ -154,7 +154,8 @@ def recompute_depth(vcf,
                 elements_in_row = Counter(mpileup_row["SPLIT_bases"])
                 count_ns = count_freq_in_row(elements_in_row, ["N"])
                 ref_dp = count_freq_in_row(elements_in_row, [",", "."])
-                total_dp = mpileup_row["DEPTH"] - count_ns
+                deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
+                total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
                 
                 info_vcf.append(
                             (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}")
@@ -186,12 +187,13 @@ def recompute_depth(vcf,
 
                     elements_in_row = Counter(mpileup_row["SPLIT_bases"])
                     count_ns = count_freq_in_row(elements_in_row, ["N"])
+                    deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
                     ns_dp_count += count_ns
 
                     ref_dp = count_freq_in_row(elements_in_row, [",", "."])
                     ref_dp_count += ref_dp
                     
-                    total_dp = mpileup_row["DEPTH"] - count_ns
+                    total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
                     total_dp_count += total_dp
 
                     count_alt = count_freq_in_row(elements_in_row, search)
@@ -252,24 +254,24 @@ def recompute_depth(vcf,
                 alt_dp = count_freq_in_row(elements_in_row, [f".{search}", f",{search}"])
                 count_ns = count_freq_in_row(elements_in_row, ["N"])
                 ref_dp = count_freq_in_row(elements_in_row, [",", "."])
-                
-                total_dp = mpileup_row["DEPTH"] - count_ns
+                deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
+                total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs                
 
             if alt_dp > 0:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         alt_dp,
-                         count_ns,
-                         f"")
+                            ref_dp,
+                            alt_dp,
+                            count_ns,
+                            f"")
                     )
             else:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         0,
-                         count_ns,
-                         f"{not_supported_filter}")
+                            ref_dp,
+                            0,
+                            count_ns,
+                            f"{not_supported_filter}")
                     )
 
             # print(info_vcf[-1])
@@ -293,24 +295,24 @@ def recompute_depth(vcf,
                 alt_dp = count_freq_in_row(elements_in_row, [f".{search}", f",{search}"])
                 count_ns = count_freq_in_row(elements_in_row, ["N"])
                 ref_dp = count_freq_in_row(elements_in_row, [",", "."])
-
-                total_dp = mpileup_row["DEPTH"] - count_ns
+                deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
+                total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
             if alt_dp > 0:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         alt_dp,
-                         count_ns,
-                         f"")
+                            ref_dp,
+                            alt_dp,
+                            count_ns,
+                            f"")
                     )
             else:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         0,
-                         count_ns,
-                         f"{not_supported_filter}")
+                            ref_dp,
+                            0,
+                            count_ns,
+                            f"{not_supported_filter}")
                     )
             # print(info_vcf[-1])
 
@@ -330,24 +332,24 @@ def recompute_depth(vcf,
                 alt_dp = count_freq_in_row(elements_in_row, [row["ALT"]])
                 count_ns = count_freq_in_row(elements_in_row, ["N"])
                 ref_dp = count_freq_in_row(elements_in_row, [",", "."])
-
-                total_dp = mpileup_row["DEPTH"] - count_ns
+                deleted_nucs = count_freq_in_row(elements_in_row, ["*"])
+                total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
             if alt_dp > 0:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         alt_dp,
-                         count_ns,
-                         f"")
+                            ref_dp,
+                            alt_dp,
+                            count_ns,
+                            f"")
                     )
             else:
                 info_vcf.append(
                         (total_dp,
-                         ref_dp,
-                         0,
-                         count_ns,
-                         f"{not_supported_filter}")
+                            ref_dp,
+                            0,
+                            count_ns,
+                            f"{not_supported_filter}")
                     )
 
             # print(info_vcf[-1])
@@ -468,7 +470,7 @@ if __name__ == '__main__':
 #             ## search for the deleted part
 #             search = f'-{row["REF"][:-1]}'
 #             updated_pos = row["POS"] - 1
-          
+
 #             mpileup_row = mpileup_data.loc[(row["CHROM"], updated_pos)]
 #             splitted_row = mpileup_row["SPLIT_bases"]#.values[0]
 #             splitted_row_read_names = mpileup_row["SPLIT_reads"]#.values[0]
@@ -486,9 +488,9 @@ if __name__ == '__main__':
 #                 alt_dp_part1 += elements_in_row[f".{search}"]
 #             if f",{search}" in elements_in_row:
 #                 alt_dp_part1 += elements_in_row[f",{search}"]
-            
 
-                
+
+
 #             ## search for the change of nucleotide part
 #             search = f'{row["ALT"]}'
 #             updated_pos = row["POS"] + len(row["REF"]) - 1
@@ -497,7 +499,7 @@ if __name__ == '__main__':
 #             splitted_row_read_names = mpileup_row["SPLIT_reads"]#.values[0]
 #             elements_in_row = Counter(splitted_row)
 
-            
+
 #             ref_dp2 = 0
 #             if "," in elements_in_row:
 #                 ref_dp2 += elements_in_row[","]
@@ -508,23 +510,23 @@ if __name__ == '__main__':
 #             alt_dp_part2 = 0
 #             if f"{search}" in elements_in_row:
 #                 alt_dp_part2 += elements_in_row[f"{search}"]            
-            
-            
+
+
 #             if alt_dp_part1 == alt_dp_part2:
 #                 alt_dp = alt_dp_part1
 #                 ref_dp = (ref_dp + ref_dp2) // 2
-                
+
 #             else:
 #                 print("variant not fully reconstructed")
 #                 alt_dp = 0
-                
-            
+
+
 #             list_depth_diff.append(total_dp - row["DEPTH"])
 #             total_dp = ref_dp + alt_dp
-            
+
 #             if alt_dp > 0:
 #                 info_vcf.append((ref_dp, alt_dp, ""))
-                
+
 #                 print_all = False
 
 #                 if alt_dp == row["ALT_DEPTH"]:

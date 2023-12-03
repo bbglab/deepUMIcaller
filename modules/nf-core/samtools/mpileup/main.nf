@@ -1,6 +1,5 @@
 process SAMTOOLS_MPILEUP {
     tag "$meta.id"
-    label 'cpu_single'
     label 'time_low'
     label 'memory_medium'
 

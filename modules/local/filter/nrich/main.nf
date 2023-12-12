@@ -35,7 +35,7 @@ process FILTER_N_RICH {
             ${ns_position_file} \\
             ${prefix}.filtered.vcf \\
             n_rich \\
-            1000
+            3
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

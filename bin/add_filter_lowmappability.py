@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-# to be added in the pipeline before executing this script to generate the vcf_lowcomplexrep_file
-# mappable genome file: /workspace/projects/bladder_ts/data/mutations/hg38_mappable_genome.mutcoords.bed
+# to be added in the pipeline before executing this script to generate the vcf_lowcmappability_file
+# unmappable region file: unmappable.bed
 # vcf_derived_bed is the file generated from the coordinates of the mutations, extending them +5 bp in the edges and with the variant id in the format chr;pos;ref;alt
-# bedtools intersect -a vcf_derived_bed -b mappable_genome_file -v  > lowmappable_file.bed
+# bedtools intersect -a vcf_derived_bed -b unmappable_file -u  > unmappable_muts_file.bed
 
-# usage: python3 add_filter_lowmappability.py vcf_file lowmappable_file.bed output_filename filter_name
+# usage: python3 add_filter_lowmappability.py vcf_file unmappable_muts_file.bed output_filename filter_name
 # use filter_name = "low_mappability"
 
 import pandas as pd
@@ -46,9 +46,9 @@ def add_filter_lowmappability(vcf, bed_low_mappability_file, filter_name):
     vcf: pandas DataFrame
         VCF-like dataframe containing the mutations
     bed_low_mappability_file: str
-        Path to the BED4 file containing the bedtools no-intersection
-        between the VCF mutations and the lowly mappable regions.
-        Mandatory columns: CHROM, START, END, VARIANT_ID  
+        Path to the BED4 file containing the bedtools intersection
+        between the VCF mutations and the low mappability regions.
+        Mandatory columns: CHROM, START, END, VARIANT_ID 
 
     Returns
     -------
@@ -84,9 +84,8 @@ def main(vcf_file, bed_low_mappability_file, output_filename, filter_name):
     vcf_file: str:
         Path to the VCF file to be updated.
     bed_low_mappability_file: str
-        Path to the BED4 file containing the bedtools no-intersection
-        between the VCF mutations and the highly mappable regions
-        (so the lowly mappable regions).
+        Path to the BED4 file containing the bedtools intersection
+        between the VCF mutations and the low mappability regions.
         Mandatory columns: CHROM, START, END, VARIANT_ID 
     output_filename: str
         Name path for the resulting updated VCF.
@@ -103,7 +102,7 @@ def main(vcf_file, bed_low_mappability_file, output_filename, filter_name):
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     ###
-    # Add filter: mutations in lowly mappable regions
+    # Add filter: mutations in low mappable regions
     ###
     updated_vcf = add_filter_lowmappability(vcf, bed_low_mappability_file, filter_name)
 

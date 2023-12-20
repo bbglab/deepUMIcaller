@@ -28,9 +28,8 @@ process FILTER_LOW_MAPPABILITY {
     def low_mappable_bed = task.ext.low_mappable ?: ''
 
     // TODO add condition to check if the file argument is empty, if it is, return same vcf file
-    // TODO change it so that we can provide a BED file of the unmappable genome, not having to provide the mappable one
     """
-    bedtools intersect -a ${vcf_derived_bed} -b ${low_mappable_bed} -v  > ${prefix}.lowmappable_file.bed
+    bedtools intersect -a ${vcf_derived_bed} -b ${low_mappable_bed} -u  > ${prefix}.lowmappable_file.bed
 
     # if there is nothing in the intersection do not filter the VCF file
     if [ -s ${prefix}.lowmappable_file.bed ]; then
@@ -42,7 +41,7 @@ process FILTER_LOW_MAPPABILITY {
     else
         cp ${vcf_file} ${prefix}.low_mappable.vcf;
     fi
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

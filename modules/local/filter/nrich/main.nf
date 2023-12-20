@@ -26,16 +26,22 @@ process FILTER_N_RICH {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     // TODO
-    // add the depth limit as a parameter, also test how it works
-    // also it would be better to set it dynamically as
-    // a given quantile of depth? (25%?)
+    // add the depth limit as a nextflow parameter
+    
+    // TODO 2 add this in a proper documentation
+    // right now the value 3 sets the minimum depth that a position needs to have
+    // so that it can be used for computing the median coverage of the sample
+    // once the median coverage of the sample is computed we only use positions 
+    // with a coverage above (median * 0.5) to then compute the proportion of Ns
+    // and with the proportion of Ns of all those positions we estimate a
+    // distribution and from this distribution we cut the to 5%
     """
     add_filter_nrich.py \\
             ${vcf_file} \\
             ${ns_position_file} \\
             ${prefix}.filtered.vcf \\
             n_rich \\
-            1000
+            3
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

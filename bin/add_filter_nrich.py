@@ -45,7 +45,7 @@ def add_filter(old_filt, add_filt, filt_name):
         return ";".join( sorted(old_filt.split(";")) )
 
 
-def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth = 1000):
+def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth_valid = 5):
     """
     Adds to a VCF-like dataframe an additional filter
     in mutations located at positions which have more 
@@ -66,9 +66,15 @@ def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth = 1000):
     # define filter threshold
     ## load file with Ns counts per position along the entire panel (no mutations only)
     ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
-                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"]) 
+                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"])
 
-    ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth].reset_index(drop = True)
+    over_valid_depth = ns_position_df["TOTAL_DEPTH"][ns_position_df["TOTAL_DEPTH"] > min_depth_valid]
+    
+    # TODO: add more documentation on this
+    # we use positions covered by at least half of the median coverage
+    min_depth_threshold = over_valid_depth.median() * 0.5
+
+    ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth_threshold].reset_index(drop = True)
 
     ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
     ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,
@@ -109,7 +115,7 @@ def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth = 1000):
     return vcf.drop([filter_name], axis = 1), threshold
 
 
-def main(vcf_file, ns_position_file, output_filename, filter_name, min_pos_depth):
+def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth):
     """
     Reads a VCF file and adds n_rich value to the
     FILTER field where applicable.
@@ -134,7 +140,7 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_pos_depth
     ###
     # Add filter: mutations in positions with more Ns than expected
     ###
-    updated_vcf, threshold = add_filter_nrich(vcf, ns_position_file, filter_name, min_pos_depth)
+    updated_vcf, threshold = add_filter_nrich(vcf, ns_position_file, filter_name, min_valid_depth)
 
     ###
     # Read the VCF header
@@ -181,5 +187,5 @@ if __name__ == '__main__':
     ns_position_file = sys.argv[2]
     output_filename = sys.argv[3]
     filter_name = sys.argv[4]
-    min_depth = int(sys.argv[5])
-    main(vcf_file, ns_position_file, output_filename, filter_name, min_depth)
+    min_valid_depth = int(sys.argv[5])
+    main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth)

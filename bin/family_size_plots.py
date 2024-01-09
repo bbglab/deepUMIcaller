@@ -84,7 +84,7 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, limx)
     in_duplex_header = "duplex_raw_reads\tduplex_sscs\tduplex_dcs\tduplex_raw_x_dcs\tduplex_raw_x_sscs"
     no_duplex_header = "noduplex_raw_reads\tnoduplex_sscs\tnoduplex_raw_x_sscs"
     distribution_header = "peak_size"
-    header = f"sample\tquality\t{simple_counts_header}\t{in_duplex_header}\t{no_duplex_header}\t{distribution_header}\n"
+    header = f"sample\tquality\t{simple_counts_header}\t{in_duplex_header}\t{no_duplex_header}\t{distribution_header}"
 
     print(header)
 

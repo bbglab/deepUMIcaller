@@ -214,7 +214,7 @@
             "description": "Options for when filtering consensus reads for the medium confidence category.",
             "properties": {
                 "duplex_med_conf": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "Activate medium confidence level",
                     "fa_icon": "fas fa-book",
                     "help_text": "The medium confidence level output will be generated."
@@ -246,7 +246,7 @@
             "description": "Options for when filtering consensus reads for the low confidence category.",
             "properties": {
                 "duplex_low_conf": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "Activate low confidence level",
                     "fa_icon": "fas fa-book",
                     "help_text": "The low confidence level output will be generated."
@@ -330,7 +330,7 @@
                     "help_text": "Use `homo_sapiens` when working with human data."
                 },
                 "vep_cache_version": {
-                    "type": "string",
+                    "type": "integer",
                     "description": "Ensembl VEP cache version.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Make sure to also update the container to use. Otherwise leave 108."

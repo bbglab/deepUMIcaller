@@ -88,6 +88,11 @@ include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW     } fro
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED     } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH    } from '../modules/local/fgbio/filterconsensusreads/main'
 
+
+include { CREATEBED_FROM_TSV                as CREATEBEDLOW                } from '../modules/local/createbed/main'
+include { CREATEBED_FROM_TSV                as CREATEBEDMED                } from '../modules/local/createbed/main'
+include { CREATEBED_FROM_TSV                as CREATEBEDHIGH               } from '../modules/local/createbed/main'
+
 include { CALLING_VARDICT                   as CALLINGVARDICTLOW           } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTMED           } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTHIGH          } from '../modules/local/calling_vardict/main'
@@ -437,9 +442,6 @@ workflow DEEPUMICALLER {
             .set { cons_high_bam }
 
 
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHHIGH(SORTBAMDUPLEXCONSHIGH.out.bam)
-
             // Quality check
             QUALIMAPQCHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
             ch_versions = ch_versions.mix(QUALIMAPQCHIGH.out.versions.first())
@@ -455,9 +457,17 @@ workflow DEEPUMICALLER {
                 cons_high_bam = INPUT_CHECK.out.reads
             }
 
+            cons_high_bam.map{it -> [it[0], it[1]] }
+            .set{ cons_high_bam_only }
+
+            // Compute depth of the consensus reads aligned to the genome
+            COMPUTEDEPTHHIGH(cons_high_bam_only)
+
+            CREATEBEDHIGH(COMPUTEDEPTHHIGH.out.tsv)
+
             // Mutation calling for duplex reads
             CALLINGVARDICTHIGH(cons_high_bam,
-                                params.targetsfile,
+                                CREATEBEDHIGH.out.bed,
                                 ch_ref_fasta, ch_ref_index_dir)
             ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
 
@@ -465,7 +475,7 @@ workflow DEEPUMICALLER {
             //    also get the Ns per position
             RECOUNTMUTSHIGH(cons_high_bam,
                             CALLINGVARDICTHIGH.out.vcf,
-                            params.targetsfile,
+                            CREATEBEDHIGH.out.bed,
                             ch_ref_fasta
                         )
             ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
@@ -518,8 +528,6 @@ workflow DEEPUMICALLER {
                 .join( SORTBAMDUPLEXCONSMED.out.csi )
                 .set { cons_med_bam }
 
-                // Compute depth of the consensus reads aligned to the genome
-                COMPUTEDEPTHMED(SORTBAMDUPLEXCONSMED.out.bam)
             }
 
             // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
@@ -530,16 +538,24 @@ workflow DEEPUMICALLER {
                     cons_med_bam = INPUT_CHECK.out.reads
                 }
 
+                cons_med_bam.map{it -> [it[0], it[1]] }
+                .set{ cons_med_bam_only }
+
+                // Compute depth of the consensus reads aligned to the genome
+                COMPUTEDEPTHMED(cons_med_bam_only)
+
+                CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
+
                 // Mutation calling for all reads
                 CALLINGVARDICTMED(cons_med_bam,
-                                    params.targetsfile,
+                                    CREATEBEDMED.out.bed,
                                     ch_ref_fasta, ch_ref_index_dir)
 
                 // Postprocessing the BAM file to get exact coverage per position and allele
                 //    also get the Ns per position
                 RECOUNTMUTSMED(cons_med_bam,
                                 CALLINGVARDICTMED.out.vcf,
-                                params.targetsfile,
+                                CREATEBEDMED.out.bed,
                                 ch_ref_fasta)
                 ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
@@ -585,8 +601,6 @@ workflow DEEPUMICALLER {
                 .join( SORTBAMDUPLEXCONSLOW.out.csi )
                 .set { cons_low_bam }
 
-                // Compute depth of the consensus reads aligned to the genome
-                COMPUTEDEPTHLOW(SORTBAMDUPLEXCONSLOW.out.bam)
             }
 
             // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
@@ -597,16 +611,24 @@ workflow DEEPUMICALLER {
                     cons_low_bam = INPUT_CHECK.out.reads
                 }
 
+                cons_low_bam.map{it -> [it[0], it[1]] }
+                .set{ cons_low_bam_only }
+
+                // Compute depth of the consensus reads aligned to the genome
+                COMPUTEDEPTHLOW(cons_low_bam_only)
+
+                CREATEBEDLOW(COMPUTEDEPTHLOW.out.tsv)
+
                 // Mutation calling for all reads
                 CALLINGVARDICTLOW(cons_low_bam,
-                                    params.targetsfile,
+                                    CREATEBEDLOW.out.bed,
                                     ch_ref_fasta, ch_ref_index_dir)
 
                 // Postprocessing the BAM file to get exact coverage per position and allele
                 //    also get the Ns per position
                 RECOUNTMUTSLOW(cons_low_bam,
                                 CALLINGVARDICTLOW.out.vcf,
-                                params.targetsfile,
+                                CREATEBEDLOW.out.bed,
                                 ch_ref_fasta)
                 ch_versions = ch_versions.mix(RECOUNTMUTSLOW.out.versions.first())
 

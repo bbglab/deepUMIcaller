@@ -25,7 +25,7 @@ workflow RECOUNT_MUTS {
 
     bam_n_index              // channel: [mandatory] [ val(meta), path (bam), path (bamindex) ]
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
-    bed_file                 // channel: [mandatory] path (intervals_file)
+    bed_file                 // channel: [mandatory] [ val(meta), path (intervals_file)]
     reference_fasta          // channel: [mandatory] path (reference_fasta)
 
 
@@ -33,7 +33,11 @@ workflow RECOUNT_MUTS {
 
     ch_versions = Channel.empty()
 
-    READJUSTREGIONS(vcf_file, bed_file)
+    vcf_file
+    .join( bed_file )
+    .set { ch_vcf_bed }
+
+    READJUSTREGIONS(ch_vcf_bed)
     // These are the three main outputs
     // READJUSTREGIONS.out.vcf_bed
     // READJUSTREGIONS.out.vcf_bed_mut_ids

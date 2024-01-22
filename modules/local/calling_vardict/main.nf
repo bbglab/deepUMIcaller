@@ -8,8 +8,8 @@ process CALLING_VARDICT {
         'biocontainers/vardict-java:1.8.3--hdfd78af_0' }"    
 
     input:
-    tuple val(meta), path(bam), path(bam_index)
-    path targets_file
+    tuple val(meta) , path(bam), path(bam_index)
+    tuple val(meta2), path (targets_file)
     path fasta
     path fasta_dir
 

@@ -10,8 +10,7 @@ process BEDTOOLS_MERGE {
         'biocontainers/bedtools:2.31.0--hf5e1c6e_2' }"
 
     input:
-    tuple val(meta), path(vcf)
-    path bed
+    tuple val(meta), path(vcf), path(bed)
 
     output:
     tuple val(meta), path('*.vcf_derived.bed')              , emit: vcf_bed

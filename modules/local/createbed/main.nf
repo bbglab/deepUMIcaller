@@ -22,7 +22,7 @@ process CREATEBED_FROM_TSV {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    tail -n +2 ${tsv} | awk -F'\t' '{print \$1, \$2, \$2}' OFS='\t' > ${prefix}.positions.tsv
+    tail -n +2 ${tsv} | awk -F'\\t' '{print \$1, \$2, \$2}' OFS='\\t' > ${prefix}.positions.tsv
     bedtools merge -i ${prefix}.positions.tsv \\
                     $args \\
                     > ${prefix}.sequenced.bed;

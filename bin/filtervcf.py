@@ -158,9 +158,11 @@ def main(sample, vcf_file, filter_str, vaf_germline, output_filename):
     vcf_read = read_from_vardict_VCF_all(sample, vcf_file)
     filter_list = sorted(filter_str.split(","))
     for filt in filter_list:
+        print(f'{sum(vcf_read["FILTER"].str.contains(filt))} variants filtered out due to {filt} filter.')
         vcf_read = vcf_read[~vcf_read["FILTER"].str.contains(filt)]
     vcf_read = vcf_read.reset_index(drop = True)
 
+    print(f'{sum(vcf_read["VAF"] > vaf_germline)} variants filtered for germline variants.')
     vcf_read = vcf_read[vcf_read["VAF"] <= vaf_germline].reset_index(drop = True)
 
     vcf_read[["CHROM", "POS", "ID", "REF", "ALT",

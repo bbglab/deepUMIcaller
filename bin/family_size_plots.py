@@ -107,7 +107,7 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, limx)
     in_duplex_features = f"{total_reads_duplex:}\t{total_scss_duplex:}\t{total_reads_duplex/total_duplex:.3f}\t{total_reads_duplex/total_scss_duplex:.3f}"
     no_duplex_features = f"{total_reads_nonduplex:}\t{total_scss_nonduplex:}\t{total_reads_nonduplex/total_scss_nonduplex:.3f}"
     distribution_features = f"{peak_size:}"
-    features = f"{sample}\tlow\t{simple_counts_features}\t{uniqueness_features}\t{in_duplex_features}\t{no_duplex_features}\t{distribution_features}"
+    features = f"{sample}\tlow\t{simple_counts_features}\t{uniqueness_features}\t{ratios_features}\t{in_duplex_features}\t{no_duplex_features}\t{distribution_features}"
 
     print(features)
 
@@ -181,7 +181,7 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, limx)
     in_duplex_features = f"{total_reads_duplex:}\t{total_scss_duplex:}\t{total_reads_duplex/total_duplex:.3f}\t{total_reads_duplex/total_scss_duplex:.3f}"
     no_duplex_features = f"{total_reads_nonduplex:}\t{total_scss_nonduplex:}\t{total_reads_nonduplex/total_scss_nonduplex:.3f}"
     distribution_features = f"{peak_size:}"
-    features = f"{sample}\thigh\t{simple_counts_features}\t{uniqueness_features}\t{in_duplex_features}\t{no_duplex_features}\t{distribution_features}"
+    features = f"{sample}\thigh\t{simple_counts_features}\t{uniqueness_features}\t{ratios_features}\t{in_duplex_features}\t{no_duplex_features}\t{distribution_features}"
 
 
     print(features)

@@ -34,7 +34,7 @@ process FILTER_N_RICH {
     // once the median coverage of the sample is computed we only use positions 
     // with a coverage above (median * 0.5) to then compute the proportion of Ns
     // and with the proportion of Ns of all those positions we estimate a
-    // distribution and from this distribution we cut the to 5%
+    // distribution and from this distribution we cut the top 5%
     """
     add_filter_nrich.py \\
             ${vcf_file} \\
@@ -42,7 +42,7 @@ process FILTER_N_RICH {
             ${prefix}.filtered.vcf \\
             n_rich \\
             3
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

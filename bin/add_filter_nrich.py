@@ -67,14 +67,19 @@ def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth_valid = 5):
     ## load file with Ns counts per position along the entire panel (no mutations only)
     ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
                                 names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"])
+    print(ns_position_df.shape)
 
     over_valid_depth = ns_position_df["TOTAL_DEPTH"][ns_position_df["TOTAL_DEPTH"] > min_depth_valid]
+    print(over_valid_depth.shape)
     
     # TODO: add more documentation on this
     # we use positions covered by at least half of the median coverage
-    min_depth_threshold = over_valid_depth.median() * 0.5
+    min_depth_threshold = over_valid_depth.quantile(0.75) #* 0.5
+    print(min_depth_threshold)
+    del over_valid_depth
 
     ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth_threshold].reset_index(drop = True)
+    print(ns_position_df.shape)
 
     ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
     ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,

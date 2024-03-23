@@ -23,7 +23,8 @@
 <!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 
 **bbglab/deepUMIcaller** is a bioinformatics best-practice analysis pipeline to produce duplex consensus reads and call mutations.
-The pipeline implements the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link], and was developed starting from the nf-core/fastquorum pipeline.
+
+The pipeline was developed from the nf-core/fasquorum pipeline that implemented the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link].
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
 
@@ -46,10 +47,9 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
       1. Call molecular consensus reads ([`fgbio CallMolecularConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallMolecularConsensusReads.html))
 6. Align ([`bwa mem`](https://github.com/lh3/bwa))
 7. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from very stringent (HIGH) to very permissive (LOW).
-8. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava))
-9. Variant annotation ([`VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)
-10. Perform mutational signatures. ([`SigProfiler`](https://github.com/AlexandrovLab/SigProfilerMatrixGenerator)) 
-11. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+8. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
+9. Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
+10. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
 
 ## Initial requirements
 
@@ -58,11 +58,14 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) (you can follow [this tutorial](https://singularity-tutorial.github.io/01-installation/)), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(you can use [`Conda`](https://conda.io/miniconda.html) both to install Nextflow itself and also to manage software within pipelines. Please only use it within pipelines as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_.
 
 
+
 ## Running the pipeline
 
-DeepUMIcaller allows to start the pipeline from a specific step:
+deepUMIcaller allows to start the pipeline from a specific step among the following options:
 
-#### Start with FASTQC-Fastq-to_BAM ([default])
+`mapping`, `groupreadsbyumi`, `calling`
+
+### Start with FASTQC-Fastq-to_BAM (default)
 
 ```console
 nextflow run deepUMIcaller/main.nf \
@@ -79,7 +82,7 @@ patient1, patient1_R1.fastq.gz, patient1_R2.fastq.gz, 8M1S+T 8M1S+T
 ```
 The read structure can change depending your configuration.
 
-#### Start with GroupByUMI (`groupreadsbyumi`)
+### Start with GroupByUMI (`groupreadsbyumi`)
 ```console
 nextflow run deepUMIcaller/main.nf \
   -profile singularity --input input.csv \
@@ -94,7 +97,7 @@ sample, bam, csi, read_structure
 patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
 ```
 
-#### Start with VarDict Variant Calling (`CALLING_VARDICT`)
+### Start with VarDict variant calling (`calling`)
 
 By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
 
@@ -126,24 +129,33 @@ sample, bam, csi, read_structure
 patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
 ```
 
-The GenomeFile must contain it's own bwa index in the same directory.
+
+
+
+## Credits
+
+[bbglab/deepUMIcaller](https://github.com/bbglab/deepUMIcaller) was written by [Ferriol Calvet](https://github.com/FerriolCalvet) and [Miquel L. Grau](https://github.com/migrau).
+
+Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pipeline at commit 09a6ae27ce917f2a4b15d2c5396acb562f9047aa. This was originally written by [Nils Homer](https://github.com/nh13). This original pipeline implemented the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link].
+
+
+
 ## Documentation
 
+**NOTE THAT: the reference fasta must contain it's own bwa index in the same directory.**
+
+1. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
+
+
+<!-- 
+## Documentation
 The nf-core/fastquorum pipeline comes with documentation about the pipeline [usage](https://nf-co.re/fastquorum/usage), [parameters](https://nf-co.re/fastquorum/parameters) and [output](https://nf-co.re/fastquorum/output).
 m
 See also:
 
 1. The [fgbio Best Practise FASTQ -> Consensus Pipeline][fgbio-best-practices-link]
 2. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
-
-## Credits
-
-[nf-core/fastquorum](https://github.com/nf-core/fastquorum) was originally written by [Nils Homer](https://github.com/nh13).
-
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-- [Ferriol Calvet](https://github.com/FerriolCalvet)
-- [Miquel L. Grau](https://github.com/migrau)
+-->
 
 # Acknowledgements
 
@@ -159,11 +171,6 @@ We thank the following people for their extensive assistance in the development 
 </a>
 </p>
 
-## Contributions and Support
-
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
-
-For further information or help, don't hesitate to get in touch on the [Slack `#fastquorum` channel](https://nfcore.slack.com/channels/fastquorum) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citations
 

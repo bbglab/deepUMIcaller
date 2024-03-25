@@ -372,7 +372,8 @@ workflow DEEPUMICALLER {
             // Plot the family size metrics
             FAMILYMETRICS(metrics_ch)
             ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
-            FAMILYMETRICS.out.log.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+            FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+            FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
             bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
 

@@ -133,11 +133,15 @@ include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } fro
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
 // include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX2           } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCMED               } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCLOW               } from '../modules/nf-core/qualimap/bamqc/main'
+
 
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
-// include { PICARD_COLLECTMULTIPLEMETRICS     as COLLECTMULTIPLEMETRICS      } from '../modules/nf-core/picard/collectmultiplemetrics/main'
+
+
 
 // Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
@@ -368,7 +372,8 @@ workflow DEEPUMICALLER {
             // Plot the family size metrics
             FAMILYMETRICS(metrics_ch)
             ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
-            FAMILYMETRICS.out.log.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+            FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+            FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
             bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
 
@@ -528,6 +533,12 @@ workflow DEEPUMICALLER {
                 .join( SORTBAMDUPLEXCONSMED.out.csi )
                 .set { cons_med_bam }
 
+                // Quality check
+                QUALIMAPQCMED(SORTBAMDUPLEXCONSMED.out.bam, params.targetsfile)
+                ch_versions = ch_versions.mix(QUALIMAPQCMED.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCMED.out.results.map{it[1]}.collect())
+
+
             }
 
             // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus', 'calling']) {
@@ -600,6 +611,12 @@ workflow DEEPUMICALLER {
                 SORTBAMDUPLEXCONSLOW.out.bam
                 .join( SORTBAMDUPLEXCONSLOW.out.csi )
                 .set { cons_low_bam }
+                
+                // Quality check
+                QUALIMAPQCLOW(SORTBAMDUPLEXCONSLOW.out.bam, params.targetsfile)
+                ch_versions = ch_versions.mix(QUALIMAPQCLOW.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCLOW.out.results.map{it[1]}.collect())
+
 
             }
 

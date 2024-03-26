@@ -10,21 +10,48 @@ report_section_order:
 
 extra_fn_clean_exts:
   - ".high"
+  - ".med"
+  - ".low"
   - "_umi_histogram"
 
 export_plots: true
 
 top_modules:
   - qualimap:
-      name: "QualiMAP (raw)"
+      name: "QualiMAP(raw)"
       info: "This section of the report shows QualiMAP results of the aligned raw reads."
       anchor: "qualimap_raw"
       path_filters_exclude:
         - "*.high/**"
+        - "*.med/**"
+        - "*.low/**"
 
   - qualimap:
-      name: "QualiMAP (high confidence)"
+      name: "QualiMAP(high confidence)"
       info: "This section of the report shows QualiMAP results of the aligned set of high quality duplex reads."
       anchor: "qualimap_high"
       path_filters:
         - "*.high/**"
+      path_filters_exclude:
+        - "*.med/**"
+        - "*.low/**"
+
+  - qualimap:
+      name: "QualiMAP(medium confidence)"
+      info: "This section of the report shows QualiMAP results of the aligned set of medium quality duplex reads."
+      anchor: "qualimap_med"
+      path_filters:
+        - "*.med/**"
+      path_filters_exclude:
+        - "*.high/**"
+        - "*.low/**"
+
+  - qualimap:
+      name: "QualiMAP(low confidence)"
+      info: "This section of the report shows QualiMAP results of the aligned set of low quality duplex reads."
+      anchor: "qualimap_low"
+      path_filters:
+        - "*.low/**"
+      path_filters_exclude:
+        - "*.high/**"
+        - "*.med/**"

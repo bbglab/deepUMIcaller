@@ -15,9 +15,10 @@ process FAMILYSIZEMETRICS {
     tuple val(meta), path(groupby_metrics), path(duplex_metrics)
 
     output:
-    tuple val(meta), path("*.pdf"), emit: pdf
-    path  "versions.yml"          , emit: versions
-    stdout                          emit: log
+    tuple val(meta), path("*.pdf")              , emit: pdf
+    tuple val(meta), path("*.sample_data.tsv")  , emit: sample_data
+    tuple val(meta), path("*.family_curve.tsv") , emit: curve_data
+    path  "versions.yml"                        , emit: versions
 
 
     when:
@@ -26,13 +27,15 @@ process FAMILYSIZEMETRICS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def high_confidence = task.ext.high_confidence ?: "2 1 1"
+    def med_confidence = task.ext.med_confidence ?: "2 1 1"
+    def low_confidence = task.ext.low_confidence ?: "2 1 1"
     """
     family_size_plots.py \\
                 ${prefix} \\
                 ${groupby_metrics} \\
                 ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt \\
-                ${prefix}.family_sizes_plot_n_stats.pdf \\
-                ${prefix}.family_sizes_plot_n_stats.high.pdf
+                ${prefix}.family_sizes_plot_n_stats
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -15,8 +15,8 @@ os.mkdir(input_dir)
 
 genome_mapping = {"hg19" : "GRCh37", "hg38": "GRCh38",
                     "GRCh37": "GRCh37", "GRCh38": "GRCh38",
-                    "mm9": "mm9", "mm10": "mm10",
-                    "GRCm37": "mm9", "GRCm38": "mm10"
+                    "mm9": "mm9", "mm10": "mm10", "mm39": "mm39",
+                    "GRCm37": "mm9", "GRCm38": "mm10", "GRCm39": "mm39",
                     }
 
 for f in file_list:
@@ -27,7 +27,7 @@ for f in file_list:
     else:
         shutil.move(f, f'{input_dir}/{file}')
 
-if genome in ["hg19", "hg38", "GRCh37", "GRCh38", "mm9", "mm10", "GRCm37", "GRCm38"]:
+if genome in ["hg19", "hg38", "GRCh37", "GRCh38", "mm9", "mm10", "mm39", "GRCm37", "GRCm38", "GRCm39"]:
     chosen_genome = genome_mapping[genome]
 else:
     print("genome not found, using GRCh38")

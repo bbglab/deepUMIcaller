@@ -24,7 +24,7 @@ process ASMINUSXS {
     def args2 = task.ext.args2 ?: ''
     def threshold = task.ext.threshold ?: "50"
     def prefix = task.ext.prefix ?: "${meta.id}.filtered.AS-XS_${threshold}"
-    def prefix_discard = task.ext.prefix_discard ?: "${meta.id}.discarded.AS-XS_${threshold}"
+    def prefix_discard = task.ext.prefix_discard ?: "${meta.id}.discarded_AS-XS_${threshold}"
     
     """
     as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold}

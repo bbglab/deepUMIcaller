@@ -297,8 +297,8 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMCLEAN.out.bam
-            .join( SORTBAMCLEAN.out.csi )
-            .set { bam_n_index_clean }
+        .join( SORTBAMCLEAN.out.csi )
+        .set { bam_n_index_clean }
 
         // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
         // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
@@ -479,6 +479,7 @@ workflow DEEPUMICALLER {
             // Postprocessing the BAM file to get exact coverage per position and allele
             //    also get the Ns per position
             RECOUNTMUTSHIGH(cons_high_bam,
+                            bam_n_index_duplex_clean,
                             CALLINGVARDICTHIGH.out.vcf,
                             CREATEBEDHIGH.out.bed,
                             ch_ref_fasta
@@ -565,6 +566,7 @@ workflow DEEPUMICALLER {
                 // Postprocessing the BAM file to get exact coverage per position and allele
                 //    also get the Ns per position
                 RECOUNTMUTSMED(cons_med_bam,
+                                bam_n_index_duplex_clean,
                                 CALLINGVARDICTMED.out.vcf,
                                 CREATEBEDMED.out.bed,
                                 ch_ref_fasta)
@@ -644,6 +646,7 @@ workflow DEEPUMICALLER {
                 // Postprocessing the BAM file to get exact coverage per position and allele
                 //    also get the Ns per position
                 RECOUNTMUTSLOW(cons_low_bam,
+                                bam_n_index_duplex_clean,
                                 CALLINGVARDICTLOW.out.vcf,
                                 CREATEBEDLOW.out.bed,
                                 ch_ref_fasta)

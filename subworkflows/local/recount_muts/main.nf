@@ -4,11 +4,13 @@
 include { BEDTOOLS_MERGE         as READJUSTREGIONS   } from '../../../modules/local/bedtools/merge/main'
 
 include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/nf-core/samtools/mpileup/main'
+include { SAMTOOLS_MPILEUP       as PILEUPBAMALL      } from '../../../modules/nf-core/samtools/mpileup/main'
 
 include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/local/count_ns/main'
 
 include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/tabix_mpileup/main'
 include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
+include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/local/patchdepth/main'
 
 include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
 include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
@@ -24,6 +26,7 @@ workflow RECOUNT_MUTS {
     take:
 
     bam_n_index              // channel: [mandatory] [ val(meta), path (bam), path (bamindex) ]
+    bam_n_index_all_mol      // channel: [mandatory] [ val(meta), path (bam), path (bamindex) ]
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] [ val(meta), path (intervals_file)]
     reference_fasta          // channel: [mandatory] path (reference_fasta)
@@ -47,13 +50,11 @@ workflow RECOUNT_MUTS {
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
-    // SUPER IMPORTANT STEP
     bam_n_index
     .join( READJUSTREGIONS.out.regions_plus_variants_bed )
     .set { ch_bam_bai_bed }
 
     PILEUPBAM(ch_bam_bai_bed, reference_fasta)
-    // This are the main outputs
     // PILEUPBAM.out.mpileup
     ch_versions = ch_versions.mix(PILEUPBAM.out.versions.first())
 
@@ -66,6 +67,18 @@ workflow RECOUNT_MUTS {
     PILEUPBAM.out.mpileup
     .join( READJUSTREGIONS.out.vcf_bed )
     .set { ch_pileup_vcfbed }
+
+
+    // join the channel with the BAM file and the corresponding VCF
+    // from the same samples together
+    bam_n_index_all_mol
+    .join( READJUSTREGIONS.out.vcf_bed )
+    .set { ch_bamall_bai_bed }
+
+    PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
+    // PILEUPBAM.out.mpileup
+    ch_versions = ch_versions.mix(PILEUPBAMALL.out.versions.first())
+
 
     QUERYTABIX(ch_pileup_vcfbed)
 
@@ -80,7 +93,14 @@ workflow RECOUNT_MUTS {
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
     ch_versions = ch_versions.mix(PATCHDP.out.versions.first())
-    
+
+    PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
+    .join( PATCHDP.out.patched_vcf )
+    .set{ ch_pileup_vcfpatched1 }
+
+    PATCHDPALL(ch_pileup_vcfpatched1)
+
+
     // FINDMUTATED(ch_pileup_vcf)
     // FINDMUTATED.out.read_names
     // FINDMUTATED.out.tags
@@ -88,7 +108,7 @@ workflow RECOUNT_MUTS {
 
     if (params.filter_mutations) {
         if (params.filter_human) {
-            PATCHDP.out.patched_vcf
+            PATCHDPALL.out.patched_vcf
             .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
             .set { ch_vcf_vcfbed }
 
@@ -99,7 +119,7 @@ workflow RECOUNT_MUTS {
             .join(NSXPOSITION.out.ns_tsv)
             .set {ch_vcf_ns}
         } else {
-            PATCHDP.out.patched_vcf
+            PATCHDPALL.out.patched_vcf
             .join(NSXPOSITION.out.ns_tsv)
             .set {ch_vcf_ns}
         }

@@ -29,7 +29,7 @@ process BEDTOOLS_MERGE {
     if ("$bed" == "${prefix}.bed") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     //  awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\
     """
-    grep -v '#' $vcf | \\
+    grep -v '#' ${vcf} | \\
         awk '{ sum = length(\$4); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum + $amplify"\\t"\$1";"\$2";"\$4";"\$5}' | \\
         sort -k1,1 -k2,3n \\
         > ${prefix}.vcf_derived.many.withID.bed
@@ -46,9 +46,9 @@ process BEDTOOLS_MERGE {
 
     bedtools \\
         merge \\
-        -i <(cat $bed ${prefix}.vcf_derived.bed | cut -f -3 | sort -k1,1 -k2,3n) \\
+        -i <(cat ${bed} ${prefix}.vcf_derived.bed | cut -f -3 | sort -k1,1 -k2,3n) \\
         -d 10 \\
-        $args \\
+        ${args} \\
         > ${prefix}.regions_n_mutations.bed
 
     cat <<-END_VERSIONS > versions.yml

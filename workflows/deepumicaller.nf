@@ -288,11 +288,14 @@ workflow DEEPUMICALLER {
         .join( SORTBAM.out.csi )
         .set { bam_n_index }
 
-        ASMINUSXSRAW(bam_n_index)
-        SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
+        // Temporary deactivate filter ASMINUSXRAW for raw reads
+        // ASMINUSXSRAW(bam_n_index)
+        // SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
 
+        //SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
         // template coordinate sorting for the GroupByUMI
-        SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
+        SORTBAMCLEAN(ALIGNRAWBAM.out.bam)
+
 
         // join the bam and the bamindex channels to have
         // the ones from the same samples together

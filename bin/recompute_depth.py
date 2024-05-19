@@ -142,12 +142,12 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
                 info_vcf.append(
-                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp}{suffix_label};{not_supported_filter}{suffix_label}")
+                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}")
                         )
                 # print(info_vcf[-1])
             else:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp}{suffix_label};{not_supported_filter}{suffix_label}")
+                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}")
                         )
 
         elif var_tp == "COMPLEX":
@@ -160,12 +160,12 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
                 
                 info_vcf.append(
-                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp}{suffix_label};{not_supported_filter}{suffix_label}")
+                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}")
                         )
                 # print(info_vcf[-1])
             else:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp}{suffix_label};{not_supported_filter}{suffix_label}")
+                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}")
                         )
 
 
@@ -226,7 +226,7 @@ def recompute_depth(vcf,
 
             elif pos_count == 0:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_supported_filter}{suffix_label}")
+                            (0, 0, 0, 0, f"{not_supported_filter}")
                         )
 
             else:
@@ -235,7 +235,7 @@ def recompute_depth(vcf,
                      round(ref_dp_count / pos_count),
                      0,
                      round(ns_dp_count / pos_count),
-                     f"{not_supported_filter}{suffix_label}")
+                     f"{not_supported_filter}")
                 )
 
 
@@ -273,7 +273,7 @@ def recompute_depth(vcf,
                             ref_dp,
                             0,
                             count_ns,
-                            f"{not_supported_filter}{suffix_label}")
+                            f"{not_supported_filter}")
                     )
 
             # print(info_vcf[-1])
@@ -314,7 +314,7 @@ def recompute_depth(vcf,
                             ref_dp,
                             0,
                             count_ns,
-                            f"{not_supported_filter}{suffix_label}")
+                            f"{not_supported_filter}")
                     )
             # print(info_vcf[-1])
 
@@ -351,7 +351,7 @@ def recompute_depth(vcf,
                             ref_dp,
                             0,
                             count_ns,
-                            f"{not_supported_filter}{suffix_label}")
+                            f"{not_supported_filter}")
                     )
 
             # print(info_vcf[-1])
@@ -393,8 +393,13 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#')
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
-    not_supported_filter = "no_pileup_support"
-    not_searched_filter = "not_searched_"
+    if suffix != '':
+        not_supported_filter = f"{suffix}_no_pileup_support"
+        not_searched_filter = f"{suffix}_not_searched_"
+    else:
+        not_supported_filter = "no_pileup_support"
+        not_searched_filter = "not_searched_"
+
     updated_vcf = recompute_depth(vcf, mpileup_data,
                                     not_supported_filter = not_supported_filter,
                                     not_searched_filter = not_searched_filter,
@@ -426,9 +431,9 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     header_lines.append(f'##FORMAT=<ID=NDP{suffix},Number=1,Type=Integer,Description="Total number of Ns computed using mpileup output. deepUMIcaller.">')
 
     # FILTER field
-    header_lines.append(f'##FILTER=<ID={not_supported_filter}{suffix},Description="Variant not supported when inspecting the BAM with mpileup. deepUMIcaller.">')
-    header_lines.append(f'##FILTER=<ID={not_searched_filter}SV{suffix},Description="Structural variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
-    header_lines.append(f'##FILTER=<ID={not_searched_filter}COMPLEX{suffix},Description="Complex variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
+    header_lines.append(f'##FILTER=<ID={not_supported_filter},Description="Variant not supported when inspecting the BAM with mpileup. deepUMIcaller.">')
+    header_lines.append(f'##FILTER=<ID={not_searched_filter}SV,Description="Structural variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
+    header_lines.append(f'##FILTER=<ID={not_searched_filter}COMPLEX,Description="Complex variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
     
     
     ###

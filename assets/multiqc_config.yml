@@ -12,6 +12,7 @@ extra_fn_clean_exts:
   - ".high"
   - ".med"
   - ".low"
+  - ".all_molecules"
   - "_umi_histogram"
 
 export_plots: true
@@ -21,6 +22,18 @@ top_modules:
       name: "QualiMAP(raw)"
       info: "This section of the report shows QualiMAP results of the aligned raw reads."
       anchor: "qualimap_raw"
+      path_filters_exclude:
+        - "*.high/**"
+        - "*.med/**"
+        - "*.low/**"
+        - "*.all_molecules/**"
+
+  - qualimap:
+      name: "QualiMAP(all molecules)"
+      info: "This section of the report shows QualiMAP results of the aligned set of all unique molecules."
+      anchor: "qualimap_all"
+      path_filters:
+        - "*.all_molecules/**"
       path_filters_exclude:
         - "*.high/**"
         - "*.med/**"
@@ -35,6 +48,7 @@ top_modules:
       path_filters_exclude:
         - "*.med/**"
         - "*.low/**"
+        - "*.all_molecules/**"
 
   - qualimap:
       name: "QualiMAP(medium confidence)"
@@ -45,6 +59,7 @@ top_modules:
       path_filters_exclude:
         - "*.high/**"
         - "*.low/**"
+        - "*.all_molecules/**"
 
   - qualimap:
       name: "QualiMAP(low confidence)"
@@ -55,3 +70,4 @@ top_modules:
       path_filters_exclude:
         - "*.high/**"
         - "*.med/**"
+        - "*.all_molecules/**"

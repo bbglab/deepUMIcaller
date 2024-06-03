@@ -425,6 +425,7 @@ workflow DEEPUMICALLER {
 
             // requires input coordinate sorted
             QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
 
 
             //

@@ -21,12 +21,16 @@ process PATCH_DEPTH {
 
     script:
     def args = task.ext.args ?: ''
+    def suffix = task.ext.suffix ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = suffix != '' ? "${prefix}.${suffix}" : prefix
     """
     recompute_depth.py \\
             ${pileup_mutations} \\
             ${vcf} \\
-            ${prefix}.readjusted.vcf
+            ${prefix}.readjusted.vcf \\
+            ${suffix} \\
+            ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

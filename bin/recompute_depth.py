@@ -87,14 +87,14 @@ def count_freq_in_row(elements_in_row, searching_elems):
     return dp
 
 
-def update_vcf_fields(row):
+def update_vcf_fields(row, suffix = ''):
     # update the formats
     formats = row["FORMAT"].split(':')
     values = row["SAMPLE"].split(':')
     formats_values = dict( zip(formats, values) )
-    formats_values["CDP"] = f'{int(row["TOT_DP"])}'
-    formats_values["CAD"] = f'{int(row["REF_DP"])},{int(row["ALT_DP"])}'
-    formats_values["NDP"] = f'{int(row["Ns_DP"])}'
+    formats_values[f"CDP{suffix}"] = f'{int(row["TOT_DP"])}'
+    formats_values[f"CAD{suffix}"] = f'{int(row["REF_DP"])},{int(row["ALT_DP"])}'
+    formats_values[f"NDP{suffix}"] = f'{int(row["Ns_DP"])}'
     
     if row["NEW_FILTER"] != "":
         if row["FILTER"] == "PASS":
@@ -112,7 +112,9 @@ def update_vcf_fields(row):
 def recompute_depth(vcf,
                     mpileup_data,
                     not_supported_filter = "no_pileup_support",
-                    not_searched_filter = "not_searched_"):
+                    not_searched_filter = "not_searched_",
+                    suffix_label = ''
+                    ):
     """
     vcf file
     mpileup_data
@@ -361,7 +363,7 @@ def recompute_depth(vcf,
     vcf[["TOT_DP", "REF_DP", "ALT_DP", "Ns_DP", "NEW_FILTER"]] = info_vcf
 
     print("Done\nUpdating VCF columns...", end = "")
-    vcf[["FILTER", "FORMAT", "SAMPLE"]] = vcf.apply(lambda x: pd.Series(update_vcf_fields(x)), axis = 1)
+    vcf[["FILTER", "FORMAT", "SAMPLE"]] = vcf.apply(lambda x: pd.Series(update_vcf_fields(x, suffix = suffix_label)), axis = 1)
     print("\nDONE")
     
     return vcf[["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]]
@@ -369,7 +371,7 @@ def recompute_depth(vcf,
 
 
 
-def main(mpileup_file, vcf_file, output_filename):
+def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     """
     Your script's main function.
     """
@@ -391,12 +393,17 @@ def main(mpileup_file, vcf_file, output_filename):
     vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#')
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
-    not_supported_filter = "no_pileup_support"
-    not_searched_filter = "not_searched_"
+    if suffix != '':
+        not_supported_filter = f"{suffix}_no_pileup_support"
+        not_searched_filter = f"{suffix}_not_searched_"
+    else:
+        not_supported_filter = "no_pileup_support"
+        not_searched_filter = "not_searched_"
+
     updated_vcf = recompute_depth(vcf, mpileup_data,
                                     not_supported_filter = not_supported_filter,
-                                    not_searched_filter = not_searched_filter
-                                    )
+                                    not_searched_filter = not_searched_filter,
+                                    suffix_label= suffix)
 
     ###
     # Read the VCF header
@@ -419,9 +426,9 @@ def main(mpileup_file, vcf_file, output_filename):
     # Add your custom header lines
     ###
     # FORMAT/INFO fields
-    header_lines.append('##FORMAT=<ID=CDP,Number=1,Type=Integer,Description="Total Depth recomputed using mpileup output. deepUMIcaller.">')
-    header_lines.append('##FORMAT=<ID=CAD,Number=2,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed. ONLY ONE ALT allele. Recomputed using mpileup output, this might not sum to CDP. deepUMIcaller.">')
-    header_lines.append('##FORMAT=<ID=NDP,Number=1,Type=Integer,Description="Total number of Ns computed using mpileup output. deepUMIcaller.">')
+    header_lines.append(f'##FORMAT=<ID=CDP{suffix},Number=1,Type=Integer,Description="Total Depth recomputed using mpileup output. deepUMIcaller.">')
+    header_lines.append(f'##FORMAT=<ID=CAD{suffix},Number=2,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed. ONLY ONE ALT allele. Recomputed using mpileup output, this might not sum to CDP. deepUMIcaller.">')
+    header_lines.append(f'##FORMAT=<ID=NDP{suffix},Number=1,Type=Integer,Description="Total number of Ns computed using mpileup output. deepUMIcaller.">')
 
     # FILTER field
     header_lines.append(f'##FILTER=<ID={not_supported_filter},Description="Variant not supported when inspecting the BAM with mpileup. deepUMIcaller.">')
@@ -451,6 +458,11 @@ if __name__ == '__main__':
     vcf_file = sys.argv[2]
     output_filename = sys.argv[3]
     main(mpileup_file, vcf_file, output_filename)
+    if len(sys.argv) >= 5:
+        suffix_cmd = sys.argv[4]
+    else:
+        suffix_cmd = ''
+    main(mpileup_file, vcf_file, output_filename, suffix_cmd)
 
 
 # @click.command()

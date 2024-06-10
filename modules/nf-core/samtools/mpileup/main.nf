@@ -24,11 +24,11 @@ process SAMTOOLS_MPILEUP {
     def intervals = intervals ? "--positions ${intervals}" : ""
     """
     samtools mpileup \\
-        --fasta-ref $fasta \\
+        --fasta-ref ${fasta} \\
         --output ${prefix}.mpileup \\
-        $args \\
-        $intervals \\
-        $bam
+        ${args} \\
+        ${intervals} \\
+        ${bam}
     bgzip -@${task.cpus} ${prefix}.mpileup
     tabix -s 1 -b 2 -e 2 ${prefix}.mpileup.gz
     cat <<-END_VERSIONS > versions.yml

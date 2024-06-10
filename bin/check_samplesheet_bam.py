@@ -35,7 +35,6 @@ class RowChecker:
         sample_col="sample",
         first_col="bam",
         second_col="csi",
-        read_structure_col="read_structure",
         **kwargs,
     ):
         """
@@ -48,15 +47,11 @@ class RowChecker:
                 (default "bam").
             second_col (str): The name of the column that contains CSI file path 
                 (default "csi").
-            read_structure (str): The name of the column that contains the read
-                structure for the given sample.
-
         """
         super().__init__(**kwargs)
         self._sample_col = sample_col
         self._first_col = first_col
         self._second_col = second_col
-        self._read_structure_col = read_structure_col
         self._seen = set()
         self.modified = []
 
@@ -91,18 +86,6 @@ class RowChecker:
         """Assert that the CSI entry has the right format if it exists."""
         assert len(row[self._second_col]) > 0, "The CSI file is required."
         self._validate_bam_format(row[self._second_col])
-
-    # def _validate_pair(self, row):
-    #     """Assert that read pairs have the same file extension. Report pair status."""
-    #     assert (
-    #         Path(row[self._first_col]).suffixes[-2:] == Path(row[self._second_col]).suffixes[-2:]
-    #     ), "FASTQ pairs must have the same file extensions."
-
-    def _validate_read_structure(self, row):
-        """Assert that the second FASTQ entry has the right format if it exists."""
-        assert len(row[self._read_structure_col].split(' ')) == 2, (
-            "Two read structures must be provided."
-        )
 
     def _validate_bam_format(self, filename):
         """Assert that a given filename has one of the expected BAM extensions."""
@@ -180,11 +163,10 @@ def check_samplesheet(file_in, file_out):
     Example:
         This function checks that the samplesheet follows the following structure ::
 
-            sample,bam,csi,read_structure
-
+            sample,bam,csi
 
     """
-    required_columns = {"sample", "bam", "csi", "read_structure"}
+    required_columns = {"sample", "bam", "csi"}
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_in.open(newline="") as in_handle:
         reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))

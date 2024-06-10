@@ -27,11 +27,11 @@ def create_input_channel(LinkedHashMap row, step) {
     // create meta map
     def meta = [:]
     meta.id             = row.sample
-    meta.read_structure = row.read_structure
 
     // add path(s) of the fastq file(s) to the meta map
     def input_meta = []
     if (step=='mapping'){
+        meta.read_structure = row.read_structure
         if (!file(row.fastq_1).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
         }
@@ -54,9 +54,6 @@ def create_input_channel(LinkedHashMap row, step) {
     else{
         if (!file(row.bam).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
-        }
-        if (!file(row.csi).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
         }
         input_meta = [ meta, [ file(row.bam) ]]
     }

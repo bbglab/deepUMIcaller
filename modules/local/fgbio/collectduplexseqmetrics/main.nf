@@ -9,6 +9,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
 
     input:
     tuple val(meta), path(grouped_bam)
+    path (intervals_file)
 
     output:
     tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
@@ -18,6 +19,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def coords_file = intervals_file ? "--intervals ${intervals_file}" : ""
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio CollectDuplexSeqMetrics] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
@@ -33,6 +35,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
         CollectDuplexSeqMetrics \\
         --input $grouped_bam \\
         --output ${prefix}.duplex_seq_metrics \\
+        ${coords_file} \\
         $args;
 
     cat <<-END_VERSIONS > versions.yml

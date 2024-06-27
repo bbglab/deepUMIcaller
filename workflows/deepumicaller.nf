@@ -65,48 +65,46 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK                                                      } from '../subworkflows/local/input_check'
+include { INPUT_CHECK                                                           } from '../subworkflows/local/input_check'
 
-include { BAM_FILTER_READS                                                 } from '../subworkflows/local/bam_filter_reads/main'
-
-
-include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/local/fgbio/fastqtobam/main'
-
-include { ALIGN_BAM                         as ALIGNRAWBAM                 } from '../modules/local/align_bam/main'
-
-include { ALIGN_BAM                         as ALIGNCONSENSUSBAM           } from '../modules/local/align_bam/main'
-include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM     } from '../modules/local/align_bam/main'
-
-include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-include { FAMILYSIZEMETRICS                 as FAMILYMETRICS               } from '../modules/local/familymetrics/main'
-
-include { FGBIO_CLIPBAM                     as CLIPBAMLOW                  } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMMED                  } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                 } from '../modules/local/clipbam/main'
-
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW     } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED     } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH    } from '../modules/local/fgbio/filterconsensusreads/main'
+include { BAM_FILTER_READS                                                      } from '../subworkflows/local/bam_filter_reads/main'
 
 
-include { CREATEBED_FROM_TSV                as CREATEBEDLOW                } from '../modules/local/createbed/main'
-include { CREATEBED_FROM_TSV                as CREATEBEDMED                } from '../modules/local/createbed/main'
-include { CREATEBED_FROM_TSV                as CREATEBEDHIGH               } from '../modules/local/createbed/main'
+include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
 
-include { CALLING_VARDICT                   as CALLINGVARDICTLOW           } from '../modules/local/calling_vardict/main'
-include { CALLING_VARDICT                   as CALLINGVARDICTMED           } from '../modules/local/calling_vardict/main'
-include { CALLING_VARDICT                   as CALLINGVARDICTHIGH          } from '../modules/local/calling_vardict/main'
+include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
 
-// include { BBGPOSTANALYSIS                     as BBGPOSTANALYSIS               } from '../modules/local/BBGPOSTANALYSIS/main'
+include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
+include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM          } from '../modules/local/align_bam/main'
 
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW              } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED              } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH             } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS          } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICSONTARGET  } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
-include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERRAW           } from '../modules/local/filter_reads/samtools/main'
-include { ASMINUSXS                         as ASMINUSXSRAW                } from '../modules/local/filter_reads/asminusxs/main'
-include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX        } from '../modules/local/filter_reads/samtools/main'
-include { ASMINUSXS                         as ASMINUSXSDUPLEX             } from '../modules/local/filter_reads/asminusxs/main'
+include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
+include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
+
+include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX             } from '../modules/local/filter_reads/samtools/main'
+include { ASMINUSXS                         as ASMINUSXSDUPLEX                  } from '../modules/local/filter_reads/asminusxs/main'
+
+include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMMED                       } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
+
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW          } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH         } from '../modules/local/fgbio/filterconsensusreads/main'
+
+include { CREATEBED_FROM_TSV                as CREATEBEDLOW                     } from '../modules/local/createbed/main'
+include { CREATEBED_FROM_TSV                as CREATEBEDMED                     } from '../modules/local/createbed/main'
+include { CREATEBED_FROM_TSV                as CREATEBEDHIGH                    } from '../modules/local/createbed/main'
+
+include { CALLING_VARDICT                   as CALLINGVARDICTLOW                } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTMED                } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTHIGH               } from '../modules/local/calling_vardict/main'
+
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH                  } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
 /*
@@ -207,6 +205,15 @@ workflow DEEPUMICALLER {
     }
     vep_extra_files = []
     
+
+    if (params.targetsfile) {
+        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
+        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
+        ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions)
+        // BEDTOINTERVAL.out.interval_list
+    }
+
+
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     INPUT_CHECK (
@@ -295,11 +302,6 @@ workflow DEEPUMICALLER {
             ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
 
-            targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
-            BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-            ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions.first())
-
-
             // truncate BAM to keep only the reads that are on target
             // TODO
             // see how BAMFILTERREADS requires the BAM file sorted....
@@ -350,9 +352,8 @@ workflow DEEPUMICALLER {
 
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics
-        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam)
+        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam, [])
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
-
 
         // Join groupby stats and duplex seq metrics files from the same samples
         GROUPREADSBYUMIDUPLEX.out.histogram
@@ -365,6 +366,28 @@ workflow DEEPUMICALLER {
         ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
         FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+
+
+
+        // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
+        COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
+        ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICSONTARGET.out.versions.first())
+
+        // Join groupby stats and duplex seq metrics files from the same samples
+        GROUPREADSBYUMIDUPLEX.out.histogram
+        .join(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
+        .set {metrics_ch_target}
+
+
+        // Plot the family size metrics
+        FAMILYMETRICSONTARGET(metrics_ch_target)
+        ch_versions = ch_versions.mix(FAMILYMETRICSONTARGET.out.versions.first())
+        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+
+
+
+
 
         bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
 

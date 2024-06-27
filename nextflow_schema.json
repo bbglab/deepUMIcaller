@@ -66,22 +66,11 @@
             "description": "Most common options used for the pipeline",
             "default": "",
             "properties": {
-                "duplex_seq": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-dna",
-                    "description": "Enable when the input is duplex sequencing.",
-                    "help_text": "With this parameter flags in various tools are set for duplex sequencing data."
-                },
-                "umi_only": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-dna",
-                    "description": "Enable when the input is not duplex sequencing.",
-                    "help_text": "With this parameter, the workflow adapts to simple UMIs data."
-                },
                 "remove_offtargets": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Choose to remove offtargets",
+                    "default": false,
                     "help_text": "This will slightly speed up the analysis by focusing on the regions of interest according to the provided BED file"
                 },
                 "step": {
@@ -91,17 +80,45 @@
                     "fa_icon": "fas fa-book",
                     "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."
                 },
-                "filter_human": {
+                "perform_qcs": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
-                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
+                    "description": "Perform additional QCs that are useful for posterior analysis.",
+                    "default": true,
+                    "help_text": ""
+                },
+                "annotate_mutations": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable for filtering Ns",
+                    "default": false,
+                    "help_text": ""
+                }
+            }
+        },
+        "main_filtering_options": {
+            "title": "Main filtering options",
+            "type": "object",
+            "description": "Main filtering options",
+            "default": "",
+            "properties": {
+                "asminusxs_thres": {
+                    "type": "integer",
+                    "description": "Avoid multiple mapping.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": ""
                 },
                 "filter_mutations": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
                     "help_text": ""
+                },
+                "filter_human": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
+                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
                 },
                 "low_mappability_file": {
                     "type": "string",
@@ -114,12 +131,6 @@
                     "description": "BED file with the low complex regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
-                },
-                "asminusxs_thres": {
-                    "type": "integer",
-                    "description": "Avoid multiple mapping.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": ""
                 }
             }
         },
@@ -169,12 +180,38 @@
                 }
             }
         },
-        "consensus_filtering": {
+        "consensus_filtering_general": {
+            "title": "Consensus filtering options for all the confidence levels",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering consensus reads",
+            "properties": {
+                "maxN_prop_per_read": {
+                    "type": "number",
+                    "description": "The maximum proportion of Ns in a consensus read",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
+                },
+                "filter_strand_agreement": {
+                    "type": "boolean",
+                    "description": "Require agreement of both strands in duplex consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Require agreement of both strands to define each base of the duplex consensus."
+                }
+            }
+        },
+        "consensus_filtering_high": {
             "title": "Consensus filtering options for the high confidence mutations",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads",
             "properties": {
+                "duplex_high_conf": {
+                    "type": "boolean",
+                    "description": "Activate medium confidence level",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The medium confidence level output will be generated."
+                },
                 "filter_min_reads_high": {
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
@@ -192,18 +229,6 @@
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
                     "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
-                },
-                "maxN_prop_per_read": {
-                    "type": "number",
-                    "description": "The maximum proportion of Ns in a consensus read",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
-                },
-                "filter_strand_agreement": {
-                    "type": "boolean",
-                    "description": "Require agreement of both strands in duplex consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "Require agreement of both strands to define each base of the duplex consensus."
                 }
             }
         },
@@ -594,13 +619,10 @@
             "$ref": "#/definitions/consensus_calling"
         },
         {
-            "$ref": "#/definitions/consensus_filtering"
+            "$ref": "#/definitions/main_filtering_options"
         },
         {
             "$ref": "#/definitions/reference_genome_options"
-        },
-        {
-            "$ref": "#/definitions/institutional_config_options"
         },
         {
             "$ref": "#/definitions/max_job_request_options"

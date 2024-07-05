@@ -25,8 +25,8 @@ process FILTERMUTATIONS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def vaf_filter = task.ext.vaf_filter ?: '0.35'
-    def filters = task.ext.filters ?: "no_pileup_support,low_complex_repetitive,low_mappability,n_rich"
+    def vaf_filter = task.ext.vaf_filter ?: ''
+    def filters = task.ext.filters ?: ''
     """
     filtervcf.py \\
                 ${prefix} \\

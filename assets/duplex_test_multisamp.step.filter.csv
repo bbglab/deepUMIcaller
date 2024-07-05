@@ -1,0 +1,4 @@
+sample,bam,csi,read
+CH_pat1_ts,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat1.sorted.bam,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat1.sorted.bam,
+CH_pat2B_ts,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat2B.sorted.bam,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat2B.sorted.bam,
+CH_pat2_ts,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat2.sorted.bam,/workspace/nobackup/scratch/fcalvet/test_reorder/sortbamduplexfiltered/CH_pat2.sorted.bam,

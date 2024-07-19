@@ -12,7 +12,7 @@ process FAMILYSIZEMETRICS {
 
 
     input:
-    tuple val(meta), path(groupby_metrics), path(duplex_metrics)
+    tuple val(meta), path(duplex_metrics)
 
     output:
     tuple val(meta), path("*.pdf")              , emit: pdf
@@ -33,7 +33,6 @@ process FAMILYSIZEMETRICS {
     """
     family_size_plots.py \\
                 ${prefix} \\
-                ${groupby_metrics} \\
                 ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt \\
                 ${prefix}.family_sizes_plot_n_stats
 

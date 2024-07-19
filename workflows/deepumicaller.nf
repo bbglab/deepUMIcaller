@@ -355,14 +355,9 @@ workflow DEEPUMICALLER {
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam, [])
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICS.out.versions.first())
 
-        // Join groupby stats and duplex seq metrics files from the same samples
-        GROUPREADSBYUMIDUPLEX.out.histogram
-        .join(COLLECTDUPLEXSEQMETRICS.out.metrics)
-        .set {metrics_ch}
-
 
         // Plot the family size metrics
-        FAMILYMETRICS(metrics_ch)
+        FAMILYMETRICS(COLLECTDUPLEXSEQMETRICS.out.metrics)
         ch_versions = ch_versions.mix(FAMILYMETRICS.out.versions.first())
         FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
@@ -373,14 +368,10 @@ workflow DEEPUMICALLER {
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICSONTARGET.out.versions.first())
 
-        // Join groupby stats and duplex seq metrics files from the same samples
-        GROUPREADSBYUMIDUPLEX.out.histogram
-        .join(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
-        .set {metrics_ch_target}
 
 
         // Plot the family size metrics
-        FAMILYMETRICSONTARGET(metrics_ch_target)
+        FAMILYMETRICSONTARGET(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
         ch_versions = ch_versions.mix(FAMILYMETRICSONTARGET.out.versions.first())
         FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
         FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)

@@ -7,20 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def compute_duplicates(file,
-                        count_var = "count"):
-
-    groupby_umi_families = pd.read_table(file, sep = "\t", header = 0)
-    groupby_umi_families['reads'] = groupby_umi_families[count_var] * groupby_umi_families['family_size']
-
-    unique_molecules = groupby_umi_families[count_var].sum()
-    total_molecules = groupby_umi_families['reads'].sum()
-    duplicated_molecules = total_molecules - unique_molecules
-
-    return duplicated_molecules / total_molecules    
-
-
-
 def wrap_family_size_curves(data_sscs):
     '''
     wrap_family_size_curves(data_scss_grouped[["family_size", "in_duplex", "fraction_reads"]])
@@ -42,7 +28,7 @@ def wrap_family_size_curves(data_sscs):
     return pivot_df.reset_index()
 
 
-def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, percent_duplicates, confidence = '2 1 1', confidence_name = 'low'):
+def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidence = '2 1 1', confidence_name = 'low'):
     '''
     this function computes the family size metrics curve
     '''
@@ -93,6 +79,8 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, percent_d
     total_scss_nonduplex = data_scss["count"][~data_scss["in_duplex"]].sum()
     total_reads_nonduplex = data_scss_grouped["count_reads"][~data_scss["in_duplex"]].sum()
 
+    percent_duplicates = (1 - total_scss/total_reads) * 100
+
     expected_dcs = round(total_scss / 2)
     recovery_of_dcs = total_duplex / expected_dcs * 100
     unique_reads = total_duplex + total_scss_nonduplex
@@ -122,8 +110,8 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, percent_d
     fig.savefig(f"{prefix_figure}.{confidence_name}.pdf", bbox_inches='tight')
 
     try:
-        max_indices = np.argmax( data_scss_grouped[data_scss_grouped['in_duplex'] == True]['fraction_reads'].values )
-        peak_size = data_scss_grouped[data_scss_grouped['in_duplex'] == True]['family_size'].values[max_indices]
+        max_indices = np.argmax( data_scss_grouped[data_scss_grouped['in_duplex']]['fraction_reads'].values )
+        peak_size = data_scss_grouped[data_scss_grouped['in_duplex']]['family_size'].values[max_indices]
     except:
         peak_size = 0
 
@@ -151,11 +139,7 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, percent_d
 
 
 
-def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, output_prefix):
-    
-    # compute duplicate rate from groupby stats
-    prop_duplicates = compute_duplicates(groupby_metrics_file)
-    percent_duplicates = prop_duplicates * 100
+def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix):
 
     # compute family size distributions from duplex stats data
     data_duplex_families = pd.read_table(f"{duplex_metrics_file}")
@@ -163,15 +147,12 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, outpu
 
     sample_data_high, data_family_size_curve_high = compute_family_sizes_curve(sample, data_duplex_families,
                                                                                 prefix_figure = output_prefix,
-                                                                                percent_duplicates=percent_duplicates,
                                                                                 confidence = '6 3 3', confidence_name = 'high')
     sample_data_med, data_family_size_curve_med = compute_family_sizes_curve(sample, data_duplex_families,
                                                                                     prefix_figure = output_prefix,
-                                                                                    percent_duplicates=percent_duplicates,
                                                                                 confidence = '4 2 2', confidence_name = 'med')
     sample_data_low, data_family_size_curve_low = compute_family_sizes_curve(sample, data_duplex_families, 
                                                                                     prefix_figure = output_prefix,
-                                                                                    percent_duplicates=percent_duplicates,
                                                                                     confidence = '2 1 1', confidence_name = 'low')
 
     sample_data = pd.concat((sample_data_high, sample_data_med, sample_data_low), axis = 0)
@@ -191,11 +172,10 @@ def stats_fam_size2plot(sample, groupby_metrics_file, duplex_metrics_file, outpu
 
 
 sam = sys.argv[1]
-groupby_metrics_file = sys.argv[2]
-duplex_metrics_file = sys.argv[3]
-output_file = sys.argv[4]
+duplex_metrics_filee = sys.argv[2]
+output_file = sys.argv[3]
 
 global limx
 limx = (0,50)
 
-stats_fam_size2plot(sam, groupby_metrics_file, duplex_metrics_file, output_file)
+stats_fam_size2plot(sam, duplex_metrics_filee, output_file)

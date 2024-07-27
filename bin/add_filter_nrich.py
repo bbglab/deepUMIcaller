@@ -66,7 +66,8 @@ def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth_valid = 5):
     # define filter threshold
     ## load file with Ns counts per position along the entire panel (no mutations only)
     ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
-                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"])
+                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"],
+                                na_filter=False)
     print(ns_position_df.shape)
 
     over_valid_depth = ns_position_df["TOTAL_DEPTH"][ns_position_df["TOTAL_DEPTH"] > min_depth_valid]
@@ -139,7 +140,9 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_dep
     ###
     # Read the VCF file body and add 
     ###
-    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#')
+    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
+                        dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                        na_filter=False)
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     ###

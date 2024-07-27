@@ -42,7 +42,10 @@ def read_from_vardict_VCF_all(sample,
     """
 
     dat = pd.read_csv(location + name,
-                    sep = '\t', header = None, comment= '#')
+                    sep = '\t', header = None, comment= '#',
+                    dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                    na_filter=False
+                    )
     dat.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
 

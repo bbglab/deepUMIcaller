@@ -379,11 +379,14 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     ###
     # Read and preprocess the mpileup data
     ###
-    mpileup_data = pd.read_csv(mpileup_file, sep = "\t", header = None)
+    mpileup_data = pd.read_csv(mpileup_file, sep="\t", header=None,
+                                dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
+                                na_filter=False)
     mpileup_data.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
 
+
     # TODO revise if this can be done more efficiently
-    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].astype(str).apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
+    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
     mpileup_data.drop(["STATUS", "QUAL", "QNAME"], axis = 1, inplace = True)
     mpileup_data = mpileup_data.set_index(["CHROM", "POS"])
 

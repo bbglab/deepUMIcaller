@@ -379,18 +379,23 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     ###
     # Read and preprocess the mpileup data
     ###
-    mpileup_data = pd.read_csv(mpileup_file, sep = "\t", header = None)
+    mpileup_data = pd.read_csv(mpileup_file, sep="\t", header=None,
+                                dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
+                                na_filter=False)
     mpileup_data.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
 
+
     # TODO revise if this can be done more efficiently
-    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].astype(str).apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
+    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
     mpileup_data.drop(["STATUS", "QUAL", "QNAME"], axis = 1, inplace = True)
     mpileup_data = mpileup_data.set_index(["CHROM", "POS"])
 
     ###
     # Read and preprocess the VCF file body
     ###
-    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#')
+    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
+                        dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                        na_filter=False)
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     if suffix != '':
@@ -446,7 +451,7 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     ###
     # Write the modified VCF header and the updated VCF body into a new file with the appropriate name
     ###
-    with open(output_filename, 'w') as new_vcf_file:
+    with open(output_filename, 'w', encoding="utf-8") as new_vcf_file:
         new_vcf_file.write(header_str + '\n')  # Write the modified header
         updated_vcf.to_csv(new_vcf_file, sep='\t', header=False, index=False)  # Write the data rows
     
@@ -457,7 +462,11 @@ if __name__ == '__main__':
     mpileup_file = sys.argv[1]
     vcf_file = sys.argv[2]
     output_filename = sys.argv[3]
-    main(mpileup_file, vcf_file, output_filename)
+
+    # main(mpileup_file, vcf_file, output_filename) # 2024-07-27
+    # Ferriol commented this line since it seems to be repetitive and a remaining of a previous version of the code
+    # that should have been removed after commit 70ed9c2a29530ae2961423e7930fb5cda4049bc3
+
     if len(sys.argv) >= 5:
         suffix_cmd = sys.argv[4]
     else:

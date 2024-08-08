@@ -56,7 +56,9 @@ def add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name):
         VCF-like dataframe updated
     """
 
-    bed_lowcomplexrep_df = pd.read_csv(bed_lowcomplexrep_file, sep = '\t', header = None)
+    bed_lowcomplexrep_df = pd.read_csv(bed_lowcomplexrep_file, sep = '\t', header = None,
+                                        na_filter=False)
+                                        # dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
     bed_lowcomplexrep_df.columns = ["CHROM", "START", "END", "VARIANT_ID"]
 
     # add filter_name label for later merging with the vcf
@@ -98,7 +100,9 @@ def main(vcf_file, bed_lowcomplexrep_file, output_filename, filter_name):
     ###
     # Read the VCF file body and add 
     ###
-    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#')
+    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
+                        dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                        na_filter=False)
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     ###

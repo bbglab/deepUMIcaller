@@ -375,29 +375,35 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     """
     Your script's main function.
     """
-
+    # Chunk size for reading
+    chunk_size = 10000
+    
     ###
     # Read and preprocess the mpileup data
     ###
-    mpileup_data = pd.read_csv(mpileup_file, sep="\t", header=None,
+    mpileup_data_chunks = pd.read_csv(mpileup_file, sep="\t", header=None,
                                 dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
-                                na_filter=False)
-    mpileup_data.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
+                                na_filter=False, chunksize=chunk_size)
 
+    mpileup_data_list = []
+    for mpileup_chunk in mpileup_data_chunks:
+        mpileup_chunk.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
+        mpileup_chunk[["SPLIT_bases", "SPLIT_reads"]] = mpileup_chunk[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis=1)
+        mpileup_chunk.drop(["STATUS", "QUAL", "QNAME"], axis=1, inplace=True)
+        mpileup_chunk.set_index(["CHROM", "POS"], inplace=True)
+        mpileup_data_list.append(mpileup_chunk)
 
-    # TODO revise if this can be done more efficiently
-    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
-    mpileup_data.drop(["STATUS", "QUAL", "QNAME"], axis = 1, inplace = True)
-    mpileup_data = mpileup_data.set_index(["CHROM", "POS"])
-
+    # Concatenate all chunks into one dataframe
+    mpileup_data = pd.concat(mpileup_data_list)
+    
     ###
     # Read and preprocess the VCF file body
     ###
-    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
+    vcf_chunks = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
                         dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
-                        na_filter=False)
-    vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
-
+                        na_filter=False, chunksize=chunk_size)
+    updated_vcf_list = []
+    
     if suffix != '':
         not_supported_filter = f"{suffix}_no_pileup_support"
         not_searched_filter = f"{suffix}_not_searched_"
@@ -405,11 +411,17 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
         not_supported_filter = "no_pileup_support"
         not_searched_filter = "not_searched_"
 
-    updated_vcf = recompute_depth(vcf, mpileup_data,
+    for vcf_chunk in vcf_chunks:
+        vcf_chunk.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
+        updated_vcf_chunk = recompute_depth(vcf_chunk, mpileup_data,
                                     not_supported_filter = not_supported_filter,
                                     not_searched_filter = not_searched_filter,
                                     suffix_label= suffix)
+        updated_vcf_list.append(updated_vcf_chunk)
 
+    # Concatenate all chunks into one dataframe
+    updated_vcf = pd.concat(updated_vcf_list)
+    
     ###
     # Read the VCF header
     ###

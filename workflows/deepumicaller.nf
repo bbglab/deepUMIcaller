@@ -497,9 +497,12 @@ workflow DEEPUMICALLER {
             CREATEBEDHIGH(COMPUTEDEPTHHIGH.out.tsv)
             ch_versions = ch_versions.mix(CREATEBEDHIGH.out.versions.first())
 
+            cons_high_bam
+            .join( CREATEBEDHIGH.out.bed )
+            .set { cons_high_bam_bed }
+
             // Mutation calling for duplex reads
-            CALLINGVARDICTHIGH(cons_high_bam,
-                                CREATEBEDHIGH.out.bed,
+            CALLINGVARDICTHIGH(cons_high_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
             ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
 
@@ -578,9 +581,12 @@ workflow DEEPUMICALLER {
 
             CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
 
+            cons_med_bam
+            .join( CREATEBEDMED.out.bed )
+            .set { cons_med_bam_bed }
+
             // Mutation calling for all reads
-            CALLINGVARDICTMED(cons_med_bam,
-                                CREATEBEDMED.out.bed,
+            CALLINGVARDICTMED(cons_med_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
 
             // Postprocessing the BAM file to get exact coverage per position and allele
@@ -653,9 +659,13 @@ workflow DEEPUMICALLER {
 
             CREATEBEDLOW(COMPUTEDEPTHLOW.out.tsv)
 
+            cons_low_bam
+            .join( CREATEBEDLOW.out.bed )
+            .set { cons_low_bam_bed }
+
+
             // Mutation calling for all reads
-            CALLINGVARDICTLOW(cons_low_bam,
-                                CREATEBEDLOW.out.bed,
+            CALLINGVARDICTLOW(cons_low_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
 
             // Postprocessing the BAM file to get exact coverage per position and allele

@@ -275,33 +275,25 @@ workflow DEEPUMICALLER {
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
         ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
-        SORTBAM(ALIGNRAWBAM.out.bam)
-        ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+        if (params.perform_qcs){
+            SORTBAM(ALIGNRAWBAM.out.bam)
+            ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+        }
 
-
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAM.out.bam
-        .join( SORTBAM.out.csi )
-        .set { bam_n_index }
-
-        // Temporary deactivate filter ASMINUSXRAW for raw reads
-        // ASMINUSXSRAW(bam_n_index)
-        // SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
-
-        //SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
         // template coordinate sorting for the GroupByUMI
         SORTBAMCLEAN(ALIGNRAWBAM.out.bam)
+        ch_versions = ch_versions.mix(SORTBAMCLEAN.out.versions.first())
 
 
         // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
         // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
         if (params.targetsfile){
-            QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
-            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
-
+            if (params.perform_qcs){
+                QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+                ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+            }
             // truncate BAM to keep only the reads that are on target
             // TODO
             // see how BAMFILTERREADS requires the BAM file sorted....
@@ -323,10 +315,11 @@ workflow DEEPUMICALLER {
 
 
         } else {
-            QUALIMAPQC(SORTBAM.out.bam, [])
-            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
-
+            if (params.perform_qcs){
+                QUALIMAPQC(SORTBAM.out.bam, [])
+                ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+            }
             bam_to_group = SORTBAMCLEAN.out.bam
 
         }

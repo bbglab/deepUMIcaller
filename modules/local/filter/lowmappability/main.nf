@@ -14,6 +14,7 @@ process FILTER_LOW_MAPPABILITY {
 
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
+    path (low_mappable_bed)
 
     output:
     tuple val(meta), path("*.low_mappable.vcf"), emit: filtered_vcf
@@ -25,7 +26,7 @@ process FILTER_LOW_MAPPABILITY {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def low_mappable_bed = task.ext.low_mappable ?: ''
+    // def low_mappable_bed = task.ext.low_mappable ?: ''
 
     // TODO add condition to check if the file argument is empty, if it is, return same vcf file
     """

@@ -46,6 +46,8 @@ ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 // if (ch_ref_index_dir) { file("${file(params.ref_fasta).parent}/${file(params.ref_fasta).name}.amb", checkIfExists: true) }
 
 
+bed_low_complex = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+bed_low_mappability = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -505,7 +507,9 @@ workflow DEEPUMICALLER {
                             bam_n_index_duplex_clean,
                             CALLINGVARDICTHIGH.out.vcf,
                             CREATEBEDHIGH.out.bed,
-                            ch_ref_fasta
+                            ch_ref_fasta,
+                            bed_low_complex,
+                            bed_low_mappability
                         )
             ch_versions = ch_versions.mix(RECOUNTMUTSHIGH.out.versions.first())
 
@@ -588,7 +592,9 @@ workflow DEEPUMICALLER {
                             bam_n_index_duplex_clean,
                             CALLINGVARDICTMED.out.vcf,
                             CREATEBEDMED.out.bed,
-                            ch_ref_fasta)
+                            ch_ref_fasta,
+                            bed_low_complex,
+                            bed_low_mappability)
             ch_versions = ch_versions.mix(RECOUNTMUTSMED.out.versions.first())
 
             if (params.annotate_mutations){
@@ -667,7 +673,9 @@ workflow DEEPUMICALLER {
                             bam_n_index_duplex_clean,
                             CALLINGVARDICTLOW.out.vcf,
                             CREATEBEDLOW.out.bed,
-                            ch_ref_fasta)
+                            ch_ref_fasta,
+                            bed_low_complex,
+                            bed_low_mappability)
             ch_versions = ch_versions.mix(RECOUNTMUTSLOW.out.versions.first())
 
             if (params.annotate_mutations){

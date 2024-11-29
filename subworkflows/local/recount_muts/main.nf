@@ -31,6 +31,8 @@ workflow RECOUNT_MUTS {
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] [ val(meta), path (intervals_file)]
     reference_fasta          // channel: [mandatory] path (reference_fasta)
+    low_complex_filter
+    low_mappability_filter
 
 
     main:
@@ -113,8 +115,8 @@ workflow RECOUNT_MUTS {
             .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
             .set { ch_vcf_vcfbed }
 
-            FILTERLOWCOMPLEX(ch_vcf_vcfbed)
-            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed)
+            FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
+            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
             
             FILTERLOWMAPPABLE.out.filtered_vcf
             .join(NSXPOSITION.out.ns_tsv)

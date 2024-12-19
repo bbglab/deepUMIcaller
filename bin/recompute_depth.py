@@ -376,7 +376,7 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     Your script's main function.
     """
     # Chunk size for reading
-    chunk_size = 10000
+    chunk_size = 1000
     
     ###
     # Read and preprocess the mpileup data

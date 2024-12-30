@@ -392,6 +392,13 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
                 single_header = line.strip()
             else:
                 break
+
+    if suffix != '':
+            not_supported_filter = f"{suffix}_no_pileup_support"
+            not_searched_filter = f"{suffix}_not_searched_"
+    else:
+        not_supported_filter = "no_pileup_support"
+        not_searched_filter = "not_searched_"
     
     ###
     # Add your custom header lines
@@ -450,12 +457,6 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
         vcf_chunks = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
                             dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
                             na_filter=False, chunksize=chunk_size)    
-        if suffix != '':
-            not_supported_filter = f"{suffix}_no_pileup_support"
-            not_searched_filter = f"{suffix}_not_searched_"
-        else:
-            not_supported_filter = "no_pileup_support"
-            not_searched_filter = "not_searched_"
     
         for vcf_chunk in vcf_chunks:
             vcf_chunk.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]

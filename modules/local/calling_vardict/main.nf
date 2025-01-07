@@ -64,7 +64,7 @@ process CALLING_VARDICT {
     cat chunk_*.genome.vcf > ${prefix}.genome.vcf
     
     # Apply the AWK filter to create the final VCF
-    awk '$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
+    awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
     
     # Cleanup intermediate files (optional)
     rm chunk_*.raw.tsv

@@ -27,20 +27,48 @@ process CALLING_VARDICT {
     def filter_args = task.ext.filter_args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    vardict-java -G ${fasta_dir}/${fasta} \\
-        -N ${prefix} -b ${bam} \\
-        -c 1 -S 2 -E 3 -g 4 \\
-        $args \\
-        -th ${task.cpus} \\
-        ${targets_file} > ${prefix}.raw.tsv;
 
-    cat ${prefix}.raw.tsv \\
-        | teststrandbias.R \\
-        | var2vcf_valid.pl \\
-        -N ${prefix} $filter_args \\
-        > ${prefix}.genome.vcf;
+    # Split the targets file into ${task.cpus} chunks
+    split -n l/${task.cpus} -d --additional-suffix=.targets ${targets_file} chunk_
     
-    awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf;
+    # Process each chunk in parallel
+    for chunk in chunk_*.targets; do
+        vardict-java -G ${fasta_dir}/${fasta} \
+            -N ${prefix} -b ${bam} \
+            -c 1 -S 2 -E 3 -g 4 \
+            $args \
+            -th 1 \
+            $chunk > ${chunk}.raw.tsv &
+    done
+    
+    # Wait for all parallel processes to finish
+    wait
+
+    # Concatenate all genome TSV chunks
+    cat chunk_*.raw.tsv > ${prefix}.raw.tsv
+
+    for chunk in chunk_*.raw.tsv; do
+        (
+            cat $chunk \
+            | teststrandbias.R \
+            | var2vcf_valid.pl \
+                -N ${prefix} $filter_args \
+            > ${chunk}.genome.vcf
+        ) &
+    done
+    
+    # Wait for all parallel processes to finish
+    wait
+
+    # Concatenate all genome VCF chunks
+    cat chunk_*.genome.vcf > ${prefix}.genome.vcf
+    
+    # Apply the AWK filter to create the final VCF
+    awk '$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
+    
+    # Cleanup intermediate files (optional)
+    rm chunk_*.raw.tsv
+    rm chunk_*.genome.vcf
     
     gzip ${prefix}.raw.tsv;
     gzip ${prefix}.genome.vcf;

@@ -32,13 +32,13 @@ process CALLING_VARDICT {
     split -n l/${task.cpus} -d --additional-suffix=.targets ${targets_file} chunk_
     
     # Process each chunk in parallel
-    for chunk in chunk_*.targets; do
+    for chunk1 in chunk_*.targets; do
         vardict-java -G ${fasta_dir}/${fasta} \
             -N ${prefix} -b ${bam} \
             -c 1 -S 2 -E 3 -g 4 \
             $args \
             -th 1 \
-            '$chunk' > '${chunk}.raw.tsv' &
+            '$chunk1' > '${chunk1}.raw.tsv' &
     done
     
     # Wait for all parallel processes to finish
@@ -47,13 +47,13 @@ process CALLING_VARDICT {
     # Concatenate all genome TSV chunks
     cat chunk_*.raw.tsv > ${prefix}.raw.tsv
 
-    for chunk in chunk_*.raw.tsv; do
+    for chunk2 in chunk_*.raw.tsv; do
         (
-            cat '$chunk' \
+            cat '$chunk2' \
             | teststrandbias.R \
             | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-            > '${chunk}.genome.vcf'
+            > '${chunk2}.genome.vcf'
         ) &
     done
     

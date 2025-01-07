@@ -29,8 +29,14 @@ process CALLING_VARDICT {
     """
 
     # Split the targets file into ${task.cpus} chunks
-    split -n l/${task.cpus} -d --additional-suffix=.targets ${targets_file} chunk_
-    
+    total_lines=\$(wc -l < ${targets_file})
+    # Calculate the number of lines per chunk
+    lines_per_chunk=\$(( (total_lines + ${task.cpus} - 1) / ${task.cpus} ))
+    # Split the file into chunks with the calculated number of lines
+    split -l \${lines_per_chunk} --numeric-suffixes=1 --additional-suffix=.targets ${targets_file} chunk_
+
+    echo "Bed splitted in chunks. Running vardict-java..."
+
     # Process each chunk in parallel
     for chunk1 in chunk_*.targets; do
         vardict-java -G ${fasta_dir}/${fasta} \
@@ -44,8 +50,12 @@ process CALLING_VARDICT {
     # Wait for all parallel processes to finish
     wait
 
+    echo "Vardict finished. Concatenating..."
+
     # Concatenate all genome TSV chunks
     cat chunk_*.raw.tsv > ${prefix}.raw.tsv
+
+    echo "Concatenated. teststrandbias running..."
 
     for chunk2 in chunk_*.raw.tsv; do
         (
@@ -60,16 +70,24 @@ process CALLING_VARDICT {
     # Wait for all parallel processes to finish
     wait
 
+    echo "Done. Concatenating..."
+
     # Concatenate all genome VCF chunks
     cat chunk_*.genome.vcf > ${prefix}.genome.vcf
-    
+
+    echo "Done. AWK filtering..."
+
     # Apply the AWK filter to create the final VCF
     awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
-    
+
+    echo "Done. Removing tmp files..."
+
     # Cleanup intermediate files (optional)
     rm chunk_*.raw.tsv
     rm chunk_*.genome.vcf
-    
+
+    echo "Done. Gzip results..."
+
     gzip ${prefix}.raw.tsv;
     gzip ${prefix}.genome.vcf;
 

@@ -38,7 +38,7 @@ process CALLING_VARDICT {
             -c 1 -S 2 -E 3 -g 4 \
             $args \
             -th 1 \
-            $chunk > ${chunk}.raw.tsv &
+            '$chunk' > '${chunk}.raw.tsv' &
     done
     
     # Wait for all parallel processes to finish
@@ -49,11 +49,11 @@ process CALLING_VARDICT {
 
     for chunk in chunk_*.raw.tsv; do
         (
-            cat $chunk \
+            cat '$chunk' \
             | teststrandbias.R \
             | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-            > ${chunk}.genome.vcf
+            > '${chunk}.genome.vcf'
         ) &
     done
     

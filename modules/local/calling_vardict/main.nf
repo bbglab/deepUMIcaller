@@ -33,12 +33,12 @@ process CALLING_VARDICT {
     # Calculate the number of lines per chunk
     lines_per_chunk=\$(( (total_lines + ${task.cpus} - 1) / ${task.cpus} ))
     # Split the file into chunks with the calculated number of lines
-    split -l \${lines_per_chunk} --numeric-suffixes=1 --additional-suffix=.targets ${targets_file} chunk_
+    split -l \${lines_per_chunk} ${targets_file} chunk_
 
     echo "Bed splitted in chunks. Running vardict-java..."
 
     # Process each chunk in parallel
-    for chunk1 in chunk_*.targets; do
+    for chunk1 in chunk_*; do
         vardict-java -G ${fasta_dir}/${fasta} \
             -N ${prefix} -b ${bam} \
             -c 1 -S 2 -E 3 -g 4 \

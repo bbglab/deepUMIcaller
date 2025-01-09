@@ -74,7 +74,7 @@ process CALLING_VARDICT {
 
     # Concatenate all genome VCF chunks
     # Extract the header from the first VCF chunk
-    grep "^#" chunk_aa.genome.vcf > ${prefix}.genome.vcf
+    grep "^#" chunk_aa.raw.tsv.genome.vcf > ${prefix}.genome.vcf
 
     for chunk in chunk_*.genome.vcf; do
         grep -v "^#" \$chunk >> ${prefix}.genome.vcf
@@ -88,8 +88,7 @@ process CALLING_VARDICT {
     echo "Done. Removing tmp files..."
 
     # Cleanup intermediate files (optional)
-    rm chunk_*.raw.tsv
-    rm chunk_*.genome.vcf
+    rm chunk_*
 
     echo "Done. Gzip results..."
 

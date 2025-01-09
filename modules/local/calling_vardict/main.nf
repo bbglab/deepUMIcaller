@@ -38,13 +38,13 @@ process CALLING_VARDICT {
     echo "Bed splitted in chunks. Running vardict-java..."
 
     # Process each chunk in parallel
-    for chunk1 in chunk_*; do
+    for chunk in chunk_*; do
         vardict-java -G ${fasta_dir}/${fasta} \
             -N ${prefix} -b ${bam} \
             -c 1 -S 2 -E 3 -g 4 \
             $args \
             -th 1 \
-            \$chunk1 > \${chunk1}.raw.tsv &
+            \$chunk > \${chunk}.raw.tsv &
     done
     
     # Wait for all parallel processes to finish
@@ -57,13 +57,13 @@ process CALLING_VARDICT {
 
     echo "Concatenated. teststrandbias running..."
 
-    for chunk2 in chunk_*.raw.tsv; do
+    for chunk in chunk_*.raw.tsv; do
         (
-            cat \$chunk2 \
+            cat \$chunk \
             | teststrandbias.R \
             | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-            > \${chunk2}.genome.vcf
+            > \${chunk}.genome.vcf
         ) &
     done
     
@@ -73,7 +73,12 @@ process CALLING_VARDICT {
     echo "Done. Concatenating..."
 
     # Concatenate all genome VCF chunks
-    cat chunk_*.genome.vcf > ${prefix}.genome.vcf
+    # Extract the header from the first VCF chunk
+    grep "^#" chunk_aa.genome.vcf > ${prefix}.genome.vcf
+
+    for chunk in chunk_*.genome.vcf; do
+        grep -v "^#" \$chunk >> ${prefix}.genome.vcf
+    done
 
     echo "Done. AWK filtering..."
 

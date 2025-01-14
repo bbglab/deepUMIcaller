@@ -24,7 +24,7 @@ process QUERY_TABIX {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     # now we also need to recount the variants
-    tabix ${pileup} -R ${vcfderived} | bgzip > ${prefix}.mutated_positions.tsv.gz
+    tabix ${pileup} -@ $task.cpus -R ${vcfderived} | bgzip > ${prefix}.mutated_positions.tsv.gz
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         tabix: \$(echo \$(tabix -h 2>&1) | sed 's/^.*Version: //; s/ .*\$//')

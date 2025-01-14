@@ -30,7 +30,7 @@ process FGBIO_CLIPBAM {
         mem_gb = task.memory.giga
     }
     """  
-    samtools sort -n -u $bam \
+    samtools sort -n -@ $task.cpus -u $bam \
         | fgbio \\
             -Xmx${mem_gb}g \\
             --tmp-dir=. \\

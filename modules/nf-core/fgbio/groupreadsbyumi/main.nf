@@ -45,6 +45,7 @@ process FGBIO_GROUPREADSBYUMI {
         --strategy ${strategy} \\
         --input $taggedbam \\
         --output ${prefix}_umi-grouped.bam \\
+        --threads ${task.cpus} \\
         --family-size-histogram ${prefix}_umi_histogram.txt
 
     cat <<-END_VERSIONS > versions.yml

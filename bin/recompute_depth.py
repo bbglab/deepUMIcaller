@@ -421,36 +421,37 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     header_str = header_str + "\n" + single_header
 
     ###
+    # Read the VCFs per chunk
+    ###
+    
+    # Chunk size for reading
+    chunk_size = 1000
+    
+    ###
+    # Read and preprocess the mpileup data
+    ###
+    mpileup_data_chunks = pd.read_csv(mpileup_file, sep="\t", header=None,
+                                dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
+                                na_filter=False, chunksize=chunk_size)
+
+    mpileup_data_list = []
+    for mpileup_chunk in mpileup_data_chunks:
+        mpileup_chunk.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
+        mpileup_chunk[["SPLIT_bases", "SPLIT_reads"]] = mpileup_chunk[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis=1)
+        mpileup_chunk.drop(["STATUS", "QUAL", "QNAME"], axis=1, inplace=True)
+        mpileup_chunk.set_index(["CHROM", "POS"], inplace=True)
+        mpileup_data_list.append(mpileup_chunk)
+
+    # Concatenate all chunks into one dataframe
+    mpileup_data = pd.concat(mpileup_data_list)
+
+
+    ###
     # Write the modified VCF header and the updated VCF body into a new file with the appropriate name
     ###
     with open(output_filename, 'w', encoding="utf-8") as new_vcf_file:
         new_vcf_file.write(header_str + '\n')  # Write the modified header
-        
-        ###
-        # Read the VCFs per chunk
-        ###
-        
-        # Chunk size for reading
-        chunk_size = 1000
-        
-        ###
-        # Read and preprocess the mpileup data
-        ###
-        mpileup_data_chunks = pd.read_csv(mpileup_file, sep="\t", header=None,
-                                    dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
-                                    na_filter=False, chunksize=chunk_size)
-    
-        mpileup_data_list = []
-        for mpileup_chunk in mpileup_data_chunks:
-            mpileup_chunk.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
-            mpileup_chunk[["SPLIT_bases", "SPLIT_reads"]] = mpileup_chunk[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis=1)
-            mpileup_chunk.drop(["STATUS", "QUAL", "QNAME"], axis=1, inplace=True)
-            mpileup_chunk.set_index(["CHROM", "POS"], inplace=True)
-            mpileup_data_list.append(mpileup_chunk)
-    
-        # Concatenate all chunks into one dataframe
-        mpileup_data = pd.concat(mpileup_data_list)
-        
+
         ###
         # Read and preprocess the VCF file body
         ###

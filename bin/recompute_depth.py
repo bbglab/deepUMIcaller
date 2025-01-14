@@ -377,40 +377,6 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     """
 
     ###
-    # Read and preprocess the mpileup data
-    ###
-    mpileup_data = pd.read_csv(mpileup_file, sep="\t", header=None,
-                                dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
-                                na_filter=False)
-    mpileup_data.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
-
-
-    # TODO revise if this can be done more efficiently
-    mpileup_data[["SPLIT_bases", "SPLIT_reads"]] = mpileup_data[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis = 1)
-    mpileup_data.drop(["STATUS", "QUAL", "QNAME"], axis = 1, inplace = True)
-    mpileup_data = mpileup_data.set_index(["CHROM", "POS"])
-
-    ###
-    # Read and preprocess the VCF file body
-    ###
-    vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
-                        dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
-                        na_filter=False)
-    vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
-
-    if suffix != '':
-        not_supported_filter = f"{suffix}_no_pileup_support"
-        not_searched_filter = f"{suffix}_not_searched_"
-    else:
-        not_supported_filter = "no_pileup_support"
-        not_searched_filter = "not_searched_"
-
-    updated_vcf = recompute_depth(vcf, mpileup_data,
-                                    not_supported_filter = not_supported_filter,
-                                    not_searched_filter = not_searched_filter,
-                                    suffix_label= suffix)
-
-    ###
     # Read the VCF header
     ###
     first_header_lines = []
@@ -426,6 +392,13 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
                 single_header = line.strip()
             else:
                 break
+
+    if suffix != '':
+            not_supported_filter = f"{suffix}_no_pileup_support"
+            not_searched_filter = f"{suffix}_not_searched_"
+    else:
+        not_supported_filter = "no_pileup_support"
+        not_searched_filter = "not_searched_"
     
     ###
     # Add your custom header lines
@@ -439,9 +412,8 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     header_lines.append(f'##FILTER=<ID={not_supported_filter},Description="Variant not supported when inspecting the BAM with mpileup. deepUMIcaller.">')
     header_lines.append(f'##FILTER=<ID={not_searched_filter}SV,Description="Structural variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
     header_lines.append(f'##FILTER=<ID={not_searched_filter}COMPLEX,Description="Complex variant. Recounting of alt depth from mpileup output not done for this type of variants. deepUMIcaller.">')
-    
-    
-    ###
+
+     ###
     # Combine the modified header rows
     ###
     # Convert the list of header lines to a single string
@@ -449,12 +421,53 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     header_str = header_str + "\n" + single_header
 
     ###
+    # Read the VCFs per chunk
+    ###
+    
+    # Chunk size for reading
+    chunk_size = 1000
+    
+    ###
+    # Read and preprocess the mpileup data
+    ###
+    mpileup_data_chunks = pd.read_csv(mpileup_file, sep="\t", header=None,
+                                dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
+                                na_filter=False, chunksize=chunk_size)
+
+    mpileup_data_list = []
+    for mpileup_chunk in mpileup_data_chunks:
+        mpileup_chunk.columns = ["CHROM", "POS", "REF", "DEPTH", "STATUS", "QUAL", "QNAME"]
+        mpileup_chunk[["SPLIT_bases", "SPLIT_reads"]] = mpileup_chunk[["STATUS", "QNAME"]].apply(lambda x: pd.Series(parse_mpu(x)), axis=1)
+        mpileup_chunk.drop(["STATUS", "QUAL", "QNAME"], axis=1, inplace=True)
+        mpileup_chunk.set_index(["CHROM", "POS"], inplace=True)
+        mpileup_data_list.append(mpileup_chunk)
+
+    # Concatenate all chunks into one dataframe
+    mpileup_data = pd.concat(mpileup_data_list)
+
+
+    ###
     # Write the modified VCF header and the updated VCF body into a new file with the appropriate name
     ###
     with open(output_filename, 'w', encoding="utf-8") as new_vcf_file:
         new_vcf_file.write(header_str + '\n')  # Write the modified header
-        updated_vcf.to_csv(new_vcf_file, sep='\t', header=False, index=False)  # Write the data rows
+
+        ###
+        # Read and preprocess the VCF file body
+        ###
+        vcf_chunks = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
+                            dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                            na_filter=False, chunksize=chunk_size)    
     
+        for vcf_chunk in vcf_chunks:
+            vcf_chunk.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
+            updated_vcf_chunk = recompute_depth(vcf_chunk, mpileup_data,
+                                        not_supported_filter = not_supported_filter,
+                                        not_searched_filter = not_searched_filter,
+                                        suffix_label= suffix)
+            updated_vcf_chunk.to_csv(new_vcf_file, sep='\t', index=False, header=False, mode='a')
+
+   
     # Print a success message or return a result if needed
     print(f"{output_filename} VCF file created successfully.")
 

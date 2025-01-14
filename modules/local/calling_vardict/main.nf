@@ -26,21 +26,71 @@ process CALLING_VARDICT {
     def filter_args = task.ext.filter_args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    vardict-java -G ${fasta_dir}/${fasta} \\
-        -N ${prefix} -b ${bam} \\
-        -c 1 -S 2 -E 3 -g 4 \\
-        $args \\
-        -th ${task.cpus} \\
-        ${targets_file} > ${prefix}.raw.tsv;
 
-    cat ${prefix}.raw.tsv \\
-        | teststrandbias.R \\
-        | var2vcf_valid.pl \\
-        -N ${prefix} $filter_args \\
-        > ${prefix}.genome.vcf;
+    # Split the targets file into ${task.cpus} chunks
+    total_lines=\$(wc -l < ${targets_file})
+    # Calculate the number of lines per chunk
+    lines_per_chunk=\$(( (total_lines + ${task.cpus} - 1) / ${task.cpus} ))
+    # Split the file into chunks with the calculated number of lines
+    split -l \${lines_per_chunk} ${targets_file} chunk_
+
+    echo "Bed splitted in chunks. Running vardict-java..."
+
+    # Process each chunk in parallel
+    for chunk in chunk_*; do
+        vardict-java -G ${fasta_dir}/${fasta} \
+            -N ${prefix} -b ${bam} \
+            -c 1 -S 2 -E 3 -g 4 \
+            $args \
+            -th 1 \
+            \$chunk > \${chunk}.raw.tsv &
+    done
     
-    awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf;
+    # Wait for all parallel processes to finish
+    wait
+
+    echo "Vardict finished. Concatenating..."
+
+    # Concatenate all genome TSV chunks
+    cat chunk_*.raw.tsv > ${prefix}.raw.tsv
+
+    echo "Concatenated. teststrandbias running..."
+
+    for chunk in chunk_*.raw.tsv; do
+        (
+            cat \$chunk \
+            | teststrandbias.R \
+            | var2vcf_valid.pl \
+                -N ${prefix} $filter_args \
+            > \${chunk}.genome.vcf
+        ) &
+    done
     
+    # Wait for all parallel processes to finish
+    wait
+
+    echo "Done. Concatenating..."
+
+    # Concatenate all genome VCF chunks
+    # Extract the header from the first VCF chunk
+    grep "^#" chunk_aa.raw.tsv.genome.vcf > ${prefix}.genome.vcf
+
+    for chunk in chunk_*.genome.vcf; do
+        grep -v "^#" \$chunk >> ${prefix}.genome.vcf
+    done
+
+    echo "Done. AWK filtering..."
+
+    # Apply the AWK filter to create the final VCF
+    awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
+
+    echo "Done. Removing tmp files..."
+
+    # Cleanup intermediate files (optional)
+    rm chunk_*
+
+    echo "Done. Gzip results..."
+
     gzip ${prefix}.raw.tsv;
     gzip ${prefix}.genome.vcf;
 

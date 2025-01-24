@@ -275,33 +275,25 @@ workflow DEEPUMICALLER {
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
         ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
 
-        SORTBAM(ALIGNRAWBAM.out.bam)
-        ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+        if (params.perform_qcs){
+            SORTBAM(ALIGNRAWBAM.out.bam)
+            ch_versions = ch_versions.mix(SORTBAM.out.versions.first())
+        }
 
-
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAM.out.bam
-        .join( SORTBAM.out.csi )
-        .set { bam_n_index }
-
-        // Temporary deactivate filter ASMINUSXRAW for raw reads
-        // ASMINUSXSRAW(bam_n_index)
-        // SAMTOOLSFILTERRAW(ASMINUSXSRAW.out.bam)
-
-        //SORTBAMCLEAN(SAMTOOLSFILTERRAW.out.bam)
         // template coordinate sorting for the GroupByUMI
         SORTBAMCLEAN(ALIGNRAWBAM.out.bam)
+        ch_versions = ch_versions.mix(SORTBAMCLEAN.out.versions.first())
 
 
         // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
         // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
         if (params.targetsfile){
-            QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
-            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
-
+            if (params.perform_qcs){
+                QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+                ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+            }
             // truncate BAM to keep only the reads that are on target
             // TODO
             // see how BAMFILTERREADS requires the BAM file sorted....
@@ -323,10 +315,11 @@ workflow DEEPUMICALLER {
 
 
         } else {
-            QUALIMAPQC(SORTBAM.out.bam, [])
-            ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
-
+            if (params.perform_qcs){
+                QUALIMAPQC(SORTBAM.out.bam, [])
+                ch_versions = ch_versions.mix(QUALIMAPQC.out.versions.first())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+            }
             bam_to_group = SORTBAMCLEAN.out.bam
 
         }
@@ -497,9 +490,12 @@ workflow DEEPUMICALLER {
             CREATEBEDHIGH(COMPUTEDEPTHHIGH.out.tsv)
             ch_versions = ch_versions.mix(CREATEBEDHIGH.out.versions.first())
 
+            cons_high_bam
+            .join( CREATEBEDHIGH.out.bed )
+            .set { cons_high_bam_bed }
+
             // Mutation calling for duplex reads
-            CALLINGVARDICTHIGH(cons_high_bam,
-                                CREATEBEDHIGH.out.bed,
+            CALLINGVARDICTHIGH(cons_high_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
             ch_versions = ch_versions.mix(CALLINGVARDICTHIGH.out.versions.first())
 
@@ -578,9 +574,12 @@ workflow DEEPUMICALLER {
 
             CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
 
+            cons_med_bam
+            .join( CREATEBEDMED.out.bed )
+            .set { cons_med_bam_bed }
+
             // Mutation calling for all reads
-            CALLINGVARDICTMED(cons_med_bam,
-                                CREATEBEDMED.out.bed,
+            CALLINGVARDICTMED(cons_med_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
 
             // Postprocessing the BAM file to get exact coverage per position and allele
@@ -653,9 +652,13 @@ workflow DEEPUMICALLER {
 
             CREATEBEDLOW(COMPUTEDEPTHLOW.out.tsv)
 
+            cons_low_bam
+            .join( CREATEBEDLOW.out.bed )
+            .set { cons_low_bam_bed }
+
+
             // Mutation calling for all reads
-            CALLINGVARDICTLOW(cons_low_bam,
-                                CREATEBEDLOW.out.bed,
+            CALLINGVARDICTLOW(cons_low_bam_bed,
                                 ch_ref_fasta, ch_ref_index_dir)
 
             // Postprocessing the BAM file to get exact coverage per position and allele

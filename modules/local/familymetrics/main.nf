@@ -1,6 +1,7 @@
 process FAMILYSIZEMETRICS {
     tag "$meta.id"
     label 'process_medium'
+    errorStrategy 'ignore'
     
     // TODO
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity

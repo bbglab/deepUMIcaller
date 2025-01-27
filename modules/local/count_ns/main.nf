@@ -28,7 +28,7 @@ process NS_X_POSITION {
             awk '{\$3=\$3-\$6;\$4=\$4+\$5; print \$1"\\t"\$2"\\t"\$3"\\t"\$4}' | \\
             bgzip -@${task.cpus} \\
             > ${prefix}.Ns_per_position.tsv.gz;
-    tabix -@ $task.cpus -s 1 -b 2 -e 2 ${prefix}.Ns_per_position.tsv.gz;
+    tabix -s 1 -b 2 -e 2 ${prefix}.Ns_per_position.tsv.gz;
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         tabix: \$(echo \$(tabix -h 2>&1) | sed 's/^.*Version: //; s/ .*\$//')

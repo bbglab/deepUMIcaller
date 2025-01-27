@@ -11,7 +11,13 @@ process FILTER_LOW_COMPLEXITY {
             'https://depot.galaxyproject.org/singularity/pybedtools:0.9.1--py38he0f268d_0' : 
             'biocontainers/pybedtools:0.9.1--py38he0f268d_0' }"
 
-
+    containerOptions = {
+        def low_complex_path = task.ext.low_complex ? file(task.ext.low_complex).parent : ''
+        workflow.containerEngine == 'singularity' && low_complex_path ? 
+            "--bind ${low_complex_path}:${low_complex_path}" : 
+            ""
+    }
+    
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
 

@@ -1,7 +1,6 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
     label 'process_low_multicpu'
-    label 'memory_medium'
     label 'time_medium'
 
 
@@ -23,6 +22,7 @@ process FGBIO_GROUPREADSBYUMI {
     task.ext.when == null || task.ext.when
 
     script:
+
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def mem_gb = 8
@@ -45,7 +45,6 @@ process FGBIO_GROUPREADSBYUMI {
         --strategy ${strategy} \\
         --input $taggedbam \\
         --output ${prefix}_umi-grouped.bam \\
-        --threads ${task.cpus} \\
         --family-size-histogram ${prefix}_umi_histogram.txt
 
     cat <<-END_VERSIONS > versions.yml

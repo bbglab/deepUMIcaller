@@ -129,6 +129,28 @@ class RowChecker:
                 if counts[sample] > 1:
                     row[self._sample_col] = f"{sample}_T{seen[sample]}"
 
+    def validate_unique_samples(self):
+        """
+        Assert that the combination of sample name and FASTQ filename is unique.
+
+        In addition to the validation, also rename the sample if more than one sample,
+        FASTQ file combination exists.
+
+        """
+        assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
+        if len({pair[0] for pair in self._seen}) < len(self._seen):
+            counts = Counter(pair[0] for pair in self._seen)
+            seen = Counter()
+            for row in self.modified:
+                sample = row[self._sample_col]
+                row['original_sample'] = sample  # Add this line
+                seen[sample] += 1
+                if counts[sample] > 1:
+                    row[self._sample_col] = f"{sample}_T{seen[sample]}"
+        else:
+            for row in self.modified:
+                row['original_sample'] = row[self._sample_col]  # Add this line
+
 
 def read_head(handle, num_lines=10):
     """Read the specified number of lines from the current position in the file."""
@@ -203,7 +225,8 @@ def check_samplesheet(file_in, file_out):
                 logger.critical(f"{str(error)} On line {i + 2}.")
                 sys.exit(1)
         checker.validate_unique_samples()
-    header = list(reader.fieldnames)
+    # Add 'original_sample' to the list of fieldnames
+    header = list(reader.fieldnames) + ['original_sample']
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_out.open(mode="w", newline="") as out_handle:
         writer = csv.DictWriter(out_handle, header, delimiter=",")

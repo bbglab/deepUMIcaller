@@ -69,10 +69,15 @@ include { INPUT_CHECK                                                           
 
 include { BAM_FILTER_READS                                                      } from '../subworkflows/local/bam_filter_reads/main'
 
+include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
+
+include { MERGEBAM                                                              } from '../modules/local/mergebam/main'
+include { MERGEBAM                          as MERGEBAMDUPLEX                   } from '../modules/local/mergebam/main'
+include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM          } from '../modules/local/align_bam/main'
@@ -84,6 +89,7 @@ include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
 
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX             } from '../modules/local/filter_reads/samtools/main'
+include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX2             } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXSDUPLEX                  } from '../modules/local/filter_reads/asminusxs/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       } from '../modules/local/clipbam/main'
@@ -240,7 +246,6 @@ workflow DEEPUMICALLER {
             reads_to_qc = INPUT_CHECK.out.reads
         }
 
-
         // MODULE: Run FastQC
         FASTQC (
             reads_to_qc
@@ -248,10 +253,22 @@ workflow DEEPUMICALLER {
         ch_versions = ch_versions.mix(FASTQC.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
+        // Optional: Include fastqs split
+        if (params.run_splitfastq) {
+            SPLITFASTQ ( reads_to_qc )
+            SPLITFASTQ.out.split_fastqs
+            .transpose()
+            .map { meta, fastqs -> 
+                def new_meta = meta.clone()
+                new_meta.id = "${meta.id}_${fastqs[0].name.tokenize('_')[0].tokenize('.')[0]}"
+                [new_meta, fastqs]
+            }
+            .set { split_fastqs_ch }
+        } else {
+            split_fastqs_ch = reads_to_qc
+        }
 
-        // MODULE: Run fgbio FastqToBam
-        // to get the UMIs out of the reads and into the tag
-        FASTQTOBAM(reads_to_qc)
+        FASTQTOBAM(split_fastqs_ch)
         ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
 
 
@@ -274,6 +291,10 @@ workflow DEEPUMICALLER {
         // it works with the test samples
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
         ch_versions = ch_versions.mix(ALIGNRAWBAM.out.versions.first())
+
+
+
+        //PENDING
 
         if (params.perform_qcs){
             SORTBAM(ALIGNRAWBAM.out.bam)
@@ -325,6 +346,50 @@ workflow DEEPUMICALLER {
         }
     }
 
+    // Group BAMs by original sample name
+    SORTBAM.out.bam
+        .map { meta, bam -> 
+            def original_sample = meta.original_sample ?: meta.id.split('_T')[0]
+            tuple(original_sample, meta, bam)
+        }
+        .groupTuple(by: 0)
+        .map { original_sample, metas, bams -> 
+            def new_meta = metas[0].clone()
+            new_meta.id = original_sample
+            new_meta.original_sample = original_sample
+            tuple(new_meta, bams)
+        }
+        .set { grouped_bams }
+
+    // Merge BAMs for each sample
+    MERGEBAM(grouped_bams)
+    
+    // Split merged BAMs by chromosome
+    SPLITBAMCHROM(MERGEBAM.out.bam_bai) 
+
+    def process_bams = { meta, bams ->
+        bams.sort { it.name }.collect { bam ->
+            def new_meta = meta.clone()
+            new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
+            [new_meta, bam]
+        }
+    }
+
+    split_bams = SPLITBAMCHROM.out.chrom_bams
+        .map { meta, bams -> process_bams(meta, bams) }
+        .flatMap { it }
+        .toSortedList { a, b -> a[0].id <=> b[0].id }
+        .flatMap { it }
+        .concat(
+            SPLITBAMCHROM.out.unknown_bam
+                .map { meta, bam -> 
+                    def new_meta = meta.clone()
+                    new_meta.id = "${meta.id}_unknown"
+                    [new_meta, bam]
+                }
+        )
+        .map { meta, bam -> [meta, bam] } // Ensure correct structure
+    //    .view { meta, bam -> "Debug: Final - Meta: $meta, BAM: $bam" }
 
     //
     // Run fgbio Duplex consensus pipeline
@@ -339,7 +404,7 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio GroupReadsByUmi
         // requires input template coordinate sorted
-        GROUPREADSBYUMIDUPLEX(bam_to_group, "Paired")
+        GROUPREADSBYUMIDUPLEX(split_bams, "Paired")
         ch_versions = ch_versions.mix(GROUPREADSBYUMIDUPLEX.out.versions.first())
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
@@ -356,21 +421,16 @@ workflow DEEPUMICALLER {
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
 
-
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICSONTARGET.out.versions.first())
 
 
-
-        // Plot the family size metrics
+        // // Plot the family size metrics
         FAMILYMETRICSONTARGET(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
         ch_versions = ch_versions.mix(FAMILYMETRICSONTARGET.out.versions.first())
         FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
         FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
-
-
-
 
 
         bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
@@ -401,19 +461,37 @@ workflow DEEPUMICALLER {
 
         SORTBAMDUPLEX(bam_alignduplexconsensus)
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
+        // Group BAMs by original sample name
         SORTBAMDUPLEX.out.bam
-        .join( SORTBAMDUPLEX.out.csi )
-        .set { bam_n_index_duplex }
+            .map { meta, bam -> 
+                def original_sample = meta.original_sample ?: meta.id.split('_')[0..-2].join('_')
+                tuple(original_sample, meta, bam)
+            }
+            .groupTuple(by: 0)
+            .map { original_sample, metas, bams -> 
+                def new_meta = metas[0].clone()
+                new_meta.id = original_sample
+                new_meta.original_sample = original_sample
+                tuple(new_meta, bams)
+            }
+            .set { grouped_bamsduplex }
 
-        ASMINUSXSDUPLEX(bam_n_index_duplex)
+
+        // Merge BAMs for each sample
+        MERGEBAMDUPLEX(grouped_bamsduplex)
+
+        //ASMINUSXSDUPLEX(bam_n_index_duplex)
+        ASMINUSXSDUPLEX(MERGEBAMDUPLEX.out.bam_bai)
         SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
         SORTBAMDUPLEXFILTERED(SAMTOOLSFILTERDUPLEX.out.bam)
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
+        // Refilter (!?)
+        SAMTOOLSFILTERDUPLEX2(duplex_filtered_bam)
+        duplex_filtered_bam = SAMTOOLSFILTERDUPLEX2.out.bam
+
+        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX2.out.bam)
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCLEAN.out.bam

@@ -30,7 +30,7 @@ process SAMTOOLS_MPILEUP {
         ${intervals} \\
         ${bam}
     bgzip -@${task.cpus} ${prefix}.mpileup
-    tabix -s 1 -@ $task.cpus -b 2 -e 2 ${prefix}.mpileup.gz
+    tabix -s 1 -b 2 -e 2 ${prefix}.mpileup.gz
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')

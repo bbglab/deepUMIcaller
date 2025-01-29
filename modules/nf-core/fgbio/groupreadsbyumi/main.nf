@@ -2,7 +2,7 @@ process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
     label 'process_low_multicpu'
     label 'time_medium'
-
+    cache 'lenient'
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

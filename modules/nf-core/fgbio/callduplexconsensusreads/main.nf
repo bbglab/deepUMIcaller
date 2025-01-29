@@ -3,6 +3,7 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
     label 'cpu_lowmed'
     label 'time_low'
     label 'memory_medium'
+    cache 'lenient'
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

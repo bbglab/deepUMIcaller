@@ -27,7 +27,7 @@ process ASMINUSXS {
     def prefix_discard = task.ext.prefix_discard ?: "${meta.id}.discarded_AS-XS_${threshold}"
     
     """
-    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold}
+    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} $task.cpus
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

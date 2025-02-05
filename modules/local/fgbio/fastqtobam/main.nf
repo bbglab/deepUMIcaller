@@ -39,8 +39,8 @@ process FGBIO_FASTQTOBAM {
         --input ${fastqs} \\
         --output "${prefix}.unmapped.bam" \\
         --read-structures ${read_structure} \\
-        --sample ${meta.id} \\
-        --library ${meta.id} \\
+        --sample ${meta.sample} \\
+        --library ${meta.sample} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

@@ -364,32 +364,38 @@ workflow DEEPUMICALLER {
     // Merge BAMs for each sample
     MERGEBAM(grouped_bams)
     
-    // Split merged BAMs by chromosome
-    SPLITBAMCHROM(MERGEBAM.out.bam_bai) 
+    if (params.split_by_chrom) {
+        // Split merged BAMs by chromosome
+        SPLITBAMCHROM(MERGEBAM.out.bam_bai) 
 
-    def process_bams = { meta, bams ->
-        bams.sort { it.name }.collect { bam ->
-            def new_meta = meta.clone()
-            new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
-            [new_meta, bam]
+        def process_bams = { meta, bams ->
+            bams.sort { it.name }.collect { bam ->
+                def new_meta = meta.clone()
+                new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
+                [new_meta, bam]
+            }
         }
-    }
 
-    split_bams = SPLITBAMCHROM.out.chrom_bams
-        .map { meta, bams -> process_bams(meta, bams) }
-        .flatMap { it }
-        .toSortedList { a, b -> a[0].id <=> b[0].id }
-        .flatMap { it }
-        .concat(
-            SPLITBAMCHROM.out.unknown_bam
-                .map { meta, bam -> 
-                    def new_meta = meta.clone()
-                    new_meta.id = "${meta.id}_unknown"
-                    [new_meta, bam]
-                }
-        )
-        .map { meta, bam -> [meta, bam] } // Ensure correct structure
-    //    .view { meta, bam -> "Debug: Final - Meta: $meta, BAM: $bam" }
+        split_bams = SPLITBAMCHROM.out.chrom_bams
+            .map { meta, bams -> process_bams(meta, bams) }
+            .flatMap { it }
+            .toSortedList { a, b -> a[0].id <=> b[0].id }
+            .flatMap { it }
+            .concat(
+                SPLITBAMCHROM.out.unknown_bam
+                    .map { meta, bam -> 
+                        def new_meta = meta.clone()
+                        new_meta.id = "${meta.id}_unknown"
+                        [new_meta, bam]
+                    }
+            )
+            .map { meta, bam -> [meta, bam] } // Ensure correct structure
+            //    .view { meta, bam -> "Debug: Final - Meta: $meta, BAM: $bam" }
+    } else {
+    // If not splitting by chromosome, just pass the merged BAMs directly
+    split_bams = MERGEBAM.out.bam_bai
+        .map { meta, bam, bai -> [meta, bam] }
+    }
 
     //
     // Run fgbio Duplex consensus pipeline

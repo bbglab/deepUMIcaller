@@ -494,10 +494,10 @@ workflow DEEPUMICALLER {
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
         // Refilter (!?)
-        SAMTOOLSFILTERDUPLEX2(duplex_filtered_bam)
-        duplex_filtered_bam = SAMTOOLSFILTERDUPLEX2.out.bam
+        //SAMTOOLSFILTERDUPLEX2(duplex_filtered_bam)
+        //duplex_filtered_bam = SAMTOOLSFILTERDUPLEX2.out.bam
 
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX2.out.bam)
+        SORTBAMDUPLEXCLEAN(duplex_filtered_bam)
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCLEAN.out.bam

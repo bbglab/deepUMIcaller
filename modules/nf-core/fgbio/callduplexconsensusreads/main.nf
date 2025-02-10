@@ -48,6 +48,8 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
         --input $bam \\
         --output ${prefix}.bam \\
         --threads ${task.cpus} \\
+        --read-name-prefix ${meta.id} \\
+        --read-group-id ${meta.id} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

@@ -133,7 +133,7 @@
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
                 },
                 "final_read_size": {
-                    "type": "string",
+                    "type": "integer",
                     "description": "Parameter to define the read size.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the read size."
@@ -203,6 +203,32 @@
                     "description": "Require agreement of both strands in duplex consensus",
                     "fa_icon": "fas fa-book",
                     "help_text": "Require agreement of both strands to define each base of the duplex consensus."
+                }
+            }
+        },
+        "all_molecules_filtering": {
+            "title": "Consensus filtering options for the all molecules used for recounting the mutations.",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering all molecules reads",
+            "properties": {
+                "filter_min_reads_am": {
+                    "type": "string",
+                    "description": "Minimum reads to keep a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_min_baseq_am": {
+                    "type": "integer",
+                    "description": "Minimum consensus base quality",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_base_error_rate_am": {
+                    "type": "string",
+                    "description": "The maximum error rate for a single consensus base",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
                 }
             }
         },

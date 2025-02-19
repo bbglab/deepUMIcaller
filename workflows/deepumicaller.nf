@@ -21,22 +21,17 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-if (params.input) { ch_input = file(params.input) } else {
-    exit 1, 'Input samplesheet not specified!'
-    }
-
 if (params.ref_fasta) {
     ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
 
     // define additional fasta file names
     ch_ref_fasta_file = file(params.ref_fasta, checkIfExists: true)
-    ch_ref_fasta_fai_index = file("${ch_ref_fasta_file}.fai", checkIfExists: true)
     ch_ref_fasta_dict = file("${ch_ref_fasta_file.parent/ch_ref_fasta_file.baseName}.dict", checkIfExists: true)
 
 } else {
     log.error "No reference FASTA was specified (--ref_fasta)."
     exit 1
-    }
+}
 
 
 // The index directory is the directory that contains the FASTA
@@ -90,6 +85,7 @@ include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       
 include { FGBIO_CLIPBAM                     as CLIPBAMMED                       } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
 
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH         } from '../modules/local/fgbio/filterconsensusreads/main'
@@ -217,7 +213,7 @@ workflow DEEPUMICALLER {
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     INPUT_CHECK (
-        ch_input, 
+        file(params.input), 
         params.step
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
@@ -284,9 +280,6 @@ workflow DEEPUMICALLER {
         SORTBAMCLEAN(ALIGNRAWBAM.out.bam)
         ch_versions = ch_versions.mix(SORTBAMCLEAN.out.versions.first())
 
-
-        // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
-        // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
         if (params.targetsfile){
             if (params.perform_qcs){
@@ -413,7 +406,8 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
+        FILTERCONSENSUSREADSAM(SORTBAMDUPLEXFILTERED.out.bam, ch_ref_fasta)
+        SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCLEAN.out.bam
@@ -711,18 +705,6 @@ workflow DEEPUMICALLER {
 
 }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    COMPLETION EMAIL AND SUMMARY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-    }
-    NfcoreTemplate.summary(workflow, params, log)
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,7 +7,7 @@
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Validate input parameters
-WorkflowFgcons.initialise(params, log)
+WorkflowMain.initialise(params, log)
 
 // TODO nf-core:
 // Add all file path parameters for the pipeline to the list below
@@ -688,7 +688,7 @@ workflow DEEPUMICALLER {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowFgcons.paramsSummaryMultiqc(workflow, summary_params)
+    workflow_summary    = WorkflowMain.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
     

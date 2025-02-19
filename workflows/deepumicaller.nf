@@ -4,8 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Removed top-level initialization code. It has been moved into the workflow block.
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -139,7 +137,7 @@ workflow DEEPUMICALLER {
 
     // Setup initial parameters and validations within the workflow scope
     def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
-    WorkflowMain.initialise(params, log)
+    WorkflowMain.initialise(workflow, params, log)
     
     def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile ]
     checkPathParamList.each { p ->

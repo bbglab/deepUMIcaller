@@ -232,6 +232,26 @@
                 }
             }
         },
+        "calling_parameters": {
+            "title": "Consensus filtering options for the high confidence mutations",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering consensus reads",
+            "properties": {
+                "vardict_params": {
+                    "type": "string",
+                    "description": "Parameters for VarDict calling step",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameters for VarDict calling step."
+                },
+                "vardict_filter_params": {
+                    "type": "string",
+                    "description": "Parameters for the filtering step in VarDict",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameters for the filtering step in VarDict"
+                }
+            }
+        },
         "consensus_filtering_high": {
             "title": "Consensus filtering options for the high confidence mutations",
             "type": "object",

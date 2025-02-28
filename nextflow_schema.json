@@ -233,10 +233,10 @@
             }
         },
         "calling_parameters": {
-            "title": "Consensus filtering options for the high confidence mutations",
+            "title": "Variant calling options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads",
+            "description": "Options for variant calling and variant filtering. ",
             "properties": {
                 "vardict_params": {
                     "type": "string",

@@ -349,7 +349,7 @@ workflow DEEPUMICALLER {
     // Group BAMs by original sample name
     SORTBAM.out.bam
         .map { meta, bam -> 
-            def original_sample = meta.original_sample ?: meta.id.split('_T')[0]
+            def original_sample = meta.original_sample ?: meta.id.split('_LPART')[0]
             tuple(original_sample, meta, bam)
         }
         .groupTuple(by: 0)

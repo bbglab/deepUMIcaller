@@ -90,7 +90,7 @@ def compute_n_threshold(ns_position_file, min_depth_valid = 5):
     #CDP: 7th column in last field of VCF (0-based)
 def annot(sample_dict, threshold):
 
-    proportion_ns = (int(sample_dict["NDP"]) / (int(sample_dict["NDP"])+int(sample_dict["CDP"])))+0.0000001
+    proportion_ns = (int(sample_dict["NDP"]) / (int(sample_dict["NDP"])+int(sample_dict["CDP"])+1))+0.0000001
 
     return proportion_ns > threshold
 

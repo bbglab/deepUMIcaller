@@ -4,58 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
-
-// Validate input parameters
-WorkflowFgcons.initialise(params, log)
-
-// TODO nf-core:
-// Add all file path parameters for the pipeline to the list below
-// Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile  ]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Check mandatory parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-if (params.input) { ch_input = file(params.input) } else {
-    exit 1, 'Input samplesheet not specified!'
-    }
-
-if (params.ref_fasta) {
-    ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
-
-    // define additional fasta file names
-    ch_ref_fasta_file = file(params.ref_fasta, checkIfExists: true)
-    ch_ref_fasta_fai_index = file("${ch_ref_fasta_file}.fai", checkIfExists: true)
-    ch_ref_fasta_dict = file("${ch_ref_fasta_file.parent/ch_ref_fasta_file.baseName}.dict", checkIfExists: true)
-
-} else {
-    log.error "No reference FASTA was specified (--ref_fasta)."
-    exit 1
-    }
-
-
-// The index directory is the directory that contains the FASTA
-ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
-// TODO
-// check if the index file for the reference genome is present
-// if (ch_ref_index_dir) { file("${file(params.ref_fasta).parent}/${file(params.ref_fasta).name}.amb", checkIfExists: true) }
-
-
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -90,6 +38,7 @@ include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       
 include { FGBIO_CLIPBAM                     as CLIPBAMMED                       } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
 
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH         } from '../modules/local/fgbio/filterconsensusreads/main'
@@ -184,10 +133,31 @@ include { VCF_ANNOTATE_ALL                  as VCFANNOTATEHIGH         } from '.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Info required for completion email and summary
-def multiqc_report = []
-
 workflow DEEPUMICALLER {
+
+    // Setup initial parameters and validations within the workflow scope
+    def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+    WorkflowMain.initialise(workflow, params, log)
+    
+    def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile ]
+    checkPathParamList.each { p ->
+        if (p) { file(p, checkIfExists: true) }
+    }
+    
+    if (params.ref_fasta) {
+        ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
+    
+        // define additional fasta file names
+        ch_ref_fasta_file = file(params.ref_fasta, checkIfExists: true)
+        ch_ref_fasta_dict = file("${ch_ref_fasta_file.parent/ch_ref_fasta_file.baseName}.dict", checkIfExists: true)
+    } else {
+        log.error "No reference FASTA was specified (--ref_fasta)."
+        exit 1
+    }
+    
+    ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
+    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
@@ -217,7 +187,7 @@ workflow DEEPUMICALLER {
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     INPUT_CHECK (
-        ch_input, 
+        file(params.input), 
         params.step
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
@@ -284,9 +254,6 @@ workflow DEEPUMICALLER {
         SORTBAMCLEAN(ALIGNRAWBAM.out.bam)
         ch_versions = ch_versions.mix(SORTBAMCLEAN.out.versions.first())
 
-
-        // COLLECTMULTIPLEMETRICS(SORTBAM.out.bam, SORTBAM.out.csi.map{it -> it [1]}, ch_ref_fasta, ch_ref_fasta_fai_index)
-        // ch_versions = ch_versions.mix(COLLECTMULTIPLEMETRICS.out.versions.first())
 
         if (params.targetsfile){
             if (params.perform_qcs){
@@ -413,7 +380,8 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
+        FILTERCONSENSUSREADSAM(SORTBAMDUPLEXFILTERED.out.bam, ch_ref_fasta)
+        SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCLEAN.out.bam
@@ -694,7 +662,7 @@ workflow DEEPUMICALLER {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowFgcons.paramsSummaryMultiqc(workflow, summary_params)
+    workflow_summary    = WorkflowMain.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
     
@@ -711,18 +679,6 @@ workflow DEEPUMICALLER {
 
 }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    COMPLETION EMAIL AND SUMMARY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-    }
-    NfcoreTemplate.summary(workflow, params, log)
-}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

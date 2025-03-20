@@ -49,15 +49,6 @@ process PICARD_BEDTOINTERVALLIST {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    echo "picard \\
-        -Xmx${avail_mem}M \\
-        BedToIntervalList \\
-        --INPUT $bed \\
-        --OUTPUT ${prefix}.interval_list \\
-        --SEQUENCE_DICTIONARY $dict \\
-        --TMP_DIR . \\
-        $args_file $args"
-
     touch ${prefix}.interval_list
 
     cat <<-END_VERSIONS > versions.yml

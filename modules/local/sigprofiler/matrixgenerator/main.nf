@@ -19,7 +19,6 @@ process SIGPROFILER_MATRIXGENERATOR {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     // def prefix = task.ext.prefix ?: "${meta.id}"
     def prefix = task.ext.prefix ?: "samples"
     """
@@ -35,7 +34,6 @@ process SIGPROFILER_MATRIXGENERATOR {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -45,7 +45,58 @@ def add_filter(old_filt, add_filt, filt_name):
         return ";".join( sorted(old_filt.split(";")) )
 
 
-def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth_valid = 5):
+
+def compute_n_threshold(ns_position_file, min_depth_valid = 5):
+    # define filter threshold
+    ## load file with Ns counts per position along the entire panel (no mutations only)
+    ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
+                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"],
+                                na_filter=False)
+    print("total of positions at start", ns_position_df.shape)
+
+    over_valid_depth = ns_position_df["TOTAL_DEPTH"][ns_position_df["TOTAL_DEPTH"] > min_depth_valid]
+    print("total of positions over hard valid depth threshold", over_valid_depth.shape)
+
+    # TODO: add more documentation on this
+    # we use positions covered by at least half of the median coverage
+    min_depth_threshold = over_valid_depth.quantile(0.75) #* 0.5
+    print("minimum depth threshold for a position being used to model background Ns", min_depth_threshold)
+    del over_valid_depth
+
+    ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth_threshold].reset_index(drop = True)
+    print("Number of positions used for modelling", ns_position_df.shape)
+
+    ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
+    ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,
+                                                                                axis = 1)
+    ## compute threshold over the log-transformed data and pass back to the original scale
+    log_data = np.log(ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"])
+    median = np.median(log_data)
+    std_dev = np.std(log_data)
+    threshold = np.exp(median+2*std_dev)
+    print("The computed threshold is ", threshold)
+    print("The used threshold is ", min(threshold, 0.05))
+
+    # TODO: add more documentation about this
+    # do not report a threshold higher than 0.05
+    return min(threshold, 0.05)
+
+
+
+
+# add filter when the proportion of Ns in the mutated position is higher than the threshold
+#(w/ pseudocount to fit with the threshold calculation)
+    #NDP: 9th column in last field of VCF (0-based)
+    #CDP: 7th column in last field of VCF (0-based)
+def annot(sample_dict, threshold):
+
+    proportion_ns = (int(sample_dict["NDP"]) / (int(sample_dict["NDP"])+int(sample_dict["CDP"])))+0.0000001
+
+    return proportion_ns > threshold
+
+
+
+def add_filter_nrich_to_vcf(vcf, threshold, filter_name):
     """
     Adds to a VCF-like dataframe an additional filter
     in mutations located at positions which have more 
@@ -63,62 +114,21 @@ def add_filter_nrich(vcf, ns_position_file, filter_name, min_depth_valid = 5):
         VCF-like dataframe updated
     """
 
-    # define filter threshold
-    ## load file with Ns counts per position along the entire panel (no mutations only)
-    ns_position_df = pd.read_csv(ns_position_file, sep = "\t", header = None,
-                                names = ["CHROM", "START", "TOTAL_DEPTH", "N_COUNT"],
-                                na_filter=False)
-    print(ns_position_df.shape)
-
-    over_valid_depth = ns_position_df["TOTAL_DEPTH"][ns_position_df["TOTAL_DEPTH"] > min_depth_valid]
-    print(over_valid_depth.shape)
-    
-    # TODO: add more documentation on this
-    # we use positions covered by at least half of the median coverage
-    min_depth_threshold = over_valid_depth.quantile(0.75) #* 0.5
-    print(min_depth_threshold)
-    del over_valid_depth
-
-    ns_position_df = ns_position_df[ns_position_df["TOTAL_DEPTH"] > min_depth_threshold].reset_index(drop = True)
-    print(ns_position_df.shape)
-
-    ## calculate the proportion of Ns per position adding a pseudocount to enable log-transformation
-    ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"] = ns_position_df.apply(lambda row: (row["N_COUNT"] / row["TOTAL_DEPTH"])+0.0000001,
-                                                                                axis = 1)
-    ## compute threshold over the log-transformed data and pass back to the original scale
-    log_data = np.log(ns_position_df["N_COUNT/TOTAL_DEPTH_pseudocount"])
-    median = np.median(log_data)
-    std_dev = np.std(log_data)
-    threshold = np.exp(median+2*std_dev)
-    
-    
-    # add filter when the proportion of Ns in the mutated position is higher than the threshold
-    #(w/ pseudocount to fit with the threshold calculation)
-        #NDP: 9th column in last field of VCF (0-based)
-        #CDP: 7th column in last field of VCF (0-based)
-    def annot(sample, filter, threshold):
-
-        # if there is no_pileup_support, the filter is not annotated because depths are zero
-        if "no_pileup_support" not in filter:
-
-            proportion_ns = (int(sample.split(":")[9]) / (int(sample.split(":")[9])+int(sample.split(":")[7])))+0.0000001
-
-            if proportion_ns > threshold:
-                return True
-
-        return False
-
     # compute which mutations have a proportion of ns higher than the threshold
-    vcf[filter_name] = vcf.apply(lambda row: annot(row["SAMPLE"], row["FILTER"], threshold), axis = 1)
+    vcf[filter_name] = vcf.apply(lambda row: annot(dict(
+                                                        zip(row["FORMAT"].split(":"), row["SAMPLE"].split(":"))
+                                                        ),
+                                                    threshold
+                                                    ), axis = 1)
 
     # add new value to FILTER column when needed
-    vcf["FILTER"] = vcf[["FILTER",filter_name]].apply(
+    vcf["FILTER"] = vcf[["FILTER", filter_name]].apply(
                                                         lambda x: add_filter(x["FILTER"], x[filter_name], filter_name),
                                                         axis = 1
                                                         )
 
     # remove unneeded column from vcf
-    return vcf.drop([filter_name], axis = 1), threshold
+    return vcf.drop([filter_name], axis = 1)
 
 
 def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth):
@@ -145,10 +155,13 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_dep
                         na_filter=False)
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
+    threshold = compute_n_threshold(ns_position_file, min_valid_depth)
+    print("Threshold:", threshold)
+
     ###
     # Add filter: mutations in positions with more Ns than expected
     ###
-    updated_vcf, threshold = add_filter_nrich(vcf, ns_position_file, filter_name, min_valid_depth)
+    updated_vcf = add_filter_nrich_to_vcf(vcf, threshold, filter_name)
 
     ###
     # Read the VCF header

@@ -116,9 +116,9 @@ def add_filter_nrich_to_vcf(vcf, threshold, filter_name):
 
     # compute which mutations have a proportion of ns higher than the threshold
     vcf[filter_name] = vcf.apply(lambda row: annot(dict(
-                                                        zip(row["FORMAT"].str.split(":"), row["SAMPLE"].str.split(":"))
+                                                        zip(row["FORMAT"].split(":"), row["SAMPLE"].split(":"))
                                                         ),
-                                                    row["FILTER"], threshold
+                                                    threshold
                                                     ), axis = 1)
 
     # add new value to FILTER column when needed
@@ -128,7 +128,7 @@ def add_filter_nrich_to_vcf(vcf, threshold, filter_name):
                                                         )
 
     # remove unneeded column from vcf
-    return vcf.drop([filter_name], axis = 1), threshold
+    return vcf.drop([filter_name], axis = 1)
 
 
 def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth):

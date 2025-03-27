@@ -1,10 +1,10 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/fastquorum/master/nextflow_schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/bbglab/deepUMIcaller/master/nextflow_schema.json",
     "title": "bbglab/deepUMIcaller pipeline parameters",
     "description": "Duplex sequencing, consensus building and variant calling pipeline.",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -70,7 +70,6 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Choose to remove offtargets",
-                    "default": false,
                     "help_text": "This will slightly speed up the analysis by focusing on the regions of interest according to the provided BED file"
                 },
                 "step": {
@@ -91,7 +90,6 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
-                    "default": false,
                     "help_text": ""
                 }
             }
@@ -133,7 +131,7 @@
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
                 },
                 "final_read_size": {
-                    "type": "string",
+                    "type": "integer",
                     "description": "Parameter to define the read size.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the read size."
@@ -172,12 +170,6 @@
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum input base quality to use when calling a consensus for fgbio's CallMolecularConsensusReads/CallDuplexConsensusReads."
                 },
-                "call_min_reads": {
-                    "type": "string",
-                    "description": "Minimum reads to call a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to call a consensus for fgbio's CallMolecularConsensusReads."
-                },
                 "call_min_reads_duplex": {
                     "type": "string",
                     "description": "Minimum reads to call a consensus when using duplex reads",
@@ -203,6 +195,52 @@
                     "description": "Require agreement of both strands in duplex consensus",
                     "fa_icon": "fas fa-book",
                     "help_text": "Require agreement of both strands to define each base of the duplex consensus."
+                }
+            }
+        },
+        "all_molecules_filtering": {
+            "title": "Consensus filtering options for the all molecules used for recounting the mutations.",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering all molecules reads",
+            "properties": {
+                "filter_min_reads_am": {
+                    "type": "string",
+                    "description": "Minimum reads to keep a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_min_baseq_am": {
+                    "type": "integer",
+                    "description": "Minimum consensus base quality",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_base_error_rate_am": {
+                    "type": "string",
+                    "description": "The maximum error rate for a single consensus base",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                }
+            }
+        },
+        "calling_parameters": {
+            "title": "Variant calling options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for variant calling and variant filtering. ",
+            "properties": {
+                "vardict_params": {
+                    "type": "string",
+                    "description": "Parameters for VarDict calling step",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameters for VarDict calling step."
+                },
+                "vardict_filter_params": {
+                    "type": "string",
+                    "description": "Parameters for the filtering step in VarDict",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameters for the filtering step in VarDict"
                 }
             }
         },
@@ -313,16 +351,6 @@
                     "description": "Name of iGenomes reference.",
                     "fa_icon": "fas fa-book",
                     "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details.",
-                    "hidden": true
-                },
-                "fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code",
                     "hidden": true
                 },
                 "igenomes_base": {
@@ -581,17 +609,9 @@
                     "fa_icon": "fas fa-cog",
                     "hidden": true
                 },
-                "tracedir": {
-                    "type": "string",
-                    "description": "Directory to keep pipeline Nextflow logs and reports.",
-                    "default": "${params.outdir}/pipeline_info",
-                    "fa_icon": "fas fa-cogs",
-                    "hidden": true
-                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
-                    "default": true,
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
                 },
@@ -613,28 +633,55 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/definitions/main_options"
+            "$ref": "#/$defs/main_options"
         },
         {
-            "$ref": "#/definitions/grouping"
+            "$ref": "#/$defs/consensus_filtering_general"
         },
         {
-            "$ref": "#/definitions/consensus_calling"
+            "$ref": "#/$defs/all_molecules_filtering"
         },
         {
-            "$ref": "#/definitions/main_filtering_options"
+            "$ref": "#/$defs/calling_parameters"
         },
         {
-            "$ref": "#/definitions/reference_genome_options"
+            "$ref": "#/$defs/consensus_filtering_high"
         },
         {
-            "$ref": "#/definitions/max_job_request_options"
+            "$ref": "#/$defs/consensus_filtering_medium"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/$defs/consensus_filtering_low"
+        },
+        {
+            "$ref": "#/$defs/ensembl_vep_options"
+        },
+        {
+            "$ref": "#/$defs/read_processing_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/grouping"
+        },
+        {
+            "$ref": "#/$defs/consensus_calling"
+        },
+        {
+            "$ref": "#/$defs/main_filtering_options"
+        },
+        {
+            "$ref": "#/$defs/reference_genome_options"
+        },
+        {
+            "$ref": "#/$defs/max_job_request_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }

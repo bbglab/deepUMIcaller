@@ -24,11 +24,7 @@ process FILTER_LOW_COMPLEXITY {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // def low_complex_bed = task.ext.low_complex ?: ''
-
-    // TODO add condition to check if the file argument is empty, if it is, return same vcf file
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_complex_bed} -u  > ${prefix}.lowcomplexrep_file.bed
 

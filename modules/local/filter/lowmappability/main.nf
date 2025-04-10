@@ -1,5 +1,3 @@
-// /workspace/projects/bladder_ts/scripts/add_filters_vcf
-
 process FILTER_LOW_MAPPABILITY {
     tag "$meta.id"
     label 'cpu_single'
@@ -24,11 +22,7 @@ process FILTER_LOW_MAPPABILITY {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // def low_mappable_bed = task.ext.low_mappable ?: ''
-
-    // TODO add condition to check if the file argument is empty, if it is, return same vcf file
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_mappable_bed} -u  > ${prefix}.lowmappable_file.bed
 

@@ -31,11 +31,12 @@ workflow RECOUNT_MUTS {
     vcf_file                 // channel: [mandatory] [ val(meta), path (vcf)]
     bed_file                 // channel: [mandatory] [ val(meta), path (intervals_file)]
     reference_fasta          // channel: [mandatory] path (reference_fasta)
-    low_complex_filter
-    low_mappability_filter
 
 
     main:
+
+    low_complex_filter = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+    low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
 
     ch_versions = Channel.empty()
 

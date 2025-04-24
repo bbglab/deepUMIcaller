@@ -200,6 +200,32 @@
                 }
             }
         },
+        "all_molecules_filtering": {
+            "title": "Consensus filtering options for the all molecules used for recounting the mutations.",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for when filtering all molecules reads",
+            "properties": {
+                "filter_min_reads_am": {
+                    "type": "string",
+                    "description": "Minimum reads to keep a consensus",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_min_baseq_am": {
+                    "type": "integer",
+                    "description": "Minimum consensus base quality",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                },
+                "filter_max_base_error_rate_am": {
+                    "type": "string",
+                    "description": "The maximum error rate for a single consensus base",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                }
+            }
+        },
         "consensus_filtering_high": {
             "title": "Consensus filtering options for the high confidence mutations",
             "type": "object",

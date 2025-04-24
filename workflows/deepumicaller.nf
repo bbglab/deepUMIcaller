@@ -96,6 +96,7 @@ include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       
 include { FGBIO_CLIPBAM                     as CLIPBAMMED                       } from '../modules/local/clipbam/main'
 include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
 
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH         } from '../modules/local/fgbio/filterconsensusreads/main'
@@ -493,35 +494,26 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
-        // Refilter (!?)
-        //SAMTOOLSFILTERDUPLEX2(duplex_filtered_bam)
-        //duplex_filtered_bam = SAMTOOLSFILTERDUPLEX2.out.bam
-
-        SORTBAMDUPLEXCLEAN(SAMTOOLSFILTERDUPLEX.out.bam)
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCLEAN.out.bam
-        .join( SORTBAMDUPLEXCLEAN.out.csi )
-        .set { bam_n_index_duplex_clean }
-
-        if (params.perform_qcs){
-            // requires input coordinate sorted
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
-        }
-
     }
 
     if (params.step == 'filterconsensus') {
         duplex_filtered_bam = INPUT_CHECK.out.reads
+    }
 
-        SORTBAMDUPLEXCLEAN(duplex_filtered_bam)
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCLEAN.out.bam
-        .join( SORTBAMDUPLEXCLEAN.out.csi )
-        .set { bam_n_index_duplex_clean }
+    FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
+    SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+    
+    // join the bam and the bamindex channels to have
+    // the ones from the same samples together
+    SORTBAMDUPLEXCLEAN.out.bam
+    .join( SORTBAMDUPLEXCLEAN.out.csi )
+    .set { bam_n_index_duplex_clean }
+
+    if (params.perform_qcs){
+        // requires input coordinate sorted
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
     }
 
     //

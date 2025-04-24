@@ -131,6 +131,12 @@
                     "description": "BED file with the low complex regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
+                },
+                "final_read_size": {
+                    "type": "string",
+                    "description": "Parameter to define the read size.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameter to define the read size."
                 }
             }
         },

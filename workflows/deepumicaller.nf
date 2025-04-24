@@ -380,32 +380,33 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
-        FILTERCONSENSUSREADSAM(SORTBAMDUPLEXFILTERED.out.bam, ch_ref_fasta)
-        SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCLEAN.out.bam
-        .join( SORTBAMDUPLEXCLEAN.out.csi )
-        .set { bam_n_index_duplex_clean }
-
-        if (params.perform_qcs){
-            // requires input coordinate sorted
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
-        }
-
     }
 
     if (params.step == 'filterconsensus') {
         duplex_filtered_bam = INPUT_CHECK.out.reads
 
-        SORTBAMDUPLEXCLEAN(duplex_filtered_bam)
+        // SORTBAMDUPLEXCLEAN(duplex_filtered_bam)
 
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMDUPLEXCLEAN.out.bam
-        .join( SORTBAMDUPLEXCLEAN.out.csi )
-        .set { bam_n_index_duplex_clean }
+        // // join the bam and the bamindex channels to have
+        // // the ones from the same samples together
+        // SORTBAMDUPLEXCLEAN.out.bam
+        // .join( SORTBAMDUPLEXCLEAN.out.csi )
+        // .set { bam_n_index_duplex_clean }
+    }
+
+
+    FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
+    SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+    // join the bam and the bamindex channels to have
+    // the ones from the same samples together
+    SORTBAMDUPLEXCLEAN.out.bam
+    .join( SORTBAMDUPLEXCLEAN.out.csi )
+    .set { bam_n_index_duplex_clean }
+
+    if (params.perform_qcs){
+        // requires input coordinate sorted
+        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
     }
 
     //

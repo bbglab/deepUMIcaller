@@ -86,6 +86,7 @@ include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } fro
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
 
+include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGE           } from '../modules/nf-core/bedtools/coverage/main'
 
 
 // Versions and reports
@@ -379,6 +380,15 @@ workflow DEEPUMICALLER {
         SORTBAMDUPLEXFILTERED(SAMTOOLSFILTERDUPLEX.out.bam)
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
+
+        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> (it[0], params.targetsfile, it[1])}.set { discarded_bam_targeted }
+        DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, null)
+        ch_versions = ch_versions.mix(DISCARDEDCOVERAGETARGETED.out.versions.first())
+
+        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> (it[0], params.global_exons_file, it[1])}.set { discarded_bam }
+        DISCARDEDCOVERAGEGLOBAL(discarded_bam, null)
+        ch_versions = ch_versions.mix(DISCARDEDCOVERAGEGLOBAL.out.versions.first())
+
 
         FILTERCONSENSUSREADSAM(SORTBAMDUPLEXFILTERED.out.bam, ch_ref_fasta)
         SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)

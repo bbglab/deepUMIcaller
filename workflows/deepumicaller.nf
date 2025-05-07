@@ -86,6 +86,8 @@ include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } fro
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
 
+include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
 
 
 // Versions and reports
@@ -380,23 +382,24 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
 
+        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> [it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
+        DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
+        ch_versions = ch_versions.mix(DISCARDEDCOVERAGETARGETED.out.versions.first())
+
+        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
+        DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
+        ch_versions = ch_versions.mix(DISCARDEDCOVERAGEGLOBAL.out.versions.first())
+
     }
 
     if (params.step == 'filterconsensus') {
         duplex_filtered_bam = INPUT_CHECK.out.reads
-
-        // SORTBAMDUPLEXCLEAN(duplex_filtered_bam)
-
-        // // join the bam and the bamindex channels to have
-        // // the ones from the same samples together
-        // SORTBAMDUPLEXCLEAN.out.bam
-        // .join( SORTBAMDUPLEXCLEAN.out.csi )
-        // .set { bam_n_index_duplex_clean }
     }
 
 
     FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
     SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+    
     // join the bam and the bamindex channels to have
     // the ones from the same samples together
     SORTBAMDUPLEXCLEAN.out.bam

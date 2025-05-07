@@ -94,18 +94,12 @@
                 }
             }
         },
-        "main_filtering_options": {
-            "title": "Main filtering options",
+        "mutation_filtering_options": {
+            "title": "Mutation filtering options",
             "type": "object",
-            "description": "Main filtering options",
+            "description": "Mutation filtering options",
             "default": "",
             "properties": {
-                "asminusxs_thres": {
-                    "type": "integer",
-                    "description": "Avoid multiple mapping.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": ""
-                },
                 "filter_mutations": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
@@ -129,12 +123,26 @@
                     "description": "BED file with the low complex regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
-                },
-                "final_read_size": {
+                }
+            }
+        },
+        "asxs_filtering_params": {
+            "title": "AS-XS filtering options",
+            "type": "object",
+            "description": "AS-XS filtering options",
+            "default": "",
+            "properties": {
+                "asminusxs_thres": {
                     "type": "integer",
-                    "description": "Parameter to define the read size.",
+                    "description": "Avoid multiple mapping.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Parameter to define the read size."
+                    "help_text": ""
+                },
+                "global_exons_file": {
+                    "type": "string",
+                    "description": "BED file with global regions to annotate coverage of AS-XS discarded reads.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file with global regions to annotate coverage of AS-XS discarded reads."
                 }
             }
         },
@@ -467,6 +475,12 @@
                     "fa_icon": "fas fa-book",
                     "help_text": "",
                     "hidden": true
+                },                
+                "final_read_size": {
+                    "type": "integer",
+                    "description": "Parameter to define the maximum read size.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameter to define the maximum read size."
                 }
             }
         },
@@ -672,8 +686,11 @@
             "$ref": "#/$defs/consensus_calling"
         },
         {
-            "$ref": "#/$defs/main_filtering_options"
+            "$ref": "#/$defs/mutation_filtering_options"
         },
+        {
+            "$ref": "#/$defs/asxs_filtering_params"
+        },        
         {
             "$ref": "#/$defs/reference_genome_options"
         },

@@ -56,14 +56,15 @@ process CALLING_VARDICT {
 
     echo "Concatenated. teststrandbias running..."
 
-    MAX_JOBS=4
+    MAX_JOBS=2
     current_jobs=0
 
     for chunk in chunk_*.raw.tsv; do
+        echo "Processing chunk:  \$chunk"
         (
             cat \$chunk | teststrandbias.R | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-                > \${chunk}.genome.vcf"
+                > \${chunk}.genome.vcf
         ) &
 
         ((current_jobs++))

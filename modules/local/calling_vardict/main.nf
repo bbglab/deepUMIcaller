@@ -56,15 +56,22 @@ process CALLING_VARDICT {
 
     echo "Concatenated. teststrandbias running..."
 
+    MAX_JOBS=4
+    current_jobs=0
+
     for chunk in chunk_*.raw.tsv; do
         (
-            cat \$chunk \
-            | teststrandbias.R \
-            | var2vcf_valid.pl \
+            cat \$chunk | teststrandbias.R | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-            > \${chunk}.genome.vcf
+                > \${chunk}.genome.vcf"
         ) &
-    done
+
+        ((current_jobs++))
+        if [[ \$current_jobs -ge \$MAX_JOBS ]]; then
+            wait -n
+            ((current_jobs--))
+        fi
+    done   
     
     # Wait for all parallel processes to finish
     wait

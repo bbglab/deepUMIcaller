@@ -59,9 +59,14 @@ process CALLING_VARDICT {
     for chunk in chunk_*.raw.tsv; do
         echo "Processing chunk: \$chunk"
 
-        cat "\$chunk" | teststrandbias.R | var2vcf_valid.pl \
-            -N ${prefix} $filter_args \
-            > "\${chunk}.genome.vcf"
+        if ${params.use_teststrandbias}; then
+            cat "\$chunk" | teststrandbias.R | var2vcf_valid.pl \
+                -N ${prefix} $filter_args \
+                > "\${chunk}.genome.vcf"
+        else
+            cat "\$chunk" | var2vcf_valid.pl \
+                -N ${prefix} $filter_args \
+                > "\${chunk}.genome.vcf"
     done
     
     # Wait for all parallel processes to finish
@@ -82,15 +87,16 @@ process CALLING_VARDICT {
     # Apply the AWK filter to create the final VCF
     awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
 
-    echo "Done. Removing tmp files..."
-
-    # Cleanup intermediate files (optional)
-    rm chunk_*
-
     echo "Done. Gzip results..."
 
     gzip ${prefix}.raw.tsv;
     gzip ${prefix}.genome.vcf;
+
+    echo "Done. Removing tmp files..."
+
+    # Cleanup intermediate files
+    rm chunk_*
+    rm ${prefix}.raw.tsv ${prefix}.genome.vcf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

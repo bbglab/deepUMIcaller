@@ -418,6 +418,19 @@
                 }
             }
         },
+        "vardict calling options": {
+            "title": "Vardict options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Define parameters for VarDict variant calling.",
+            "properties": {
+                "use_teststrandbias": {
+                "type": "boolean",
+                "description": "Whether to use teststrandbias.R script in VarDict calling",
+                "default": true
+                }
+            }
+        },
         "read_processing_options": {
             "title": "FASTP options",
             "type": "object",

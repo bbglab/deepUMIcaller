@@ -67,6 +67,7 @@ process CALLING_VARDICT {
             cat "\$chunk" | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
                 > "\${chunk}.genome.vcf"
+        fi
     done
     
     # Wait for all parallel processes to finish

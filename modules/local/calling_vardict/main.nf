@@ -64,7 +64,7 @@ process CALLING_VARDICT {
                 -N ${prefix} $filter_args \
                 > "\${chunk}.genome.vcf"
         else
-            awk 'BEGIN { FS=OFS="\t" } { if (NF < 34) { print "ERROR: Unexpected column count " NF > "/dev/stderr"; exit 1; } for (i = 1; i <= 20; i++) printf "%s\t", $i; printf "1.0\t1.0\t"; for (i = 21; i <= NF; i++) { printf "%s", $i; if (i < NF) printf "\t";} printf "\n"; }' "\$chunk" | var2vcf_valid.pl -N PD45482c_ds0001  -A -E -f 0.0 -p 0 -m 20 -v 2 > "\${chunk}.genome.vcf"
+            awk 'BEGIN { FS=OFS="\\t" } { if (NF < 34) { print "ERROR: Unexpected column count " NF > "/dev/stderr"; exit 1; } for (i = 1; i <= 20; i++) printf "%s\\t", \$i; printf "1.0\\t1.0\\t"; for (i = 21; i <= NF; i++) { printf "%s", \$i; if (i < NF) printf "\\t";} printf "\\n"; }' "\$chunk" | var2vcf_valid.pl -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 > "\${chunk}.genome.vcf"
         fi
     done
     

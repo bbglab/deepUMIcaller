@@ -134,7 +134,6 @@ workflow RECOUNT_MUTS {
     }
 
 
-
     FILTERVCFSOMATIC(output_vcf)
     ch_versions = ch_versions.mix(FILTERVCFSOMATIC.out.versions.first())
 

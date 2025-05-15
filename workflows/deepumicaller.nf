@@ -182,7 +182,6 @@ workflow DEEPUMICALLER {
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions)
-        // BEDTOINTERVAL.out.interval_list
     }
 
 
@@ -300,7 +299,7 @@ workflow DEEPUMICALLER {
     //
 
     if (params.step in ['mapping', 'groupreadsbyumi']) {
-        
+
         // ASSIGN bam_to_group = to our input bam
         if (params.step == 'groupreadsbyumi') {
             bam_to_group = INPUT_CHECK.out.reads
@@ -325,11 +324,9 @@ workflow DEEPUMICALLER {
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
 
-
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICSONTARGET.out.versions.first())
-
 
 
         // Plot the family size metrics
@@ -339,36 +336,16 @@ workflow DEEPUMICALLER {
         FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
 
 
-
-
-
-        bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
-
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
-
-            // ASSIGN bam_groupreadsbyumi = to our input bam
-            // if (params.step == 'consensus') {
-            //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
-            // }
-
         // MODULE: Run fgbio CallDuplexConsensusReads
-        CALLDUPLEXCONSENSUSREADS(bam_groupreadsbyumi)
+        CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
         ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+
 
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
-        bam_alignduplexconsensus = ALIGNDUPLEXCONSENSUSBAM.out.bam
 
-        // }
 
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
-
-            // ASSIGN bam_alignduplexconsensus = to our input bam
-            // if (params.step == 'filterconsensus') {
-            //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
-            // }
-
-        SORTBAMDUPLEX(bam_alignduplexconsensus)
+        SORTBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
@@ -431,7 +408,7 @@ workflow DEEPUMICALLER {
             // MODULE: Sort BAM file
             SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
             ch_versions = ch_versions.mix(SORTBAMDUPLEXCONSHIGH.out.versions.first())
-            
+
             // join the bam and the bamindex channels to have
             // the ones from the same samples together
             SORTBAMDUPLEXCONSHIGH.out.bam

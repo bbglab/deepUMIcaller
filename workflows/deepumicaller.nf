@@ -52,8 +52,14 @@ include { CALLING_VARDICT                   as CALLINGVARDICTMED                
 include { CALLING_VARDICT                   as CALLINGVARDICTHIGH               } from '../modules/local/calling_vardict/main'
 
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH                  } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
 /*
@@ -474,6 +480,14 @@ workflow DEEPUMICALLER {
             SIGPROFPLOTHIGH(mutation_files_high.collect())
             ch_versions = ch_versions.mix(SIGPROFPLOTHIGH.out.versions)
 
+            RECOUNTMUTSHIGH.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_high }
+            SIGPROFPLOTHIGHPUR(mutation_files_pur_high.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTHIGHPUR.out.versions)
+
+            RECOUNTMUTSHIGH.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_high }
+            SIGPROFPLOTHIGHPYR(mutation_files_pyr_high.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTHIGHPYR.out.versions)
+
         }
 
     }
@@ -552,6 +566,15 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
             SIGPROFPLOTMED(mutation_files_med.collect())
+
+            RECOUNTMUTSMED.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_med }
+            SIGPROFPLOTMEDPUR(mutation_files_pur_med.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTMEDPUR.out.versions)
+
+            RECOUNTMUTSMED.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_med }
+            SIGPROFPLOTMEDPYR(mutation_files_pyr_med.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTMEDPYR.out.versions)
+
         }
     }
 
@@ -631,6 +654,15 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSLOW.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_low }
             SIGPROFPLOTLOW(mutation_files_low.collect())
+
+            RECOUNTMUTSLOW.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_low }
+            SIGPROFPLOTLOWPUR(mutation_files_pur_low.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTLOWPUR.out.versions)
+
+            RECOUNTMUTSLOW.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_low }
+            SIGPROFPLOTLOWPYR(mutation_files_pyr_low.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTLOWPYR.out.versions)
+
         }
 
     }

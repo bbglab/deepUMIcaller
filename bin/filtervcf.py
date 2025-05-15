@@ -153,10 +153,11 @@ def read_from_vardict_VCF_all(sample,
 
 
 
-def main(sample, vcf_file, filter_str, vaf_germline, output_filename):
+def main(sample, vcf_file, filter_str, vaf_germline, output_prefix, split_type = False):
     """
     Your script's main function.
     """
+    output_filename = f"{output_prefix}.filter_mutations.vcf"
 
     vcf_read = read_from_vardict_VCF_all(sample, vcf_file)
     
@@ -186,6 +187,30 @@ def main(sample, vcf_file, filter_str, vaf_germline, output_filename):
                                                                                 "FILTER", "INFO",
                                                                                 "FORMAT", "SAMPLE"], index = False)
 
+
+    if split_type:
+        purine = ["A", "G"]
+        pyrimidine = ["C", "T"]
+
+        purine_vcf = vcf_read[vcf_read["REF"].isin(purine)].reset_index(drop = True)
+        pyrimidine_vcf = vcf_read[vcf_read["REF"].isin(pyrimidine)].reset_index(drop = True)
+
+        purine_vcf[["CHROM", "POS", "ID", "REF", "ALT",
+                    "QUAL", "FILTER", "INFO",
+                    "FORMAT", "SAMPLE"]].to_csv(f"{output_prefix}_pur.filter_mutations.purine.vcf",
+                                                    sep='\t', header=["#CHROM", "POS", "ID",
+                                                                        "REF", "ALT", "QUAL",
+                                                                        "FILTER", "INFO",
+                                                                        "FORMAT", "SAMPLE"], index = False)
+
+        pyrimidine_vcf[["CHROM", "POS", "ID", "REF", "ALT",
+                        "QUAL", "FILTER", "INFO",
+                        "FORMAT", "SAMPLE"]].to_csv(f"{output_prefix}_pyr.filter_mutations.pyrimidine.vcf",
+                                                    sep='\t', header=["#CHROM", "POS", "ID",
+                                                                        "REF", "ALT", "QUAL",
+                                                                        "FILTER", "INFO",
+                                                                        "FORMAT", "SAMPLE"], index = False)
+
     # Print a success message or return a result if needed
     print(f"{output_filename} VCF file created successfully.")
 
@@ -196,6 +221,12 @@ if __name__ == '__main__':
     vcf_file = sys.argv[2]
     filters = sys.argv[3]
     vaf_threshold = float(sys.argv[4])
-    vcf_file_out = sys.argv[5]
-    main(sample, vcf_file, filters, vaf_threshold, vcf_file_out)
+    vcf_file_prefix = sys.argv[5]
+
+    try:
+        split_type = bool(sys.argv[6])
+    except:
+        split_type = False
+
+    main(sample, vcf_file, filters, vaf_threshold, vcf_file_prefix, split_type)
 

@@ -52,8 +52,14 @@ include { CALLING_VARDICT                   as CALLINGVARDICTMED                
 include { CALLING_VARDICT                   as CALLINGVARDICTHIGH               } from '../modules/local/calling_vardict/main'
 
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH                  } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
 /*
@@ -182,7 +188,6 @@ workflow DEEPUMICALLER {
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
         ch_versions = ch_versions.mix(BEDTOINTERVAL.out.versions)
-        // BEDTOINTERVAL.out.interval_list
     }
 
 
@@ -300,7 +305,7 @@ workflow DEEPUMICALLER {
     //
 
     if (params.step in ['mapping', 'groupreadsbyumi']) {
-        
+
         // ASSIGN bam_to_group = to our input bam
         if (params.step == 'groupreadsbyumi') {
             bam_to_group = INPUT_CHECK.out.reads
@@ -325,11 +330,9 @@ workflow DEEPUMICALLER {
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
 
-
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         ch_versions = ch_versions.mix(COLLECTDUPLEXSEQMETRICSONTARGET.out.versions.first())
-
 
 
         // Plot the family size metrics
@@ -339,36 +342,16 @@ workflow DEEPUMICALLER {
         FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
 
 
-
-
-
-        bam_groupreadsbyumi = GROUPREADSBYUMIDUPLEX.out.bam
-
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus']) {
-
-            // ASSIGN bam_groupreadsbyumi = to our input bam
-            // if (params.step == 'consensus') {
-            //     bam_groupreadsbyumi = INPUT_CHECK.out.reads
-            // }
-
         // MODULE: Run fgbio CallDuplexConsensusReads
-        CALLDUPLEXCONSENSUSREADS(bam_groupreadsbyumi)
+        CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
         ch_versions = ch_versions.mix(CALLDUPLEXCONSENSUSREADS.out.versions.first())
+
 
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
-        bam_alignduplexconsensus = ALIGNDUPLEXCONSENSUSBAM.out.bam
 
-        // }
 
-        // if (params.step in ['mapping', 'groupreadsbyumi', 'consensus', 'filterconsensus']) {
-
-            // ASSIGN bam_alignduplexconsensus = to our input bam
-            // if (params.step == 'filterconsensus') {
-            //     bam_alignduplexconsensus = INPUT_CHECK.out.reads
-            // }
-
-        SORTBAMDUPLEX(bam_alignduplexconsensus)
+        SORTBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
@@ -431,7 +414,7 @@ workflow DEEPUMICALLER {
             // MODULE: Sort BAM file
             SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
             ch_versions = ch_versions.mix(SORTBAMDUPLEXCONSHIGH.out.versions.first())
-            
+
             // join the bam and the bamindex channels to have
             // the ones from the same samples together
             SORTBAMDUPLEXCONSHIGH.out.bam
@@ -496,6 +479,14 @@ workflow DEEPUMICALLER {
             RECOUNTMUTSHIGH.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_high }
             SIGPROFPLOTHIGH(mutation_files_high.collect())
             ch_versions = ch_versions.mix(SIGPROFPLOTHIGH.out.versions)
+
+            RECOUNTMUTSHIGH.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_high }
+            SIGPROFPLOTHIGHPUR(mutation_files_pur_high.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTHIGHPUR.out.versions)
+
+            RECOUNTMUTSHIGH.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_high }
+            SIGPROFPLOTHIGHPYR(mutation_files_pyr_high.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTHIGHPYR.out.versions)
 
         }
 
@@ -575,6 +566,15 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
             SIGPROFPLOTMED(mutation_files_med.collect())
+
+            RECOUNTMUTSMED.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_med }
+            SIGPROFPLOTMEDPUR(mutation_files_pur_med.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTMEDPUR.out.versions)
+
+            RECOUNTMUTSMED.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_med }
+            SIGPROFPLOTMEDPYR(mutation_files_pyr_med.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTMEDPYR.out.versions)
+
         }
     }
 
@@ -654,6 +654,15 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSLOW.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_low }
             SIGPROFPLOTLOW(mutation_files_low.collect())
+
+            RECOUNTMUTSLOW.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_low }
+            SIGPROFPLOTLOWPUR(mutation_files_pur_low.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTLOWPUR.out.versions)
+
+            RECOUNTMUTSLOW.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_low }
+            SIGPROFPLOTLOWPYR(mutation_files_pyr_low.collect())
+            ch_versions = ch_versions.mix(SIGPROFPLOTLOWPYR.out.versions)
+
         }
 
     }

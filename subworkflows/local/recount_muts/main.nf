@@ -134,7 +134,6 @@ workflow RECOUNT_MUTS {
     }
 
 
-
     FILTERVCFSOMATIC(output_vcf)
     ch_versions = ch_versions.mix(FILTERVCFSOMATIC.out.versions.first())
 
@@ -150,11 +149,13 @@ workflow RECOUNT_MUTS {
 
     emit:
 
-    ns_file        = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
-    versions       = ch_versions                // channel: [ versions.yml ]
+    ns_file         = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
+    versions        = ch_versions                // channel: [ versions.yml ]
 
-    filtered_vcf   = output_vcf                 // channel: [ val(meta), [ vcf ] ]
-    somatic_vcf    = FILTERVCFSOMATIC.out.vcf          // channel: [ val(meta), [ vcf ] ]
+    filtered_vcf    = output_vcf                 // channel: [ val(meta), [ vcf ] ]
+    somatic_vcf     = FILTERVCFSOMATIC.out.vcf   // channel: [ val(meta), [ vcf ] ]
 
+    purvcf          = FILTERVCFSOMATIC.out.pur_vcf
+    pyrvcf          = FILTERVCFSOMATIC.out.pyr_vcf
 
 }

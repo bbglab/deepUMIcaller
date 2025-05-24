@@ -17,6 +17,5 @@ process CUSTOM_DUMPSOFTWAREVERSIONS {
 
 
     script:
-    def args = task.ext.args ?: ''
     template 'dumpsoftwareversions.py'
 }

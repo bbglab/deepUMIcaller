@@ -21,7 +21,6 @@ process FILTER_N_RICH {
 
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def filter_name = task.ext.filter_name ?: "n_rich"
     def minimum_depth = task.ext.minimum_depth ?: "25"
@@ -33,6 +32,8 @@ process FILTER_N_RICH {
     // with a coverage above (median * 0.75) to then compute the proportion of Ns
     // and with the proportion of Ns of all those positions we estimate a
     // distribution from which we compute the mean + 2 std as the threshold for the max. proportion of Ns
+
+    // TODO think if we want to reimplement this with click
     """
     add_filter_nrich.py \\
             ${vcf_file} \\

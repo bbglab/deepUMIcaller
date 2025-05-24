@@ -21,7 +21,6 @@ process MUTS_PER_POS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def read_size = task.ext.read_size ?: "142"
     """
     # vcf is filtered for only low VAF variants in principle, but we could let the python script filter it itself
     grep -v '##' $vcf > ${prefix}.no_header.vcf;
@@ -29,11 +28,7 @@ process MUTS_PER_POS {
                 --inFile ${bam} \\
                 --inVCF ${prefix}.no_header.vcf \\
                 -o ${prefix} \\
-                -l ${read_size} \\
-                --filter INCLUDE \\
-                -t 0 \\
-                --clonality_limit 0.1 \\
-                -c
+                ${args}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')

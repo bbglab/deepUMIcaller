@@ -479,6 +479,7 @@
                 "final_read_size": {
                     "type": "integer",
                     "description": "Parameter to define the maximum read size.",
+                    "default": 142,
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the maximum read size."
                 }

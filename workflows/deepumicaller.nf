@@ -176,7 +176,7 @@ workflow DEEPUMICALLER {
     ensemblvep_info = params.vep_cache ? [] : Channel.of([ [ id:"${params.vep_genome}.${params.vep_cache_version}" ], params.vep_genome, params.vep_species, params.vep_cache_version ])
     if (params.download_cache) {
         PREPARE_CACHE(ensemblvep_info)
-        vep_cache = PREPARE_CACHE.out.ensemblvep_cache.map{ meta, cache -> [ cache ] }
+        vep_cache = PREPARE_CACHE.out.ensemblvep_cache.map{ _meta, cache -> [ cache ] }
         ch_versions = ch_versions.mix(PREPARE_CACHE.out.versions)
     } else {
         vep_cache = params.vep_cache
@@ -687,9 +687,6 @@ workflow DEEPUMICALLER {
     MULTIQC (
         ch_multiqc_files.collect()
     )
-    multiqc_report = MULTIQC.out.report.toList()
-    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
-
 }
 
 

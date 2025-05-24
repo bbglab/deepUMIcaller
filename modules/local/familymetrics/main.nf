@@ -6,9 +6,6 @@ process FAMILYSIZEMETRICS {
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
     conda "anaconda::seaborn=0.12.2"
     container "biocontainers/seaborn:0.12.2_cv1"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-    //         'https://depot.galaxyproject.org/singularity/seaborn:0.12.2_cv1' : 
-    //         'biocontainers/seaborn:0.12.2_cv1' }"
 
 
     input:
@@ -21,13 +18,8 @@ process FAMILYSIZEMETRICS {
     path  "versions.yml"                        , emit: versions
 
 
-
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def high_confidence = task.ext.high_confidence ?: "2 1 1"
-    def med_confidence = task.ext.med_confidence ?: "2 1 1"
-    def low_confidence = task.ext.low_confidence ?: "2 1 1"
     """
     family_size_plots.py \\
                 ${prefix} \\

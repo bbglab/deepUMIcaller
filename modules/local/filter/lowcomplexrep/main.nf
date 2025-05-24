@@ -17,8 +17,8 @@ process FILTER_LOW_COMPLEXITY {
     path (low_complex_bed)
 
     output:
-    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed) , emit: filtered_vcf_bed
-    path  "versions.yml"                      , emit: versions
+    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed)   , emit: filtered_vcf_bed
+    path  "versions.yml"                                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

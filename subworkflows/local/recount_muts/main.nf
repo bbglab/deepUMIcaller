@@ -45,10 +45,6 @@ workflow RECOUNT_MUTS {
     .set { ch_vcf_bed }
 
     READJUSTREGIONS(ch_vcf_bed)
-    // These are the three main outputs
-    // READJUSTREGIONS.out.vcf_bed
-    // READJUSTREGIONS.out.vcf_bed_mut_ids
-    // READJUSTREGIONS.out.regions_plus_variants_bed
 
     ch_versions = ch_versions.mix(READJUSTREGIONS.out.versions.first())
 
@@ -59,13 +55,10 @@ workflow RECOUNT_MUTS {
     .set { ch_bam_bai_bed }
 
     PILEUPBAM(ch_bam_bai_bed, reference_fasta)
-    // PILEUPBAM.out.mpileup
     ch_versions = ch_versions.mix(PILEUPBAM.out.versions.first())
 
 
     NSXPOSITION(PILEUPBAM.out.mpileup)
-    // This is the main output
-    // NSXPOSITION.out.ns_per_pos
     ch_versions = ch_versions.mix(NSXPOSITION.out.versions.first())
 
     PILEUPBAM.out.mpileup
@@ -80,7 +73,6 @@ workflow RECOUNT_MUTS {
     .set { ch_bamall_bai_bed }
 
     PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
-    // PILEUPBAM.out.mpileup
     ch_versions = ch_versions.mix(PILEUPBAMALL.out.versions.first())
 
 
@@ -105,11 +97,6 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    // FINDMUTATED(ch_pileup_vcf)
-    // FINDMUTATED.out.read_names
-    // FINDMUTATED.out.tags
-    // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
-
     if (params.filter_mutations) {
         if (params.filter_human) {
             PATCHDPALL.out.patched_vcf
@@ -133,10 +120,8 @@ workflow RECOUNT_MUTS {
         output_vcf = PATCHDP.out.patched_vcf
     }
 
-
     FILTERVCFSOMATIC(output_vcf)
     ch_versions = ch_versions.mix(FILTERVCFSOMATIC.out.versions.first())
-
 
     FILTERVCFPLOT(output_vcf)
     ch_versions = ch_versions.mix(FILTERVCFPLOT.out.versions.first())

@@ -18,8 +18,6 @@ process FILTER_LOW_MAPPABILITY {
     tuple val(meta), path("*.low_mappable.vcf"), emit: filtered_vcf
     path  "versions.yml"                       , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"

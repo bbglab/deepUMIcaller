@@ -30,8 +30,6 @@ process ENSEMBLVEP_VEP {
     path "*.summary.html"              , optional:true, emit: report
     path "versions.yml"                               , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

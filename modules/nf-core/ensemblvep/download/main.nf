@@ -14,8 +14,6 @@ process ENSEMBLVEP_DOWNLOAD {
     tuple val(meta), path("vep_cache"), emit: cache
     path "versions.yml"               , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

@@ -16,8 +16,6 @@ process PATCH_DEPTH {
     tuple val(meta), path("*.readjusted.vcf")     , emit: patched_vcf
     path  "versions.yml"                          , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

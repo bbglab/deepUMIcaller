@@ -16,8 +16,6 @@ process PICARD_BEDTOINTERVALLIST {
     tuple val(meta), path('*.interval_list'), emit: interval_list
     path  "versions.yml"                    , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

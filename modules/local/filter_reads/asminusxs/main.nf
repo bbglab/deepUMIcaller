@@ -16,8 +16,6 @@ process ASMINUSXS {
     tuple val(meta), path("*.discarded_AS-XS_*.bam"), emit: discarded_bam
     path  "versions.yml"                  , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

@@ -19,8 +19,6 @@ process FGBIO_GROUPREADSBYUMI {
     tuple val(meta), path("*_umi_histogram.txt"), emit: histogram
     path "versions.yml"                         , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

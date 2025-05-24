@@ -16,8 +16,6 @@ process ALIGN_BAM {
     tuple val(meta), path("*.mapped.bam"), emit: bam
     path "versions.yml"                  , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def samtools_fastq_args = task.ext.samtools_fastq_args ?: ''

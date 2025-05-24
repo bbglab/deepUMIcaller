@@ -17,8 +17,6 @@ process FGBIO_FILTERBAM {
     tuple val(meta), path("*.txt"), emit: read_names
     path "versions.yml"           , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def samtools_args = task.ext.samtools_args ?: ''

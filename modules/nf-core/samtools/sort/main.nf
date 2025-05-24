@@ -15,8 +15,6 @@ process SAMTOOLS_SORT {
     tuple val(meta), path("*.csi"), emit: csi, optional: true
     path  "versions.yml"          , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

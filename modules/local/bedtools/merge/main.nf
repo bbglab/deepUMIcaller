@@ -18,8 +18,6 @@ process BEDTOOLS_MERGE {
     tuple val(meta), path('*.regions_n_mutations.bed')      , emit: regions_plus_variants_bed
     path  "versions.yml"                                    , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

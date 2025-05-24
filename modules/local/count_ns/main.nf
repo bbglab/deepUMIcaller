@@ -16,8 +16,6 @@ process NS_X_POSITION {
     tuple val(meta), path("*.tsv.gz"), path("*.tsv.gz.tbi") , emit: ns_tsv
     path  "versions.yml"                                    , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

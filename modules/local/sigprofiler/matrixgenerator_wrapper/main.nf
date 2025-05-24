@@ -48,8 +48,6 @@ process SIGPROFILER_MATRIXGENERATOR {
     // TODO nf-core: List additional required output channels/values here
     path "versions.yml"                                                     , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

@@ -468,9 +468,6 @@ workflow DEEPUMICALLER {
             if (params.annotate_mutations){
                 VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
                                 ch_ref_fasta,
-                                params.vep_genome,
-                                params.vep_species,
-                                params.vep_cache_version,
                                 vep_cache,
                                 vep_extra_files)
                 
@@ -557,9 +554,6 @@ workflow DEEPUMICALLER {
             if (params.annotate_mutations){
                 VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
                                 ch_ref_fasta,
-                                params.vep_genome,
-                                params.vep_species,
-                                params.vep_cache_version,
                                 vep_cache,
                                 vep_extra_files)
             }
@@ -645,9 +639,6 @@ workflow DEEPUMICALLER {
             if (params.annotate_mutations){
                 VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
                                 ch_ref_fasta,
-                                params.vep_genome,
-                                params.vep_species,
-                                params.vep_cache_version,
                                 vep_cache,
                                 vep_extra_files)
             }
@@ -657,7 +648,6 @@ workflow DEEPUMICALLER {
 
             RECOUNTMUTSLOW.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_low }
             SIGPROFPLOTLOWPUR(mutation_files_pur_low.collect())
-            
 
             RECOUNTMUTSLOW.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_low }
             SIGPROFPLOTLOWPYR(mutation_files_pyr_low.collect())

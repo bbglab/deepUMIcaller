@@ -9,9 +9,6 @@ workflow VCF_ANNOTATE_ALL {
     take:
     vcf          // channel: [ val(meta), vcf ]
     fasta
-    vep_genome
-    vep_species
-    vep_cache_version
     vep_cache
     vep_extra_files
 
@@ -38,7 +35,11 @@ workflow VCF_ANNOTATE_ALL {
     //     versions = versions.mix(VCF_ANNOTATE_MERGE.out.versions)
     // }
 
-    VCF_ANNOTATE_ENSEMBLVEP(vcf, fasta, vep_genome, vep_species, vep_cache_version, vep_cache, vep_extra_files)
+    VCF_ANNOTATE_ENSEMBLVEP(vcf, fasta,
+                            params.vep_genome,
+                            params.vep_species,
+                            params.vep_cache_version,
+                            vep_cache, vep_extra_files)
 
     reports = reports.mix(VCF_ANNOTATE_ENSEMBLVEP.out.reports)
     vcf_ann = vcf_ann.mix(VCF_ANNOTATE_ENSEMBLVEP.out.vcf)

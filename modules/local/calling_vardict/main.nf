@@ -16,7 +16,7 @@ process CALLING_VARDICT {
     tuple val(meta), path("*.vcf")                   , emit: vcf
     tuple val(meta), path("*.vcf.gz"), optional: true, emit: genome_vcf
     tuple val(meta), path("*.tsv.gz"), optional: true, emit: tsv
-    path  "versions.yml"                             , emit: versions
+    path  "versions.yml"                             , topic: versions
 
 
     script:

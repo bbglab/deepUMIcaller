@@ -16,7 +16,7 @@ process FILTERMUTATIONS {
     tuple val(meta), path("*.filter_mutations.purine.vcf")      , optional:true , emit: pur_vcf
     tuple val(meta), path("*.filter_mutations.pyrimidine.vcf")  , optional:true , emit: pyr_vcf
     tuple val(meta), path("*.png")                              , optional:true , emit: png
-    path "versions.yml"                                                         , emit: versions
+    path "versions.yml"                                                         , topic: versions
 
 
     script:

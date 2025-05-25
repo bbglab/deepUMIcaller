@@ -18,7 +18,7 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
 
     output:
     tuple val(meta), path("${prefix}.bam"), emit: bam
-    path "versions.yml"                   , emit: versions
+    path "versions.yml"                   , topic: versions
 
 
     script:

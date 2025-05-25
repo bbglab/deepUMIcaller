@@ -14,7 +14,7 @@ process QUERY_TABIX {
 
     output:
     tuple val(meta), path("*.mutated_positions.tsv.gz") , emit: mutated_tsv
-    path  "versions.yml"                                , emit: versions
+    path  "versions.yml"                                , topic: versions
 
 
     script:

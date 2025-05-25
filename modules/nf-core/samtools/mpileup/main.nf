@@ -14,7 +14,7 @@ process SAMTOOLS_MPILEUP {
 
     output:
     tuple val(meta), path("*.mpileup.gz"), path("*.mpileup.gz.tbi") , emit: mpileup
-    path  "versions.yml"                                            , emit: versions
+    path  "versions.yml"                                            , topic: versions
 
 
     script:

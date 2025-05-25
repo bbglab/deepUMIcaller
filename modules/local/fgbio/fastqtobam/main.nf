@@ -13,7 +13,7 @@ process FGBIO_FASTQTOBAM {
 
     output:
     tuple val(meta), path("*.unmapped.bam"), emit: bam
-    path "versions.yml"                    , emit: versions
+    path "versions.yml"                    , topic: versions
 
 
     script:

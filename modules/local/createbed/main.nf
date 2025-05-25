@@ -13,7 +13,7 @@ process CREATEBED_FROM_TSV {
 
     output:
     tuple val(meta), path("*.bed"), emit: bed
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
 
     script:

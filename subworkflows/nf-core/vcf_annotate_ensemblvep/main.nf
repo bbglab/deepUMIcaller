@@ -3,7 +3,7 @@
 //
 
 include { ENSEMBLVEP_VEP } from '../../../modules/nf-core/ensemblvep/vep/main'
-// include { TABIX_TABIX    } from '../../../modules/nf-core/tabix/tabix/main'
+
 
 workflow VCF_ANNOTATE_ENSEMBLVEP {
     take:
@@ -16,17 +16,14 @@ workflow VCF_ANNOTATE_ENSEMBLVEP {
     vep_extra_files   // channel: [ file1, file2...] (optionnal)
 
     main:
-    ch_versions = Channel.empty()
+    
 
     ENSEMBLVEP_VEP(vcf, vep_genome, vep_species, vep_cache_version, vep_cache, fasta, vep_extra_files)
 
-    // Gather versions of all tools used
-    ch_versions = ch_versions.mix(ENSEMBLVEP_VEP.out.versions)
 
     emit:
     vcf      = ENSEMBLVEP_VEP.out.vcf      // channel: [ val(meta), vcf ]
     json     = ENSEMBLVEP_VEP.out.json     // channel: [ val(meta), json ]
     tab      = ENSEMBLVEP_VEP.out.tab      // channel: [ val(meta), tab ]
     reports  = ENSEMBLVEP_VEP.out.report   // channel: [ *.html ]
-    versions = ch_versions                 // channel: [ versions.yml ]
 }

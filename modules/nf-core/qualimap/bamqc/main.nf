@@ -15,7 +15,7 @@ process QUALIMAP_BAMQC {
 
     output:
     tuple val(meta), path("${prefix}"), emit: results
-    path  "versions.yml"              , emit: versions
+    path  "versions.yml"              , topic: versions
 
 
     script:

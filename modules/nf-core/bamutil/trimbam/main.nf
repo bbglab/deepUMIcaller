@@ -14,7 +14,7 @@ process BAMUTIL_TRIMBAM {
 
     output:
     tuple val(meta), path("*.bam"), emit: bam
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
 
     script:

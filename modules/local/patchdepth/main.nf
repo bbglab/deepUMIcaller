@@ -14,7 +14,7 @@ process PATCH_DEPTH {
 
     output:
     tuple val(meta), path("*.readjusted.vcf")     , emit: patched_vcf
-    path  "versions.yml"                          , emit: versions
+    path  "versions.yml"                          , topic: versions
 
 
     script:

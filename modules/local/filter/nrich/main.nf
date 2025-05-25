@@ -17,7 +17,7 @@ process FILTER_N_RICH {
 
     output:
     tuple val(meta), path("*.filtered.vcf"), emit: filtered_vcf
-    path  "versions.yml"                   , emit: versions
+    path  "versions.yml"                   , topic: versions
 
 
     script:

@@ -15,7 +15,7 @@ process MUTS_PER_POS {
     output:
     tuple val(meta), path("**.png")     , emit: plots
     tuple val(meta), path("**")         , emit: others
-    path  "versions.yml"                , emit: versions
+    path  "versions.yml"                , topic: versions
 
 
     script:

@@ -20,7 +20,7 @@ process SAMTOOLS_VIEW {
     tuple val(meta), path("*.bai") , emit: bai ,    optional: true
     tuple val(meta), path("*.csi") , emit: csi ,    optional: true
     tuple val(meta), path("*.crai"), emit: crai,    optional: true
-    path  "versions.yml"           , emit: versions
+    path  "versions.yml"           , topic: versions
 
 
     script:

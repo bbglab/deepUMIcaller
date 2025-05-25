@@ -12,7 +12,7 @@ process SAMTOOLS_DEPTH {
 
     output:
     tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
 
     script:

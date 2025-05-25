@@ -14,7 +14,7 @@ process ALIGN_BAM {
 
     output:
     tuple val(meta), path("*.mapped.bam"), emit: bam
-    path "versions.yml"                  , emit: versions
+    path "versions.yml"                  , topic: versions
 
 
     script:

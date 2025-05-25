@@ -17,7 +17,7 @@ process FGBIO_GROUPREADSBYUMI {
     output:
     tuple val(meta), path("*_umi-grouped.bam")  , emit: bam
     tuple val(meta), path("*_umi_histogram.txt"), emit: histogram
-    path "versions.yml"                         , emit: versions
+    path "versions.yml"                         , topic: versions
 
 
     script:

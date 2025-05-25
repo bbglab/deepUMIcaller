@@ -16,7 +16,7 @@ process BEDTOOLS_MERGE {
     tuple val(meta), path('*.vcf_derived.bed')              , emit: vcf_bed
     tuple val(meta), path('*.vcf_derived.many.withID.bed')  , emit: vcf_bed_mut_ids
     tuple val(meta), path('*.regions_n_mutations.bed')      , emit: regions_plus_variants_bed
-    path  "versions.yml"                                    , emit: versions
+    path  "versions.yml"                                    , topic: versions
 
 
     script:

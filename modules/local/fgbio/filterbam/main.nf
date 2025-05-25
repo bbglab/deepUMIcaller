@@ -15,7 +15,7 @@ process FGBIO_FILTERBAM {
 
     output:
     tuple val(meta), path("*.txt"), emit: read_names
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
 
     script:

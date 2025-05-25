@@ -15,7 +15,7 @@ process FAMILYSIZEMETRICS {
     tuple val(meta), path("*.pdf")              , emit: pdf
     tuple val(meta), path("*.sample_data.tsv")  , emit: sample_data
     tuple val(meta), path("*.family_curve.tsv") , emit: curve_data
-    path  "versions.yml"                        , emit: versions
+    path  "versions.yml"                        , topic: versions
 
 
     script:

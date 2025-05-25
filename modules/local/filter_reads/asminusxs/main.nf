@@ -14,7 +14,7 @@ process ASMINUSXS {
     output:
     tuple val(meta), path("*.AS-XS_*.bam"), emit: bam
     tuple val(meta), path("*.discarded_AS-XS_*.bam"), emit: discarded_bam
-    path  "versions.yml"                  , emit: versions
+    path  "versions.yml"                  , topic: versions
 
 
     script:

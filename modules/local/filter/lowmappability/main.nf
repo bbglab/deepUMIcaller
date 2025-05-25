@@ -16,7 +16,7 @@ process FILTER_LOW_MAPPABILITY {
 
     output:
     tuple val(meta), path("*.low_mappable.vcf"), emit: filtered_vcf
-    path  "versions.yml"                       , emit: versions
+    path  "versions.yml"                       , topic: versions
 
 
     script:

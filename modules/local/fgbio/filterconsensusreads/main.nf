@@ -13,7 +13,7 @@ process FGBIO_FILTERCONSENSUSREADS {
 
     output:
     tuple val(meta), path("*.filtered.bam")  , emit: bam
-    path "versions.yml"                      , emit: versions
+    path "versions.yml"                      , topic: versions
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''

@@ -14,7 +14,7 @@ process NS_X_POSITION {
 
     output:
     tuple val(meta), path("*.tsv.gz"), path("*.tsv.gz.tbi") , emit: ns_tsv
-    path  "versions.yml"                                    , emit: versions
+    path  "versions.yml"                                    , topic: versions
 
 
     script:

@@ -3,9 +3,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     bbglab/deepUMIcaller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/bbglab/deepUMIcaller
-#    Website: https://nf-co.re/fastquorum
-#    Slack  : https://nfcore.slack.com/channels/fastquorum
+#    Github : https://github.com/bbglab/deepUMIcaller
 ----------------------------------------------------------------------------------------
 */
 

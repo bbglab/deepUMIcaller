@@ -97,28 +97,24 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    if (params.filter_mutations) {
-        if (params.filter_human) {
-            PATCHDPALL.out.patched_vcf
-            .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
-            .set { ch_vcf_vcfbed }
+    if (params.filter_regions) {
+        PATCHDPALL.out.patched_vcf
+        .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+        .set { ch_vcf_vcfbed }
 
-            FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
-            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
-            
-            FILTERLOWMAPPABLE.out.filtered_vcf
-            .join(NSXPOSITION.out.ns_tsv)
-            .set {ch_vcf_ns}
-        } else {
-            PATCHDPALL.out.patched_vcf
-            .join(NSXPOSITION.out.ns_tsv)
-            .set {ch_vcf_ns}
-        }
-        FILTERNRICH(ch_vcf_ns)
-        output_vcf = FILTERNRICH.out.filtered_vcf
+        FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
+        FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
+        
+        FILTERLOWMAPPABLE.out.filtered_vcf
+        .join(NSXPOSITION.out.ns_tsv)
+        .set {ch_vcf_ns}
     } else {
-        output_vcf = PATCHDP.out.patched_vcf
+        PATCHDPALL.out.patched_vcf
+        .join(NSXPOSITION.out.ns_tsv)
+        .set {ch_vcf_ns}
     }
+    FILTERNRICH(ch_vcf_ns)
+    output_vcf = FILTERNRICH.out.filtered_vcf
 
     FILTERVCFSOMATIC(output_vcf)
     

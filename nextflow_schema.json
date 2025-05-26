@@ -99,11 +99,11 @@
                     "description": "Enable for filtering Ns",
                     "help_text": ""
                 },
-                "filter_human": {
+                "filter_regions": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
-                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
+                    "help_text": "With this parameter, you can flag variants present in the defined regions."
                 },
                 "low_mappability_file": {
                     "type": "string",

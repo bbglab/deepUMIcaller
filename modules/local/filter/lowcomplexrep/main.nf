@@ -22,7 +22,8 @@ process FILTER_LOW_COMPLEXITY {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_complex_bed} -u  > ${prefix}.lowcomplexrep_file.bed
 
@@ -44,7 +45,8 @@ process FILTER_LOW_COMPLEXITY {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.low_complex.vcf
 

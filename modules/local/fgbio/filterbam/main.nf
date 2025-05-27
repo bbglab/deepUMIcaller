@@ -21,7 +21,8 @@ process FGBIO_FILTERBAM {
     script:
     def samtools_args = task.ext.samtools_args ?: ''
     def fgbio_args = task.ext.fgbio_args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def fgbio_mem_gb = 4
 
     if (!task.memory) {

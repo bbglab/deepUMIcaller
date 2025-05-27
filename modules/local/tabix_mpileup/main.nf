@@ -18,7 +18,8 @@ process QUERY_TABIX {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     # now we also need to recount the variants
     tabix ${pileup} -R ${vcfderived} | bgzip > ${prefix}.mutated_positions.tsv.gz
@@ -30,7 +31,8 @@ process QUERY_TABIX {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.mutated_positions.tsv.gz
 

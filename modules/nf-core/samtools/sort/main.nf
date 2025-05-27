@@ -18,7 +18,8 @@ process SAMTOOLS_SORT {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     mkdir tmp
@@ -30,7 +31,8 @@ process SAMTOOLS_SORT {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.bam
 

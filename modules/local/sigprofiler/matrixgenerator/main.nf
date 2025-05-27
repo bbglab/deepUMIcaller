@@ -17,7 +17,6 @@ process SIGPROFILER_MATRIXGENERATOR {
 
 
     script:
-    // def prefix = task.ext.prefix ?: "${meta.id}"
     def prefix = task.ext.prefix ?: "samples"
     """
     sigprofiler_matrix_generator.py \\

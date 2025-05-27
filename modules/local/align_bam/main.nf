@@ -22,7 +22,8 @@ process ALIGN_BAM {
     def samtools_sort_args = task.ext.samtools_sort_args ?: ''
     def bwa_args = task.ext.bwa_args ?: ''
     def fgbio_args = task.ext.fgbio_args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def fgbio_mem_gb = 4
 
     if (!task.memory) {
@@ -77,7 +78,8 @@ process ALIGN_BAM {
 
     stub:
 
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.mapped.bam
     cat <<-END_VERSIONS > versions.yml

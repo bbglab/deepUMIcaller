@@ -26,7 +26,8 @@ process SAMTOOLS_VIEW {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def reference = fasta ? "--reference ${fasta}" : ""
     def readnames = qname ? "--qname-file ${qname}": ""
     def file_type = args.contains("--output-fmt sam") ? "sam" :
@@ -52,7 +53,8 @@ process SAMTOOLS_VIEW {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.bam
     touch ${prefix}.cram

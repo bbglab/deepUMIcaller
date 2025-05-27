@@ -20,7 +20,8 @@ process FILTER_LOW_MAPPABILITY {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_mappable_bed} -u  > ${prefix}.lowmappable_file.bed
 
@@ -42,7 +43,8 @@ process FILTER_LOW_MAPPABILITY {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.low_mappable.vcf
 

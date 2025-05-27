@@ -18,7 +18,8 @@ process CREATEBED_FROM_TSV {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     tail -n +2 ${tsv} | awk -F'\\t' '{print \$1, \$2, \$2}' OFS='\\t' > ${prefix}.positions.tsv
     bedtools merge -i ${prefix}.positions.tsv \\
@@ -32,7 +33,8 @@ process CREATEBED_FROM_TSV {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filter_mutations.vcf
 

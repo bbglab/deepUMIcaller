@@ -22,7 +22,8 @@ process CALLING_VARDICT {
     script:
     def args = task.ext.args ?: ''
     def filter_args = task.ext.filter_args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
 
     # Split the targets file into ${task.cpus} chunks

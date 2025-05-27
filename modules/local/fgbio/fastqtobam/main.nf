@@ -18,7 +18,8 @@ process FGBIO_FASTQTOBAM {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def mem_gb = 1
     def read_structure = "${meta.read_structure}"
     if (!task.memory) {

@@ -21,7 +21,8 @@ process FILTER_N_RICH {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def filter_name = task.ext.filter_name ?: "n_rich"
     def minimum_depth = task.ext.minimum_depth ?: "25"
 
@@ -49,7 +50,8 @@ process FILTER_N_RICH {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filtered.vcf
 

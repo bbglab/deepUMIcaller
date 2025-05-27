@@ -20,7 +20,8 @@ process FILTERMUTATIONS {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def vaf_filter = task.ext.vaf_filter ?: ''
     def filters = task.ext.filters ?: ''
     def splitting = task.ext.splitting ?: ''
@@ -40,7 +41,8 @@ process FILTERMUTATIONS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filter_mutations.vcf
 

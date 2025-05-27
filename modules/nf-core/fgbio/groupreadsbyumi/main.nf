@@ -22,7 +22,8 @@ process FGBIO_GROUPREADSBYUMI {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio GroupReadsByUmi] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'

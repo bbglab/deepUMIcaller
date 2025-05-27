@@ -20,7 +20,8 @@ process PATCH_DEPTH {
     script:
     def args = task.ext.args ?: ''
     def suffix = task.ext.suffix ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     prefix = suffix != '' ? "${prefix}.${suffix}" : prefix
     """
     recompute_depth.py \\
@@ -37,7 +38,8 @@ process PATCH_DEPTH {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.readjusted.vcf
 

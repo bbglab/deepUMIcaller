@@ -20,7 +20,8 @@ process MUTS_PER_POS {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     # vcf is filtered for only low VAF variants in principle, but we could let the python script filter it itself
     grep -v '##' $vcf > ${prefix}.no_header.vcf;
@@ -36,7 +37,8 @@ process MUTS_PER_POS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}_BasePerPosInclNs.png
     touch ${prefix}_BasePerPosWithoutNs.png

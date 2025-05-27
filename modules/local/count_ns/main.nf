@@ -18,7 +18,8 @@ process NS_X_POSITION {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     zcat $pileup | \\
             awk 'BEGIN{FS=OFS="\\t"} {print \$1"\\t"\$2"\\t"\$4"\\t"gsub(/N/,"",\$5)"\\t"gsub(/n/,"",\$5)"\\t"gsub(/\\*/,"",\$5)}' | \\
@@ -33,7 +34,8 @@ process NS_X_POSITION {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.Ns_per_position.tsv.gz
     touch ${prefix}.Ns_per_position.tsv.gz.tbi;

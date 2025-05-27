@@ -33,7 +33,8 @@ process ASMINUSXS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def prefix_discard = task.ext.prefix_discard ?: "${meta.id}"
     """
     touch ${prefix}.bam

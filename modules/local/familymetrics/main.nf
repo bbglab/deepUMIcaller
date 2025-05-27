@@ -19,7 +19,8 @@ process FAMILYSIZEMETRICS {
 
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     family_size_plots.py \\
                 ${prefix} \\
@@ -33,7 +34,8 @@ process FAMILYSIZEMETRICS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.family_sizes_plot_n_stats.pdf \\ 
             ${prefix}.family_sizes_plot_n_stats.high.pdf

@@ -5,8 +5,8 @@
 */
 
 
-include { paramsSummaryMap      } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc  } from '../nf-core/utils_nfcore_pipeline'
+include { paramsSummaryMap          } from 'plugin/nf-schema'
+include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -4,6 +4,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+
+include { paramsSummaryMap      } from 'plugin/nf-schema'
+include { paramsSummaryMultiqc  } from '../nf-core/utils_nfcore_pipeline'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -143,14 +147,11 @@ include { VCF_ANNOTATE_ALL                  as VCFANNOTATEHIGH         } from '.
 
 workflow DEEPUMICALLER {
 
-    // Setup initial parameters and validations within the workflow scope
-    def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
-    WorkflowMain.initialise(workflow, params, log)
-    
-    def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile ]
-    checkPathParamList.each { p ->
-        if (p) { file(p, checkIfExists: true) }
-    }
+    // is this really needed?
+    // def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile ]
+    // checkPathParamList.each { p ->
+    //     if (p) { file(p, checkIfExists: true) }
+    // }
     
     if (params.ref_fasta) {
         ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
@@ -164,23 +165,11 @@ workflow DEEPUMICALLER {
     }
     
     ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
-    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
 
-    
     ch_multiqc_files = Channel.empty()
 
 
-    // Download Ensembl VEP cache if needed
-    // Assuming that if the cache is provided, the user has already downloaded it
-    ensemblvep_info = params.vep_cache ? [] : Channel.of([ [ id:"${params.vep_genome}.${params.vep_cache_version}" ], params.vep_genome, params.vep_species, params.vep_cache_version ])
-    if (params.download_cache) {
-        PREPARE_CACHE(ensemblvep_info)
-        vep_cache = PREPARE_CACHE.out.ensemblvep_cache.map{ _meta, cache -> [ cache ] }
-        
-    } else {
-        vep_cache = params.vep_cache
-    }
+    vep_cache = params.vep_cache
     vep_extra_files = []
     
 
@@ -665,9 +654,13 @@ workflow DEEPUMICALLER {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = WorkflowMain.paramsSummaryMultiqc(workflow, summary_params)
+    def summary_params  = paramsSummaryMap(workflow, params)
+    workflow_summary    = paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
+
+    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
     
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))

@@ -17,7 +17,7 @@ process FGBIO_FILTERCONSENSUSREADS {
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''
-    def samtools_args = task.ext.samtools_args ?: ''
+    // def samtools_args = task.ext.samtools_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def mem_gb = 8
@@ -40,7 +40,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     // } else {
     fgbio_zipper_bams_output = prefix + ".filtered.bam"
     fgbio_zipper_bams_compression = 1
-    extra_command = ""
+    // extra_command = ""
     // }
     """
     fgbio \\

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-
+import click
 import sys
 import re
 import pandas as pd
-import numpy as np
 from collections import Counter
 
 def parse_mpu(x):
@@ -95,6 +94,11 @@ def update_vcf_fields(row, suffix = ''):
     formats_values[f"CDP{suffix}"] = f'{int(row["TOT_DP"])}'
     formats_values[f"CAD{suffix}"] = f'{int(row["REF_DP"])},{int(row["ALT_DP"])}'
     formats_values[f"NDP{suffix}"] = f'{int(row["Ns_DP"])}'
+    if suffix == '':
+        # Parse PMEAN and PSTD from INFO field if present
+        info_dict = dict(item.split("=", 1) for item in row["INFO"].split(";") if "=" in item)
+        formats_values["PMN"] = info_dict.get("PMEAN", "")
+        formats_values["PST"] = info_dict.get("PSTD", "")
     
     if row["NEW_FILTER"] != "":
         if row["FILTER"] == "PASS":
@@ -407,6 +411,9 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     header_lines.append(f'##FORMAT=<ID=CDP{suffix},Number=1,Type=Integer,Description="Total Depth recomputed using mpileup output. deepUMIcaller.">')
     header_lines.append(f'##FORMAT=<ID=CAD{suffix},Number=2,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed. ONLY ONE ALT allele. Recomputed using mpileup output, this might not sum to CDP. deepUMIcaller.">')
     header_lines.append(f'##FORMAT=<ID=NDP{suffix},Number=1,Type=Integer,Description="Total number of Ns computed using mpileup output. deepUMIcaller.">')
+    if suffix == '':
+        header_lines.append(f'##FORMAT=<ID=PMN,Number=1,Type=Float,Description="The mean distance to the nearest 5 or 3 prime read end (whichever is closer) in all reads that support the variant call">')
+        header_lines.append(f'##FORMAT=<ID=PST,Number=1,Type=Float,Description="Position STD in reads">')
 
     # FILTER field
     header_lines.append(f'##FILTER=<ID={not_supported_filter},Description="Variant not supported when inspecting the BAM with mpileup. deepUMIcaller.">')
@@ -471,29 +478,16 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     # Print a success message or return a result if needed
     print(f"{output_filename} VCF file created successfully.")
 
+@click.command()
+@click.option('--mpileup-file', '-m', required=True, type=click.Path(exists=True), help='Path to the input mpileup file.')
+@click.option('--vcf-file', '-v', required=True, type=click.Path(exists=True), help='Path to the input VCF file.')
+@click.option('--output-filename', '-o', required=True, type=click.Path(), help='Path to the output VCF file.')
+@click.option('--suffix', '-s', default='', help='Suffix for custom filters and FORMAT fields.')
+def cli(mpileup_file, vcf_file, output_filename, suffix):
+    main(mpileup_file, vcf_file, output_filename, suffix)
+
 if __name__ == '__main__':
-    mpileup_file = sys.argv[1]
-    vcf_file = sys.argv[2]
-    output_filename = sys.argv[3]
-
-    # main(mpileup_file, vcf_file, output_filename) # 2024-07-27
-    # Ferriol commented this line since it seems to be repetitive and a remaining of a previous version of the code
-    # that should have been removed after commit 70ed9c2a29530ae2961423e7930fb5cda4049bc3
-
-    if len(sys.argv) >= 5:
-        suffix_cmd = sys.argv[4]
-    else:
-        suffix_cmd = ''
-    main(mpileup_file, vcf_file, output_filename, suffix_cmd)
-
-
-# @click.command()
-# @click.option('--mpileup_file', '-m', required=True, type=click.Path(exists=True),
-#                 help='Path to the input mpileup file.')
-# @click.option('--vcf_file', '-v', required=True, type=click.Path(exists=True),
-#                 help='Path to the output VCF file.')
-# @click.option('--output_filename', '-o', required=True, type=click.Path(),
-#                 help='Path to the output file.')
+    cli()
 
 
 

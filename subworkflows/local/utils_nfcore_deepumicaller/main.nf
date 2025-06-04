@@ -28,7 +28,7 @@ workflow PIPELINE_INITIALISATION {
     version           // boolean: Display version and exit
     help              // boolean: Display help text
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
-    _monochrome_logs   // boolean: Do not use coloured log outputs
+    monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
 
@@ -50,7 +50,7 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    pre_help_text =  logo(workflow, params.monochrome_logs)
+    pre_help_text =  logo(monochrome_logs)
     post_help_text = '\n' + citation(workflow) + '\n'
     def workflow_command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../bbglab> --input path/to/input/ --outdir path/to/output/"
     UTILS_NFVALIDATION_PLUGIN (
@@ -221,29 +221,3 @@ def citation(workflow) {
             "* Software dependencies\n" +
             "  https://github.com/${workflow.manifest.name}/blob/master/CITATIONS.md"
 }
-
-
-
-def paramsSummaryMultiqc(workflow, summary) {
-        String summary_section = ''
-        summary.keySet().each { group ->
-            def group_params = summary.get(group)  // This gets the parameters of that particular group
-            if (group_params) {
-                summary_section += "    <p style=\"font-size:110%\"><b>$group</b></p>\n"
-                summary_section += "    <dl class=\"dl-horizontal\">\n"
-                group_params.keySet().each { param ->
-                    summary_section += "        <dt>$param</dt><dd><samp>${group_params.get(param) ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>\n"
-                }
-                summary_section += "    </dl>\n"
-            }
-        }
-
-        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/','-')}-summary'\n"
-        yaml_file_text        += "description: ' - this information is collected when the pipeline is started.'\n"
-        yaml_file_text        += "section_name: '${workflow.manifest.name} Workflow Summary'\n"
-        yaml_file_text        += "section_href: 'https://github.com/${workflow.manifest.name}'\n"
-        yaml_file_text        += "plot_type: 'html'\n"
-        yaml_file_text        += "data: |\n"
-        yaml_file_text        += "${summary_section}"
-        return yaml_file_text
-    }

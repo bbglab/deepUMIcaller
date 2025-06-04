@@ -19,8 +19,10 @@ process ASMINUSXS {
 
     script:
     def threshold = task.ext.threshold ?: "50"
-    def prefix = task.ext.prefix ?: "${meta.id}.filtered.AS-XS_${threshold}"
-    def prefix_discard = task.ext.prefix_discard ?: "${meta.id}.discarded_AS-XS_${threshold}"
+    def prefix = task.ext.prefix ?: ".filtered.AS-XS_${threshold}"
+    prefix = "${meta.id}${prefix}"
+    def prefix_discard = task.ext.prefix_discard ?: ".discarded_AS-XS_${threshold}"
+    prefix_discard = "${meta.id}${prefix_discard}"
     
     // TODO think of reimplementing with click
     """

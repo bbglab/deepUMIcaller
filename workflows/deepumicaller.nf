@@ -654,8 +654,8 @@ workflow DEEPUMICALLER {
     //
     // MODULE: MultiQC
     //
-    def summary_params  = paramsSummaryMap(workflow, params)
-    workflow_summary    = paramsSummaryMultiqc(workflow, summary_params)
+    def summary_params  = paramsSummaryMap(workflow)
+    workflow_summary    = paramsSummaryMultiqc(summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
 

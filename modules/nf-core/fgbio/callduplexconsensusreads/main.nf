@@ -23,7 +23,9 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}_consensus"
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}.consensus${prefix}"
+
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio CallDuplexConsensusReads] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'

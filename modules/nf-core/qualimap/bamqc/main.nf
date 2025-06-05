@@ -20,7 +20,8 @@ process QUALIMAP_BAMQC {
 
     script:
     def args = task.ext.args   ?: ''
-    prefix   = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
 
     def collect_pairs = meta.single_end ? '' : '--collect-overlap-pairs'
     def memory = (task.memory.mega*0.8).intValue() + 'M'

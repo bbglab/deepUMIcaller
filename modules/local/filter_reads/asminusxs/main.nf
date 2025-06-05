@@ -30,7 +30,7 @@ process ASMINUSXS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        pysam: 0.21.0
     END_VERSIONS
     """
 
@@ -46,7 +46,7 @@ process ASMINUSXS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        pysam: 0.21.0
     END_VERSIONS
     """
 }

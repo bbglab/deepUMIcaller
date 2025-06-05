@@ -10,10 +10,6 @@ process FGBIO_FILTERCONSENSUSREADS {
     input:
     tuple val(meta), path(bam)
     path fasta
-    // please note:
-    // --min-reads is a required argument with no default
-    // --min-base-quality is a required argument with no default
-    // make sure they are specified via ext.args in your config
 
     output:
     tuple val(meta), path("${prefix}.bam"), emit: bam
@@ -22,7 +18,8 @@ process FGBIO_FILTERCONSENSUSREADS {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}_consensus_filtered"
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}.consensus_filtered${prefix}"
 
     def mem_gb = 8
     if (!task.memory) {

@@ -124,9 +124,6 @@ include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } fro
 // include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
 
 
-// Download annotation cache if needed
-include { PREPARE_CACHE                                                   } from '../subworkflows/local/prepare_cache/main'
-
 // Postprocessing of the BAM and the VCF
 include { RECOUNT_MUTS                      as RECOUNTMUTSLOW          } from '../subworkflows/local/recount_muts/main'
 include { RECOUNT_MUTS                      as RECOUNTMUTSMED          } from '../subworkflows/local/recount_muts/main'
@@ -147,11 +144,6 @@ include { VCF_ANNOTATE_ALL                  as VCFANNOTATEHIGH         } from '.
 
 workflow DEEPUMICALLER {
 
-    // is this really needed?
-    // def checkPathParamList = [ params.input, params.multiqc_config, params.ref_fasta, params.targetsfile ]
-    // checkPathParamList.each { p ->
-    //     if (p) { file(p, checkIfExists: true) }
-    // }
     
     if (params.ref_fasta) {
         ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()

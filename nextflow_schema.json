@@ -407,12 +407,6 @@
                     "fa_icon": "fas fa-book",
                     "help_text": ""
                 },
-                "download_cache": {
-                    "type": "boolean",
-                    "description": "Do you want to download the cache? Activate it only if necessary.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "Do you want to download the cache? Activate it only if necessary."
-                },
                 "vep_cache": {
                     "type": "string",
                     "description": "Location of Ensembl VEP cache.",

@@ -98,7 +98,7 @@ patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
 
 ### Start with the filter consensus step (`filterconsensus`)
 
-This step allows the concatenation of multiple libraries of the same sample for a cummulative variant calling.
+This step allows the concatenation of multiple libraries of the same sample for a cumulative variant calling.
 <!-- TODO explain this step better and provide some examples -->
 
 

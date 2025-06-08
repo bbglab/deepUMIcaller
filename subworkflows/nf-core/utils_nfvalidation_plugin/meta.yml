@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "UTILS_NFVALIDATION_PLUGIN"
-description: Use nf-validation to initiate and validate a pipeline
+description: Use nf-schema to initiate and validate a pipeline
 keywords:
   - utility
   - pipeline

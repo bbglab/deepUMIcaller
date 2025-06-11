@@ -25,12 +25,17 @@
             "bam": {
                 "type": "string",
                 "pattern": "^\\S+\\.bam$",
-                "errorMessage": "BAM file of duplex reads ready for 'filterconsensus' or 'calling' steps."
+                "errorMessage": "BAM file of duplex reads ready for 'filterconsensus' or 'groupbyumi' steps."
+            },
+            "duplexbam": {
+                "type": "string",
+                "pattern": "^\\S+\\.bam$",
+                "errorMessage": "BAM file of duplex reads ready for the 'calling' step."
             },
             "csi": {
                 "type": "string",
                 "pattern": "^\\S+\\.bam.csi$",
-                "errorMessage": "BAM index file of duplex reads ready for 'filterconsensus' or 'calling' steps."
+                "errorMessage": "BAM index file of duplex reads ready for the 'calling' step."
             },
             "read_structure": {
                 "type": "string",
@@ -41,7 +46,7 @@
         "required": ["sample"],
         "dependentRequired": {
             "fastq_1" : ["fastq_2", "read_structure"],
-            "bam" : ["csi"]
+            "duplexbam" : ["csi"]
         }
     }
 }

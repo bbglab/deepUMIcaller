@@ -13,7 +13,6 @@
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg)](https://sylabs.io/docs/)
 [![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/bbglab/deepUMIcaller)
 
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23fastquorum-4A154B?logo=slack)](https://nfcore.slack.com/channels/fastquorum)
 [![Follow on Twitter](http://img.shields.io/badge/twitter-%40bbglab-1DA1F2?logo=twitter)](https://twitter.com/bbglab)
 [![Watch on YouTube](http://img.shields.io/badge/youtube-bbglab-FF0000?logo=youtube)](https://www.youtube.com/@bcnbglab)
 
@@ -42,15 +41,18 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 5. Call duplex consensus reads [Duplex-Sequencing][duplex-seq-link] data
       1. Call duplex consensus reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))
       2. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
-6. Align ([`bwa mem`](https://github.com/lh3/bwa))
-7. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from very stringent (HIGH) to very permissive (LOW).
-8. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
-9. Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
+6. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
+7. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
+8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from stringent (HIGH) to permissive (LOW), we are generally using MED.
+9. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
+10. Varient calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allelle depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
+11. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.
+12. (optional) Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
 10. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
 
 ## Initial requirements
 
-1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=24.04.3`)
+1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=25.04.2`)
 
 2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) (you can follow [this tutorial](https://singularity-tutorial.github.io/01-installation/)), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(you can use [`Conda`](https://conda.io/miniconda.html) both to install Nextflow itself and also to manage software within pipelines. Please only use it within pipelines as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_.
 
@@ -93,6 +95,12 @@ In this case, the input.csv samplesheet must contain the following columns:
 sample, bam, csi, read_structure
 patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
 ```
+
+### Start with the filter consensus step (`filterconsensus`)
+
+This step allows the concatenation of multiple libraries of the same sample for a cumulative variant calling.
+<!-- TODO explain this step better and provide some examples -->
+
 
 ### Start with VarDict variant calling (`calling`)
 
@@ -170,9 +178,6 @@ See also:
 
 
 ## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/fastquorum for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

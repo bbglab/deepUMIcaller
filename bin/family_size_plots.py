@@ -81,33 +81,9 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
     percent_duplicates = (1 - total_scss/total_reads) * 100
 
-    expected_dcs = round(total_scss / 2)
-    recovery_of_dcs = total_duplex / expected_dcs * 100
+    expected_dscs = round(total_scss / 2)
+    recovery_of_dscs = total_duplex / expected_dscs * 100
     unique_reads = total_duplex + total_scss_nonduplex
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (14, 6))
-    sns.lineplot(data = data_scss_grouped,
-                x = "family_size",
-                y = "fraction_reads",
-                hue = "in_duplex",
-                marker = 'o',
-                palette= {True : "k", False : "r"},
-                ax = ax1
-                )
-
-    ax1.set_xlim(limx)
-    ax1.set_xlabel("Family size")
-    ax1.set_ylabel("Fraction of reads")
-    ax1.legend(title = "in duplex\nfamilies")
-
-    ax2.text(0.15, 0.8, f"Raw reads:   {total_reads:,}\nDuplicates:      {percent_duplicates:.1f}%\n\nSSCS:            {total_scss:,}" )
-    ax2.text(0.15, 0.6, f"Raw/DCS:          {total_reads/total_duplex:.3f}\nRaw/SSCS:         {total_reads/total_scss:.3f}\nSSCS/Duplex:    {total_scss/total_duplex:.3f}")
-    ax2.text(0.15, 0.25, f"IN DUPLEX\nRaw:                {total_reads_duplex:,} ({total_reads_duplex/(total_reads)*100:.1f}%)\nSSCs:               {total_scss_duplex:,}\nDuplex:            {total_duplex:,}\nRaw/DCS:         {total_reads_duplex/total_duplex:.3f}\nRaw/SSCS:        {total_reads_duplex/total_scss_duplex:.3f}\n")
-    ax2.text(0.15, 0.05, f"NO DUPLEX\nRaw:                {total_reads_nonduplex:,} ({total_reads_nonduplex/(total_reads)*100:.1f}%)\nSSCs:               {total_scss_nonduplex:,} ({total_scss_nonduplex/(total_scss)*100:.1f}%)\nRaw/SSCS:        {total_reads_nonduplex/total_scss_nonduplex:.3f}")
-    ax2.axis('off')
-    fig.suptitle(f"{sample} Duplex:{confidence_name}({confidence})")
-    plt.show()
-    fig.savefig(f"{prefix_figure}.{confidence_name}.pdf", bbox_inches='tight')
 
     try:
         max_indices = np.argmax( data_scss_grouped[data_scss_grouped['in_duplex']]['fraction_reads'].values )
@@ -115,19 +91,46 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
     except:
         peak_size = 0
 
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    sns.lineplot(data=data_scss_grouped,
+                 x="family_size",
+                 y="fraction_reads",
+                 hue="in_duplex",
+                 marker='o',
+                 palette={True: "k", False: "r"},
+                 ax=ax1)
+
+    # Add a vertical bar indicating the peak size
+    ax1.axvline(x=peak_size, color="blue", linestyle="--", label=f"Peak:{peak_size}")
+
+    ax1.set_xlim(limx)
+    ax1.set_xlabel("Family size")
+    ax1.set_ylabel("Fraction of reads")
+    ax1.legend(title="in duplex\nfamilies")
+
+    ax2.text(0.15, 0.8, f"Raw reads:   {total_reads:,}\nDuplicates:      {percent_duplicates:.1f}%\n\nSSCs:            {total_scss:,}")
+    ax2.text(0.15, 0.6, f"Raw/DSCs:          {total_reads/total_duplex:.3f}\nRaw/SSCs:         {total_reads/total_scss:.3f}\nSSCs/DSCs:    {total_scss/total_duplex:.3f}")
+    ax2.text(0.15, 0.25, f"IN DUPLEX\nRaw:                {total_reads_duplex:,} ({total_reads_duplex/(total_reads)*100:.1f}%)\nSSCs:               {total_scss_duplex:,}\nDSCs:            {total_duplex:,}\nRaw/DSCs:         {total_reads_duplex/total_duplex:.3f}\nRaw/SSCs:        {total_reads_duplex/total_scss_duplex:.3f}\n")
+    ax2.text(0.15, 0.05, f"NO DUPLEX\nRaw:                {total_reads_nonduplex:,} ({total_reads_nonduplex/(total_reads)*100:.1f}%)\nSSCs:               {total_scss_nonduplex:,} ({total_scss_nonduplex/(total_scss)*100:.1f}%)\nRaw/SSCs:        {total_reads_nonduplex/total_scss_nonduplex:.3f}")
+    ax2.axis('off')
+    fig.suptitle(f"{sample} Duplex:{confidence_name}({confidence})")
+    plt.show()
+    fig.savefig(f"{prefix_figure}.{confidence_name}.pdf", bbox_inches='tight')
+
+
 
     keys = ['sample', 'quality', 'raw_reads',
-                'duplicates', 'sscs', 'dcs',
-                'expected_dcs', 'recovery_of_dcs', 'unique_reads', 'uq_reads_duplex', 'unique_molecules',
-                'raw_x_dcs', 'raw_x_sscs', 'sscs_x_dcs',
-                'duplex_raw_reads', 'duplex_sscs', 'duplex_raw_x_dcs', 'duplex_raw_x_sscs',
+                'duplicates', 'sscs', 'dscs',
+                'expected_dscs', 'recovery_of_dscs', 'unique_reads', 'uq_reads_duplex', 'unique_molecules',
+                'raw_x_dscs', 'raw_x_sscs', 'sscs_x_dscs',
+                'duplex_raw_reads', 'duplex_sscs', 'duplex_raw_x_dscs', 'duplex_raw_x_sscs',
                 'noduplex_raw_reads', 'noduplex_sscs', 'noduplex_raw_x_sscs',
                 'peak_size']
 
     values = [sample, confidence_name, total_reads,
                 round(percent_duplicates, 3), total_scss,
                 total_duplex,
-                expected_dcs, round(recovery_of_dcs, 3), unique_reads, round(total_duplex/unique_reads*100, 3), round(unique_reads/2),
+                expected_dscs, round(recovery_of_dscs, 3), unique_reads, round(total_duplex/unique_reads*100, 3), round(unique_reads/2),
                 round(total_reads/total_duplex, 3), round(total_reads/total_scss, 3), round(total_scss/total_duplex, 3),
                 total_reads_duplex, total_scss_duplex, round(total_reads_duplex/total_duplex, 3), round(total_reads_duplex/total_scss_duplex, 3),
                 total_reads_nonduplex, total_scss_nonduplex, round(total_reads_nonduplex/total_scss_nonduplex, 3),

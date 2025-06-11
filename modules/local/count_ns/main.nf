@@ -14,14 +14,12 @@ process NS_X_POSITION {
 
     output:
     tuple val(meta), path("*.tsv.gz"), path("*.tsv.gz.tbi") , emit: ns_tsv
-    path  "versions.yml"                                    , emit: versions
+    path  "versions.yml"                                    , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     zcat $pileup | \\
             awk 'BEGIN{FS=OFS="\\t"} {print \$1"\\t"\$2"\\t"\$4"\\t"gsub(/N/,"",\$5)"\\t"gsub(/n/,"",\$5)"\\t"gsub(/\\*/,"",\$5)}' | \\
@@ -36,7 +34,8 @@ process NS_X_POSITION {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.Ns_per_position.tsv.gz
     touch ${prefix}.Ns_per_position.tsv.gz.tbi;

@@ -15,15 +15,13 @@ process MUTS_PER_POS {
     output:
     tuple val(meta), path("**.png")     , emit: plots
     tuple val(meta), path("**")         , emit: others
-    path  "versions.yml"                , emit: versions
+    path  "versions.yml"                , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def read_size = task.ext.read_size ?: "142"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     # vcf is filtered for only low VAF variants in principle, but we could let the python script filter it itself
     grep -v '##' $vcf > ${prefix}.no_header.vcf;
@@ -31,11 +29,7 @@ process MUTS_PER_POS {
                 --inFile ${bam} \\
                 --inVCF ${prefix}.no_header.vcf \\
                 -o ${prefix} \\
-                -l ${read_size} \\
-                --filter INCLUDE \\
-                -t 0 \\
-                --clonality_limit 0.1 \\
-                -c
+                ${args}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -43,7 +37,8 @@ process MUTS_PER_POS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}_BasePerPosInclNs.png
     touch ${prefix}_BasePerPosWithoutNs.png

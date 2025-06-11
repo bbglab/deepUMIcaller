@@ -6,9 +6,6 @@ process FAMILYSIZEMETRICS {
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
     conda "anaconda::seaborn=0.12.2"
     container "biocontainers/seaborn:0.12.2_cv1"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-    //         'https://depot.galaxyproject.org/singularity/seaborn:0.12.2_cv1' : 
-    //         'biocontainers/seaborn:0.12.2_cv1' }"
 
 
     input:
@@ -18,18 +15,12 @@ process FAMILYSIZEMETRICS {
     tuple val(meta), path("*.pdf")              , emit: pdf
     tuple val(meta), path("*.sample_data.tsv")  , emit: sample_data
     tuple val(meta), path("*.family_curve.tsv") , emit: curve_data
-    path  "versions.yml"                        , emit: versions
+    path  "versions.yml"                        , topic: versions
 
-
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def high_confidence = task.ext.high_confidence ?: "2 1 1"
-    def med_confidence = task.ext.med_confidence ?: "2 1 1"
-    def low_confidence = task.ext.low_confidence ?: "2 1 1"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     family_size_plots.py \\
                 ${prefix} \\
@@ -43,7 +34,8 @@ process FAMILYSIZEMETRICS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.family_sizes_plot_n_stats.pdf \\ 
             ${prefix}.family_sizes_plot_n_stats.high.pdf

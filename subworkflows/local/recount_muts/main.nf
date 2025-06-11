@@ -38,19 +38,15 @@ workflow RECOUNT_MUTS {
     low_complex_filter = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
     low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
 
-    ch_versions = Channel.empty()
+    
 
     vcf_file
     .join( bed_file )
     .set { ch_vcf_bed }
 
     READJUSTREGIONS(ch_vcf_bed)
-    // These are the three main outputs
-    // READJUSTREGIONS.out.vcf_bed
-    // READJUSTREGIONS.out.vcf_bed_mut_ids
-    // READJUSTREGIONS.out.regions_plus_variants_bed
 
-    ch_versions = ch_versions.mix(READJUSTREGIONS.out.versions.first())
+    
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
@@ -59,14 +55,11 @@ workflow RECOUNT_MUTS {
     .set { ch_bam_bai_bed }
 
     PILEUPBAM(ch_bam_bai_bed, reference_fasta)
-    // PILEUPBAM.out.mpileup
-    ch_versions = ch_versions.mix(PILEUPBAM.out.versions.first())
+    
 
 
     NSXPOSITION(PILEUPBAM.out.mpileup)
-    // This is the main output
-    // NSXPOSITION.out.ns_per_pos
-    ch_versions = ch_versions.mix(NSXPOSITION.out.versions.first())
+    
 
     PILEUPBAM.out.mpileup
     .join( READJUSTREGIONS.out.vcf_bed )
@@ -80,8 +73,7 @@ workflow RECOUNT_MUTS {
     .set { ch_bamall_bai_bed }
 
     PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
-    // PILEUPBAM.out.mpileup
-    ch_versions = ch_versions.mix(PILEUPBAMALL.out.versions.first())
+    
 
 
     QUERYTABIX(ch_pileup_vcfbed)
@@ -96,7 +88,7 @@ workflow RECOUNT_MUTS {
     // think well which is the best way to output this information, if a VCF or a TSV with only the updated depths or what.
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
-    ch_versions = ch_versions.mix(PATCHDP.out.versions.first())
+    
 
     PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
     .join( PATCHDP.out.patched_vcf )
@@ -105,41 +97,30 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    // FINDMUTATED(ch_pileup_vcf)
-    // FINDMUTATED.out.read_names
-    // FINDMUTATED.out.tags
-    // samtools view ../K_43_1_A_1_umi-grouped.bam -h -b -@ 9 -D MI:../K_43_1_A_1.tags > K_43_1_A_1.grouped.bam
+    if (params.filter_regions) {
+        PATCHDPALL.out.patched_vcf
+        .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+        .set { ch_vcf_vcfbed }
 
-    if (params.filter_mutations) {
-        if (params.filter_human) {
-            PATCHDPALL.out.patched_vcf
-            .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
-            .set { ch_vcf_vcfbed }
-
-            FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
-            FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
-            
-            FILTERLOWMAPPABLE.out.filtered_vcf
-            .join(NSXPOSITION.out.ns_tsv)
-            .set {ch_vcf_ns}
-        } else {
-            PATCHDPALL.out.patched_vcf
-            .join(NSXPOSITION.out.ns_tsv)
-            .set {ch_vcf_ns}
-        }
-        FILTERNRICH(ch_vcf_ns)
-        output_vcf = FILTERNRICH.out.filtered_vcf
+        FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
+        FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
+        
+        FILTERLOWMAPPABLE.out.filtered_vcf
+        .join(NSXPOSITION.out.ns_tsv)
+        .set {ch_vcf_ns}
     } else {
-        output_vcf = PATCHDP.out.patched_vcf
+        PATCHDPALL.out.patched_vcf
+        .join(NSXPOSITION.out.ns_tsv)
+        .set {ch_vcf_ns}
     }
-
+    FILTERNRICH(ch_vcf_ns)
+    output_vcf = FILTERNRICH.out.filtered_vcf
 
     FILTERVCFSOMATIC(output_vcf)
-    ch_versions = ch_versions.mix(FILTERVCFSOMATIC.out.versions.first())
-
+    
 
     FILTERVCFPLOT(output_vcf)
-    ch_versions = ch_versions.mix(FILTERVCFPLOT.out.versions.first())
+    
 
     bam_n_index
     .join( FILTERVCFPLOT.out.vcf )
@@ -150,7 +131,6 @@ workflow RECOUNT_MUTS {
     emit:
 
     ns_file         = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
-    versions        = ch_versions                // channel: [ versions.yml ]
 
     filtered_vcf    = output_vcf                 // channel: [ val(meta), [ vcf ] ]
     somatic_vcf     = FILTERVCFSOMATIC.out.vcf   // channel: [ val(meta), [ vcf ] ]

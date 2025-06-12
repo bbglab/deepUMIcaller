@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the bbglab/intogenplus pipeline
+// Subworkflow with functionality specific to the bbglab/deepUMIcaller pipeline
 //
 
 /*

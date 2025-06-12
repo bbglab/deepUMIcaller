@@ -18,7 +18,6 @@ workflow INPUT_CHECK {
 
     emit:
     reads                                     // channel: [ val(meta), [ reads ] ]
-    versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
@@ -40,10 +39,10 @@ def create_input_channel(LinkedHashMap row, step) {
         }
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
-    // For all the calling, only bams/indexes are required
+    // For all the calling, only BAMs/indexes are required
     else if (step=='calling'){
-        if (!file(row.bam).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
+        if (!file(row.duplexbam).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Duplex BAM file does not exist!\n${row.duplexbam}"
         }
         if (!file(row.csi).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
@@ -53,7 +52,7 @@ def create_input_channel(LinkedHashMap row, step) {
     // Only the bam is required to the meta map for the other steps (e.g. groupreadsbyumi)
     else{
         if (!file(row.bam).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
+            exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${row.bam}"
         }
         input_meta = [ meta, [ file(row.bam) ]]
     }

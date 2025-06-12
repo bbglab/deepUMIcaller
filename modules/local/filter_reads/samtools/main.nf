@@ -18,15 +18,13 @@ process SAMTOOLS_FILTER {
     tuple val(meta), path("*.bai") , emit: bai ,    optional: true
     tuple val(meta), path("*.csi") , emit: csi ,    optional: true
     tuple val(meta), path("*.crai"), emit: crai,    optional: true
-    path  "versions.yml"           , emit: versions
+    path  "versions.yml"           , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def file_type = args.contains("--output-fmt sam") ? "sam" :
                     args.contains("--output-fmt bam") ? "bam" :
                     args.contains("--output-fmt cram") ? "cram" :
@@ -51,7 +49,8 @@ process SAMTOOLS_FILTER {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.bam
     touch ${prefix}.cram

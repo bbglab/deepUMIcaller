@@ -14,14 +14,13 @@ process PICARD_BEDTOINTERVALLIST {
 
     output:
     tuple val(meta), path('*.interval_list'), emit: interval_list
-    path  "versions.yml"                    , emit: versions
+    path  "versions.yml"                    , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def args_file = arguments_file ? "--arguments_file ${arguments_file}" : ""
 
     def avail_mem = 3072
@@ -47,7 +46,8 @@ process PICARD_BEDTOINTERVALLIST {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.interval_list
 

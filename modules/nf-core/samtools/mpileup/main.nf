@@ -14,14 +14,13 @@ process SAMTOOLS_MPILEUP {
 
     output:
     tuple val(meta), path("*.mpileup.gz"), path("*.mpileup.gz.tbi") , emit: mpileup
-    path  "versions.yml"                                            , emit: versions
+    path  "versions.yml"                                            , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def intervals_var = intervals ? "--positions ${intervals}" : ""
     """
     samtools mpileup \\

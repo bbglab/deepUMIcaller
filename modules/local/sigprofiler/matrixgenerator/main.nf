@@ -13,13 +13,10 @@ process SIGPROFILER_MATRIXGENERATOR {
     path("input_mutations/output/DBS/*")  , optional : true, emit: matrices_DBS
     path("input_mutations/output/SBS/*")  , optional : true, emit: matrices_SBS
     path("input_mutations/output/TSB/*")  , optional : true, emit: transcription_bias
-    path "versions.yml"                                    , emit: versions
+    path "versions.yml"                                    , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    // def prefix = task.ext.prefix ?: "${meta.id}"
     def prefix = task.ext.prefix ?: "samples"
     """
     sigprofiler_matrix_generator.py \\

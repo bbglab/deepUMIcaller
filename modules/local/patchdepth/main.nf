@@ -11,14 +11,13 @@ process PATCH_DEPTH {
 
     output:
     tuple val(meta), path("*.readjusted.vcf")     , emit: patched_vcf
-    path  "versions.yml"                          , emit: versions
+    path  "versions.yml"                          , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def suffix = task.ext.suffix ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     prefix = suffix != '' ? "${prefix}.${suffix}" : prefix
     suffix = suffix != '' ? "--suffix ${suffix}" : ''
     """
@@ -36,7 +35,8 @@ process PATCH_DEPTH {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.readjusted.vcf
 

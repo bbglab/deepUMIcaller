@@ -3,9 +3,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     bbglab/deepUMIcaller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/bbglab/deepUMIcaller
-#    Website: https://nf-co.re/fastquorum
-#    Slack  : https://nfcore.slack.com/channels/fastquorum
+#    Github : https://github.com/bbglab/deepUMIcaller
 ----------------------------------------------------------------------------------------
 */
 
@@ -17,6 +15,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_deepumicaller'
 include { DEEPUMICALLER } from './workflows/deepumicaller'
 
 /*
@@ -26,8 +25,27 @@ include { DEEPUMICALLER } from './workflows/deepumicaller'
 */
 
 workflow {
-    DEEPUMICALLER ()
+
+    main:
+
+    // SUBWORKFLOW: Run initialisation tasks
+    PIPELINE_INITIALISATION (
+        params.version,
+        params.help,
+        params.validate_params,
+        params.monochrome_logs,
+        args,
+        params.outdir,
+    )
+
+    //
+    // WORKFLOW: Run main workflow
+    //
+    DEEPUMICALLER()
+
 }
+
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

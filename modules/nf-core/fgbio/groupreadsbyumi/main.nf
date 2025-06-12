@@ -17,14 +17,13 @@ process FGBIO_GROUPREADSBYUMI {
     output:
     tuple val(meta), path("*_umi-grouped.bam")  , emit: bam
     tuple val(meta), path("*_umi_histogram.txt"), emit: histogram
-    path "versions.yml"                         , emit: versions
+    path "versions.yml"                         , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio GroupReadsByUmi] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'

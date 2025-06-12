@@ -46,10 +46,8 @@ process SIGPROFILER_MATRIXGENERATOR {
     path("input_mutations/output/DBS/*")  , optional : true, emit: matrices_DBS
     path("input_mutations/output/SBS/*")                   , emit: matrices_SBS
     // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"                                                     , emit: versions
+    path "versions.yml"                                                     , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

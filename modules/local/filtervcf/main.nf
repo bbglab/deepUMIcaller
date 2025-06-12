@@ -16,13 +16,12 @@ process FILTERMUTATIONS {
     tuple val(meta), path("*.filter_mutations.purine.vcf")      , optional:true , emit: pur_vcf
     tuple val(meta), path("*.filter_mutations.pyrimidine.vcf")  , optional:true , emit: pyr_vcf
     tuple val(meta), path("*.png")                              , optional:true , emit: png
-    path "versions.yml"                                                         , emit: versions
+    path "versions.yml"                                                         , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def vaf_filter = task.ext.vaf_filter ?: ''
     def filters = task.ext.filters ?: ''
     def splitting = task.ext.splitting ?: ''
@@ -42,7 +41,8 @@ process FILTERMUTATIONS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filter_mutations.vcf
 

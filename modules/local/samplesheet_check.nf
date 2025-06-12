@@ -12,7 +12,7 @@ process SAMPLESHEET_CHECK {
 
     output:
     path '*.csv'       , emit: csv
-    path "versions.yml", emit: versions
+    path "versions.yml", topic: versions
 
     script: // This script is bundled with the pipeline, in nf-core/fgcons/bin/
     """

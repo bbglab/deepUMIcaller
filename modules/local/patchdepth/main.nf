@@ -4,10 +4,7 @@ process PATCH_DEPTH {
     label 'time_low'
     label 'process_medium_high_memory'
 
-    conda "conda-forge::pandas=1.5.2"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/pandas:1.5.2' :
-        'biocontainers/pandas:1.5.2' }"
+    container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 
     input:
     tuple val(meta), path(pileup_mutations), path(vcf)
@@ -18,18 +15,18 @@ process PATCH_DEPTH {
 
 
     script:
-    def args = task.ext.args ?: ''
     def suffix = task.ext.suffix ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     prefix = suffix != '' ? "${prefix}.${suffix}" : prefix
+    suffix = suffix != '' ? "--suffix ${suffix}" : ''
     """
     recompute_depth.py \\
-            ${pileup_mutations} \\
-            ${vcf} \\
-            ${prefix}.readjusted.vcf \\
-            ${suffix} \\
-            ${args}
+            --mpileup-file ${pileup_mutations} \\
+            --vcf-file ${vcf} \\
+            --output-filename ${prefix}.readjusted.vcf \\
+            ${suffix}
+            
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

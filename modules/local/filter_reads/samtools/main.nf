@@ -27,7 +27,7 @@ process SAMTOOLS_FILTER {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def memory_per_cpu = Math.floor(task.memory.toGiga() / task.cpus)
+    def memory_per_cpu = Math.floor(task.memory.toGiga() / task.cpus) as Integer
     def file_type = args.contains("--output-fmt sam") ? "sam" :
                     args.contains("--output-fmt bam") ? "bam" :
                     args.contains("--output-fmt cram") ? "cram" :

@@ -1,8 +1,8 @@
 process FAMILYSIZEMETRICS {
     tag "$meta.id"
-    label 'process_medium'
     errorStrategy 'ignore'
-    
+    label 'process_medium_low'
+
     // TODO
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
     conda "anaconda::seaborn=0.12.2"

@@ -1,8 +1,7 @@
 process ASMINUSXS {
     tag "$meta.id"
-    label 'process_medium'
-    label 'process_medium_high_memory'
-
+    label 'process_memory_intensive'
+    
     conda "bioconda::pysam-0.21.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pysam-0.21.0--py38h15b938a_1' :

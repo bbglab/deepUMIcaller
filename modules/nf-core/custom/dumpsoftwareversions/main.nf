@@ -1,6 +1,5 @@
 process CUSTOM_DUMPSOFTWAREVERSIONS {
-    label 'process_low'
-
+    
     // Requires `pyyaml` which does not have a dedicated container but is in the MultiQC container
     conda "bioconda::multiqc=1.14"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

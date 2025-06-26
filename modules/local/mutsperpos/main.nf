@@ -1,8 +1,7 @@
 process MUTS_PER_POS {
     tag "$meta.id"
-    label 'time_medium'
-    label 'cpu_low'
-    label 'process_medium_high_memory'
+    label 'process_low'
+    
     // conda "bioconda::pysam=0.21.0--py38h15b938a_1"
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
     //     'https://depot.galaxyproject.org/singularity/pysam:0.21.0--py38h15b938a_1' :

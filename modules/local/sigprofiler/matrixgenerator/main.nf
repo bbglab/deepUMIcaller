@@ -1,7 +1,7 @@
 process SIGPROFILER_MATRIXGENERATOR {
     tag "${task.ext.prefix}"
     label 'process_single'
-
+    
     container 'docker.io/ferriolcalvet/sigprofiler:latest'
 
     input:

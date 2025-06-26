@@ -1,7 +1,6 @@
 process MULTIQC {
-    label 'process_medium'
-    label 'process_medium_high_memory'
-
+    label 'process_low'
+    
     conda 'bioconda::multiqc=1.16'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/multiqc:1.16--pyhdfd78af_0' :

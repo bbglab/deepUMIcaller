@@ -21,11 +21,11 @@ process SAMTOOLS_SORT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def memory_per_cpu = Math.floor(task.memory.toGiga() / task.cpus) as Integer
+    //def memory_per_cpu = Math.floor(task.memory.toGiga() / task.cpus) as Integer
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     mkdir tmp
-    samtools sort $args -@ $task.cpus -m ${memory_per_cpu}G -o ${prefix}.bam -T tmp/ $bam
+    samtools sort $args -@ $task.cpus -o ${prefix}.bam -T tmp/ $bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')

@@ -20,10 +20,11 @@ process FAMILYSIZEMETRICS {
 
     script:
     def prefix = task.ext.prefix ?: ""
+    def sample_name = "${meta.id}"
     prefix = "${meta.id}${prefix}"
     """
     family_size_plots.py \\
-                ${prefix} \\
+                ${sample_name} \\
                 ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt \\
                 ${prefix}.family_sizes_plot_n_stats
 

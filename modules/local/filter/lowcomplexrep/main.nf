@@ -2,7 +2,6 @@
 
 process FILTER_LOW_COMPLEXITY {
     tag "$meta.id"
-    label 'process_single'
     
     conda "bioconda::pybedtools=0.9.1--py38he0f268d_0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 

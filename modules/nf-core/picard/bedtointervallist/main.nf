@@ -1,6 +1,5 @@
 process PICARD_BEDTOINTERVALLIST {
     tag "$meta.id"
-    label 'process_single'
 
     conda "bioconda::picard=3.0.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

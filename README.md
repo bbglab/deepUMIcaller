@@ -48,7 +48,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 10. Varient calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allelle depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
 11. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.
 12. (optional) Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
-10. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
+13. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
 
 ## Initial requirements
 

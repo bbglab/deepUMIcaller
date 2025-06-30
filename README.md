@@ -16,10 +16,7 @@
 [![Follow on Twitter](http://img.shields.io/badge/twitter-%40bbglab-1DA1F2?logo=twitter)](https://twitter.com/bbglab)
 [![Watch on YouTube](http://img.shields.io/badge/youtube-bbglab-FF0000?logo=youtube)](https://www.youtube.com/@bcnbglab)
 
-
 ## Introduction
-
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
 
 **bbglab/deepUMIcaller** is a bioinformatics best-practice analysis pipeline to produce duplex consensus reads and call mutations.
 
@@ -38,9 +35,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 2. Fastq to BAM, extracting UMIs ([`fgbio FastqToBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FastqToBam.html))
 3. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgbio ZipperBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/ZipperBam.html)), and template-coordinate sort ([`samtools sort`](http://www.htslib.org/doc/samtools.html))
 4. Group reads by UMI ([`fgbio GroupReadsByUmi`](http://fulcrumgenomics.github.io/fgbio/tools/latest/GroupReadsByUmi.html))
-5. Call duplex consensus reads [Duplex-Sequencing][duplex-seq-link] data
-      1. Call duplex consensus reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))
-      2. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
+5. Call [duplex consensus][duplex-seq-link] reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))
+      1. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
 6. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
 7. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
 8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from stringent (HIGH) to permissive (LOW), we are generally using MED.
@@ -56,101 +52,17 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) (you can follow [this tutorial](https://singularity-tutorial.github.io/01-installation/)), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(you can use [`Conda`](https://conda.io/miniconda.html) both to install Nextflow itself and also to manage software within pipelines. Please only use it within pipelines as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_.
 
-
-
-## Running the pipeline
-
-deepUMIcaller allows to start the pipeline from a specific step among the following options:
-
-`mapping`, `groupreadsbyumi`, `calling`
-
-### Start with FASTQC-Fastq-to_BAM (default)
-
-```console
-nextflow run deepUMIcaller/main.nf \
-  -profile singularity --input input.csv \
-  --ref_fasta refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ 
-```
-
-The input.csv samplesheet must contain the following columns:
-```
-sample, fastq_1, fastq_2, read_structure
-patient1, patient1_R1.fastq.gz, patient1_R2.fastq.gz, 8M1S+T 8M1S+T
-```
-The read structure can change depending your configuration.
-
-### Start with GroupByUMI (`groupreadsbyumi`)
-```console
-nextflow run deepUMIcaller/main.nf \
-  -profile singularity --input input.csv \
-  --ref_fasta  refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ \
-  --step groupreadsbyumi
-```
-In this case, the input.csv samplesheet must contain the following columns:
-```
-sample, bam, csi, read_structure
-patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
-```
-
-### Start with the filter consensus step (`filterconsensus`)
-
-This step allows the concatenation of multiple libraries of the same sample for a cumulative variant calling.
-<!-- TODO explain this step better and provide some examples -->
-
-
-### Start with VarDict variant calling (`calling`)
-
-By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
-
-
-```console
-nextflow run deepUMIcaller/main.nf \
-  -profile singularity --input input.csv \
-  --ref_fasta refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ \
-  --step calling
-```
-
-If you prefer to do it only for HIGH e.g.:
-```console
-nextflow run deepUMIcaller/main.nf \
-  -profile singularity --input input.csv \
-  --ref_fasta refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ \
-  --step calling \
-  --duplex_med_conf false \
-  --duplex_low_conf false
-```
-
-The input.csv samplesheet must contain the following columns:
-```
-sample, bam, csi, read_structure
-patient1, patient.bam, patient.bam.csi, 8M1S+T 8M1S+T
-```
-
-
-
-
 ## Credits
 
 [bbglab/deepUMIcaller](https://github.com/bbglab/deepUMIcaller) was written by [Ferriol Calvet](https://github.com/FerriolCalvet) and [Miquel L. Grau](https://github.com/migrau).
 
 Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pipeline at commit 09a6ae27ce917f2a4b15d2c5396acb562f9047aa. This was originally written by [Nils Homer](https://github.com/nh13). This original pipeline implemented the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link].
 
-
-
 ## Documentation
 
 **NOTE THAT: the reference fasta must contain it's own bwa index in the same directory.**
 
 1. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
-
 
 <!-- 
 ## Documentation
@@ -162,20 +74,10 @@ See also:
 2. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
 -->
 
-# Acknowledgements
+## Acknowledgements
 
-<p align="center">
-<a href="https://fulcrumgenomics.com">
-<img width="500" height="100" src="docs/images/Fulcrum.svg" alt="Fulcrum Genomics"/>
-</a>
-</p>
-
-<p align="center">
-<a href="http://nf-co.re">
-<img width="500" height="125" src="docs/images/nf-core-logo.png" alt="nf-core"/>
-</a>
-</p>
-
+[![Fulcrum Genomics](docs/images/Fulcrum.svg)](https://fulcrumgenomics.com)
+[![nf-core](docs/images/nf-core-logo.png)](http://nf-co.re)
 
 ## Citations
 

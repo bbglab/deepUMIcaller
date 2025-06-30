@@ -1,12 +1,8 @@
 # bbglab/deepUMIcaller: Usage
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/fastquorum/usage](https://nf-co.re/fastquorum/usage)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
-
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+**bbglab/deepUMIcaller** is a bioinformatics best-practice analysis pipeline to produce duplex consensus reads and call mutations.
 
 ## Samplesheet input
 
@@ -16,32 +12,13 @@ You will need to create a samplesheet with information about the samples you wou
 --input '[path to samplesheet file]'
 ```
 
-### Multiple runs of the same sample
+Example:
 
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
-
-```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
-```
-
-### Full samplesheet
-
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
-
-```console
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+```csv
+sample,fastq_1,fastq_2,read_structure
+CH_pat1,CH_pat1_R1.fastq.gz,CH_pat1_R2.fastq.gz,8M1S+T 8M1S+T
+CH_pat2,CH_pat2_R1.fastq.gz,CH_pat2_R2.fastq.gz,8M1S+T 8M1S+T
+CH_pat3,CH_pat3_R1.fastq.gz,CH_pat3_R2.fastq.gz,8M1S+T 8M1S+T
 ```
 
 | Column    | Description                                                                                                                                                                            |
@@ -49,27 +26,96 @@ TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
 | `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
 | `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+| `read_structure` | Duplex sequencing read structure as defined in [fgbio read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures). This will change depending on the duplex sequencing technology used for the library preparation.                                                     |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 
 ## Running the pipeline
 
-The typical command for running the pipeline is as follows:
+The typical way of running deepUMIcaller is by starting from the raw paired-end FASTQ files of duplex sequencing libraries. You should prepare the input csv file as described above.
 
 ```console
-nextflow run bbglab/deepUMIcaller --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile docker
+nextflow run bbglab/deepUMIcaller \
+  -profile singularity \
+  --input input.csv \
+  --ref_fasta hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ 
 ```
 
-This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
+## Running the pipeline. Additional run modes
 
-Note that the pipeline will create the following files in your working directory:
+Additionally to the end to end mode. deepUMIcaller allows to start the pipeline from other specific steps among the following options:
+
+`groupreadsbyumi`, `filterconsensus`, `calling`
+
+### Start with GroupByUMI (`groupreadsbyumi`)
 
 ```console
-work                # Directory containing the nextflow working files
-<OUTIDR>            # Finished results in specified location (defined with --outdir)
-.nextflow_log       # Log file from Nextflow
-# Other nextflow hidden files, eg. history of pipeline runs and old logs.
+nextflow run bbglab/deepUMIcaller \
+  -profile singularity \
+  --input input.csv \
+  --ref_fasta  hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step groupreadsbyumi
 ```
+
+In this case, the input.csv samplesheet must contain the following columns:
+
+```csv
+sample,bam
+sample1,sample1.bam
+```
+
+### Start with the filter consensus step (`filterconsensus`)
+
+This step allows the concatenation of multiple libraries of the same sample for a cumulative variant calling.
+<!-- TODO explain this step better and provide some examples -->
+
+In this case, the input.csv samplesheet must contain the following columns:
+
+```csv
+sample,bam
+sample1,sample1.bam
+```
+
+### Start with VarDict variant calling (`calling`)
+
+By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
+
+```console
+nextflow run bbglab/deepUMIcaller \
+  -profile singularity \
+  --input input.csv \
+  --ref_fasta hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step calling
+```
+
+If you prefer to do it only for medium confidence e.g.:
+
+```console
+nextflow run bbglab/deepUMIcaller \
+  -profile singularity \
+  --input input.csv \
+  --ref_fasta refs/dnaNexus/hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step calling \
+  --duplex_med_conf false \
+  --duplex_low_conf false
+```
+
+The input.csv samplesheet must contain the following columns:
+
+```csv
+sample,duplexbam,csi
+sample1,sample1.duplex_consensus.bam,sample1.duplex_consensus.bam.csi
+```
+
+## Additional Nextflow configurations
 
 ### Updating the pipeline
 
@@ -136,7 +182,7 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 ### Resource requests
 
-Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher requests (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
+Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with any of the [error codes specified here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher requests (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
 
 For example, if the nf-core/rnaseq pipeline is failing after multiple re-submissions of the `STAR_ALIGN` process due to an exit code of `137` this would indicate that there is an out of memory issue:
 

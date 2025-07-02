@@ -7,7 +7,7 @@
 [![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8)](https://doi.org/10.5281/zenodo.XXXXXXX)
 -->
 
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A525.04.6-23aa62.svg)](https://www.nextflow.io/)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg)](https://sylabs.io/docs/)
@@ -76,8 +76,14 @@ See also:
 
 ## Acknowledgements
 
-[![Fulcrum Genomics](docs/images/Fulcrum.svg)](https://fulcrumgenomics.com)
-[![nf-core](docs/images/nf-core-logo.png)](http://nf-co.re)
+<a href="https://fulcrumgenomics.com">
+  <img src="docs/images/Fulcrum.svg" alt="Fulcrum Genomics" width="120">
+</a>
+
+
+<a href="http://nf-co.re">
+  <img src="docs/images/nf-core-logo.png" alt="nf-core" width="120">
+</a>
 
 ## Citations
 

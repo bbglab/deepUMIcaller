@@ -2,10 +2,10 @@ process MULTIQC {
     label 'process_medium'
     label 'process_medium_high_memory'
 
-    conda 'bioconda::multiqc=1.16'
+    conda 'bioconda::multiqc=1.29'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.16--pyhdfd78af_0' :
-        'biocontainers/multiqc:1.16--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.29--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.29--pyhdfd78af_0' }"
 
     input:
     path multiqc_files

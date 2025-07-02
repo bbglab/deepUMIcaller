@@ -13,3 +13,4 @@ reports:
 
   "sigprofplotmed/input_mutations/output/plots/*.pdf":
     display: "Mutational profiles"
+    description: "Mutational signature analysis plots showing mutation patterns and profiles."

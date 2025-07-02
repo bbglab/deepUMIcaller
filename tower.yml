@@ -1,0 +1,15 @@
+reports:
+  "**/multiqc_report.html":
+    display: "MULTIQC report"
+    description: "This report aggregates results from multiple tools into a single HTML report."
+  
+  "familymetricsontarget/*med.pdf":
+    display: "Family Metrics"
+    description: "Family metric plots for on target reads."
+  
+  "fastqc/*.html":
+    display: "FastQC report"
+    description: "Quality control report for sequencing data."
+
+  "sigprofplotmed/input_mutations/output/plots/*.pdf":
+    display: "Mutational profiles"

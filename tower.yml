@@ -1,5 +1,5 @@
 reports:
-  "**/multiqc_report.html":
+  "**/*multiqc_report.html":
     display: "MULTIQC report"
   
   "familymetricsontarget/*med.pdf":

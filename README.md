@@ -64,16 +64,6 @@ Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pi
 
 1. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
 
-<!-- 
-## Documentation
-The nf-core/fastquorum pipeline comes with documentation about the pipeline [usage](https://nf-co.re/fastquorum/usage), [parameters](https://nf-co.re/fastquorum/parameters) and [output](https://nf-co.re/fastquorum/output).
-m
-See also:
-
-1. The [fgbio Best Practise FASTQ -> Consensus Pipeline][fgbio-best-practices-link]
-2. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
--->
-
 ## Acknowledgements
 
 <a href="https://fulcrumgenomics.com">

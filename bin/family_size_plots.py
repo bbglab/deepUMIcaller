@@ -114,8 +114,8 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
     ax2.text(0.15, 0.05, f"NO DUPLEX\nRaw:                {total_reads_nonduplex:,} ({total_reads_nonduplex/(total_reads)*100:.1f}%)\nSSCs:               {total_scss_nonduplex:,} ({total_scss_nonduplex/(total_scss)*100:.1f}%)\nRaw/SSCs:        {total_reads_nonduplex/total_scss_nonduplex:.3f}")
     ax2.axis('off')
     fig.suptitle(f"{sample} Duplex:{confidence_name}({confidence})")
-    plt.show()
     fig.savefig(f"{prefix_figure}.{confidence_name}.pdf", bbox_inches='tight')
+    plt.close()
 
 
 

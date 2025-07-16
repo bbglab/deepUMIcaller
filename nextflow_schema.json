@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/bbglab/deepUMIcaller/master/nextflow_schema.json",
     "title": "bbglab/deepUMIcaller pipeline parameters",
-    "description": "Duplex sequencing, consensus building and variant calling pipeline.",
+    "description": "FASTQ to VCFs with Duplex-seq data",
     "type": "object",
     "$defs": {
         "input_output_options": {
@@ -245,50 +245,12 @@
                 }
             }
         },
-        "consensus_filtering_high": {
-            "title": "Consensus filtering options for the high confidence mutations",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads",
-            "properties": {
-                "duplex_high_conf": {
-                    "type": "boolean",
-                    "description": "Activate medium confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The medium confidence level output will be generated."
-                },
-                "filter_min_reads_high": {
-                    "type": "string",
-                    "description": "Minimum reads to keep a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_min_baseq_high": {
-                    "type": "integer",
-                    "description": "Minimum consensus base quality",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_max_base_error_rate_high": {
-                    "type": "string",
-                    "description": "The maximum error rate for a single consensus base",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
-                }
-            }
-        },
-        "consensus_filtering_medium": {
+        "consensus_filtering": {
             "title": "Consensus filtering options for the medium confidence mutations",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads for the medium confidence category.",
             "properties": {
-                "duplex_med_conf": {
-                    "type": "boolean",
-                    "description": "Activate medium confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The medium confidence level output will be generated."
-                },
                 "filter_min_reads_med": {
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
@@ -302,38 +264,6 @@
                     "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
                 },
                 "filter_max_base_error_rate_med": {
-                    "type": "string",
-                    "description": "The maximum error rate for a single consensus base",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
-                }
-            }
-        },
-        "consensus_filtering_low": {
-            "title": "Consensus filtering options for the low confidence mutations",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads for the low confidence category.",
-            "properties": {
-                "duplex_low_conf": {
-                    "type": "boolean",
-                    "description": "Activate low confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The low confidence level output will be generated."
-                },
-                "filter_min_reads_low": {
-                    "type": "string",
-                    "description": "Minimum reads to keep a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_min_baseq_low": {
-                    "type": "integer",
-                    "description": "Minimum consensus base quality",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_max_base_error_rate_low": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
@@ -656,13 +586,7 @@
             "$ref": "#/$defs/calling_parameters"
         },
         {
-            "$ref": "#/$defs/consensus_filtering_high"
-        },
-        {
-            "$ref": "#/$defs/consensus_filtering_medium"
-        },
-        {
-            "$ref": "#/$defs/consensus_filtering_low"
+            "$ref": "#/$defs/consensus_filtering"
         },
         {
             "$ref": "#/$defs/ensembl_vep_options"

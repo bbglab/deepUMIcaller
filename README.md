@@ -39,7 +39,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
       1. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
 6. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
 7. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
-8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from stringent (HIGH) to permissive (LOW), we are generally using MED.
+8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)).
 9. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
 10. Varient calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allelle depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
 11. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.

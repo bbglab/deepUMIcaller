@@ -43,27 +43,15 @@ include { FGBIO_CLIPBAM                     as CLIPBAMMED                       
 include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSLOW          } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSHIGH         } from '../modules/local/fgbio/filterconsensusreads/main'
 
-include { CREATEBED_FROM_TSV                as CREATEBEDLOW                     } from '../modules/local/createbed/main'
 include { CREATEBED_FROM_TSV                as CREATEBEDMED                     } from '../modules/local/createbed/main'
-include { CREATEBED_FROM_TSV                as CREATEBEDHIGH                    } from '../modules/local/createbed/main'
 
-include { CALLING_VARDICT                   as CALLINGVARDICTLOW                } from '../modules/local/calling_vardict/main'
 include { CALLING_VARDICT                   as CALLINGVARDICTMED                } from '../modules/local/calling_vardict/main'
-include { CALLING_VARDICT                   as CALLINGVARDICTHIGH               } from '../modules/local/calling_vardict/main'
 
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOW                   } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTLOWPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED                   } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGH                  } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTHIGHPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
 /*
@@ -87,14 +75,10 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 //  Metrics
 include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQCHIGH              } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCMED               } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQCLOW               } from '../modules/nf-core/qualimap/bamqc/main'
 
 
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHLOW             } from '../modules/nf-core/samtools/depth/main'
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } from '../modules/nf-core/samtools/depth/main'
 
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } from '../modules/nf-core/bedtools/coverage/main'
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
@@ -108,9 +92,7 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } fro
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCLEAN                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSLOW        } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSMED        } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSHIGH       } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEX               } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCLEAN          } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXFILTERED       } from '../modules/nf-core/samtools/sort/main'
@@ -125,14 +107,10 @@ include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } fro
 
 
 // Postprocessing of the BAM and the VCF
-include { RECOUNT_MUTS                      as RECOUNTMUTSLOW          } from '../subworkflows/local/recount_muts/main'
 include { RECOUNT_MUTS                      as RECOUNTMUTSMED          } from '../subworkflows/local/recount_muts/main'
-include { RECOUNT_MUTS                      as RECOUNTMUTSHIGH         } from '../subworkflows/local/recount_muts/main'
 
 // Annotation
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATELOW          } from '../subworkflows/local/vcf_annotate_all/main'
 include { VCF_ANNOTATE_ALL                  as VCFANNOTATEMED          } from '../subworkflows/local/vcf_annotate_all/main'
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATEHIGH         } from '../subworkflows/local/vcf_annotate_all/main'
 
 
 
@@ -327,7 +305,6 @@ workflow DEEPUMICALLER {
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
         
 
-
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
@@ -377,264 +354,81 @@ workflow DEEPUMICALLER {
     }
 
     //
-    // HIGH CONFIDENCE CALLS
-    //
-    if (params.duplex_high_conf) {
-
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
-
-            // MODULE: Run fgbio FilterConsensusReads
-            // requires input queryname sorted
-            FILTERCONSENSUSREADSHIGH(duplex_filtered_bam, ch_ref_fasta)
-            
-
-            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMHIGH(FILTERCONSENSUSREADSHIGH.out.bam, ch_ref_fasta)
-            
-
-            // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONSHIGH(CLIPBAMHIGH.out.bam)
-            
-
-            // join the bam and the bamindex channels to have
-            // the ones from the same samples together
-            SORTBAMDUPLEXCONSHIGH.out.bam
-            .join( SORTBAMDUPLEXCONSHIGH.out.csi )
-            .set { cons_high_bam }
-
-            if (params.perform_qcs){
-                // Quality check
-                QUALIMAPQCHIGH(SORTBAMDUPLEXCONSHIGH.out.bam, params.targetsfile)
-                
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCHIGH.out.results.map{it[1]}.collect())
-            }
-        }
-
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
-
-            if (params.step == 'calling') {
-                cons_high_bam = INPUT_CHECK.out.reads
-            }
-
-            cons_high_bam.map{it -> [it[0], it[1]] }
-            .set{ cons_high_bam_only }
-
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHHIGH(cons_high_bam_only)
-            
-
-            CREATEBEDHIGH(COMPUTEDEPTHHIGH.out.tsv)
-            
-
-            cons_high_bam
-            .join( CREATEBEDHIGH.out.bed )
-            .set { cons_high_bam_bed }
-
-            // Mutation calling for duplex reads
-            CALLINGVARDICTHIGH(cons_high_bam_bed,
-                                ch_ref_fasta, ch_ref_index_dir)
-            
-
-            // Postprocessing the BAM file to get exact coverage per position and allele
-            //    also get the Ns per position
-            RECOUNTMUTSHIGH(cons_high_bam,
-                            bam_n_index_duplex_clean,
-                            CALLINGVARDICTHIGH.out.vcf,
-                            CREATEBEDHIGH.out.bed,
-                            ch_ref_fasta
-                        )
-            
-
-
-            if (params.annotate_mutations){
-                VCFANNOTATEHIGH(CALLINGVARDICTHIGH.out.vcf,
-                                ch_ref_fasta,
-                                vep_cache,
-                                vep_extra_files)
-                
-            }
-
-            RECOUNTMUTSHIGH.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_high }
-            SIGPROFPLOTHIGH(mutation_files_high.collect())
-            
-
-            RECOUNTMUTSHIGH.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_high }
-            SIGPROFPLOTHIGHPUR(mutation_files_pur_high.collect())
-            
-
-            RECOUNTMUTSHIGH.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_high }
-            SIGPROFPLOTHIGHPYR(mutation_files_pyr_high.collect())
-            
-
-        }
-
-    }
-
-
-    //
     // MEDIUM CONFIDENCE CALLS
     //
-    if (params.duplex_med_conf){
+    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
+        FILTERCONSENSUSREADSMED(duplex_filtered_bam, ch_ref_fasta)
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
-            FILTERCONSENSUSREADSMED(duplex_filtered_bam, ch_ref_fasta)
+        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
+        CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
+        
 
-            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
+        // MODULE: Sort BAM file
+        SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
+
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMDUPLEXCONSMED.out.bam
+        .join( SORTBAMDUPLEXCONSMED.out.csi )
+        .set { cons_med_bam }
+
+        // Quality check
+        if (params.perform_qcs){
+            QUALIMAPQCMED(SORTBAMDUPLEXCONSMED.out.bam, params.targetsfile)
             
-
-            // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
-
-            // join the bam and the bamindex channels to have
-            // the ones from the same samples together
-            SORTBAMDUPLEXCONSMED.out.bam
-            .join( SORTBAMDUPLEXCONSMED.out.csi )
-            .set { cons_med_bam }
-
-            // Quality check
-            if (params.perform_qcs){
-                QUALIMAPQCMED(SORTBAMDUPLEXCONSMED.out.bam, params.targetsfile)
-                
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCMED.out.results.map{it[1]}.collect())
-            }
-        }
-
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
-
-            // ASSIGN cons_med_bam = to our input bam
-            if (params.step == 'calling') {
-                cons_med_bam = INPUT_CHECK.out.reads
-            }
-
-            cons_med_bam.map{it -> [it[0], it[1]] }
-            .set{ cons_med_bam_only }
-
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHMED(cons_med_bam_only)
-
-            CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
-
-            cons_med_bam
-            .join( CREATEBEDMED.out.bed )
-            .set { cons_med_bam_bed }
-
-            // Mutation calling for all reads
-            CALLINGVARDICTMED(cons_med_bam_bed,
-                                ch_ref_fasta, ch_ref_index_dir)
-
-            // Postprocessing the BAM file to get exact coverage per position and allele
-            //    also get the Ns per position
-            RECOUNTMUTSMED(cons_med_bam,
-                            bam_n_index_duplex_clean,
-                            CALLINGVARDICTMED.out.vcf,
-                            CREATEBEDMED.out.bed,
-                            ch_ref_fasta)
-            
-
-            if (params.annotate_mutations){
-                VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
-                                ch_ref_fasta,
-                                vep_cache,
-                                vep_extra_files)
-            }
-
-            RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
-            SIGPROFPLOTMED(mutation_files_med.collect())
-
-            RECOUNTMUTSMED.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_med }
-            SIGPROFPLOTMEDPUR(mutation_files_pur_med.collect())
-            
-
-            RECOUNTMUTSMED.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_med }
-            SIGPROFPLOTMEDPYR(mutation_files_pyr_med.collect())
-            
-
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCMED.out.results.map{it[1]}.collect())
         }
     }
 
-    //
-    // Low Confidence mutations
-    //
-    if (params.duplex_low_conf){
+    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
-
-
-            // filter the reads with the low conf parameters
-            FILTERCONSENSUSREADSLOW(duplex_filtered_bam, ch_ref_fasta)
-
-            // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-            CLIPBAMLOW(FILTERCONSENSUSREADSLOW.out.bam, ch_ref_fasta)
-            
-
-            // MODULE: Sort BAM file
-            SORTBAMDUPLEXCONSLOW(CLIPBAMLOW.out.bam)
-
-            // join the bam and the bamindex channels to have
-            // the ones from the same samples together
-            SORTBAMDUPLEXCONSLOW.out.bam
-            .join( SORTBAMDUPLEXCONSLOW.out.csi )
-            .set { cons_low_bam }
-            
-            // Quality check
-            if (params.perform_qcs){
-                QUALIMAPQCLOW(SORTBAMDUPLEXCONSLOW.out.bam, params.targetsfile)
-                
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCLOW.out.results.map{it[1]}.collect())
-            }
+        // ASSIGN cons_med_bam = to our input bam
+        if (params.step == 'calling') {
+            cons_med_bam = INPUT_CHECK.out.reads
         }
 
-        if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
+        cons_med_bam.map{it -> [it[0], it[1]] }
+        .set{ cons_med_bam_only }
 
-            if (params.step == 'calling') {
-                cons_low_bam = INPUT_CHECK.out.reads
-            }
+        // Compute depth of the consensus reads aligned to the genome
+        COMPUTEDEPTHMED(cons_med_bam_only)
 
-            cons_low_bam.map{it -> [it[0], it[1]] }
-            .set{ cons_low_bam_only }
+        CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
 
-            // Compute depth of the consensus reads aligned to the genome
-            COMPUTEDEPTHLOW(cons_low_bam_only)
+        cons_med_bam
+        .join( CREATEBEDMED.out.bed )
+        .set { cons_med_bam_bed }
 
-            CREATEBEDLOW(COMPUTEDEPTHLOW.out.tsv)
+        // Mutation calling for all reads
+        CALLINGVARDICTMED(cons_med_bam_bed,
+                            ch_ref_fasta, ch_ref_index_dir)
 
-            cons_low_bam
-            .join( CREATEBEDLOW.out.bed )
-            .set { cons_low_bam_bed }
+        // Postprocessing the BAM file to get exact coverage per position and allele
+        //    also get the Ns per position
+        RECOUNTMUTSMED(cons_med_bam,
+                        bam_n_index_duplex_clean,
+                        CALLINGVARDICTMED.out.vcf,
+                        CREATEBEDMED.out.bed,
+                        ch_ref_fasta)
+        
 
-
-            // Mutation calling for all reads
-            CALLINGVARDICTLOW(cons_low_bam_bed,
-                                ch_ref_fasta, ch_ref_index_dir)
-
-            // Postprocessing the BAM file to get exact coverage per position and allele
-            //    also get the Ns per position
-            RECOUNTMUTSLOW(cons_low_bam,
-                            bam_n_index_duplex_clean,
-                            CALLINGVARDICTLOW.out.vcf,
-                            CREATEBEDLOW.out.bed,
-                            ch_ref_fasta)
-            
-
-            if (params.annotate_mutations){
-                VCFANNOTATELOW(CALLINGVARDICTLOW.out.vcf,
-                                ch_ref_fasta,
-                                vep_cache,
-                                vep_extra_files)
-            }
-
-            RECOUNTMUTSLOW.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_low }
-            SIGPROFPLOTLOW(mutation_files_low.collect())
-
-            RECOUNTMUTSLOW.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_low }
-            SIGPROFPLOTLOWPUR(mutation_files_pur_low.collect())
-
-            RECOUNTMUTSLOW.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_low }
-            SIGPROFPLOTLOWPYR(mutation_files_pyr_low.collect())
-            
-
+        if (params.annotate_mutations){
+            VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
+                            ch_ref_fasta,
+                            vep_cache,
+                            vep_extra_files)
         }
+
+        RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
+        SIGPROFPLOTMED(mutation_files_med.collect())
+
+        RECOUNTMUTSMED.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_med }
+        SIGPROFPLOTMEDPUR(mutation_files_pur_med.collect())
+        
+
+        RECOUNTMUTSMED.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_med }
+        SIGPROFPLOTMEDPYR(mutation_files_pyr_med.collect())
+        
 
     }
 

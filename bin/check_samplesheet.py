@@ -81,7 +81,7 @@ class RowChecker:
             self._validate_read_structure(row)
             self._validate_pair(row)
 
-        self._seen.add((row[column] for column in self._columns))
+        self._seen.add(tuple(row[column] for column in self._columns))
         self.modified.append(row)
 
     def _validate_sample(self, row):

@@ -16,11 +16,7 @@ process SAMPLESHEET_CHECK {
 
     script: // This script is bundled with the pipeline, in nf-core/fgcons/bin/
     """
-    if [ "$step" = "mapping" ]; then    
-        check_samplesheet.py $samplesheet samplesheet.valid.csv
-    else
-        check_samplesheet_bam.py $samplesheet samplesheet.valid.csv
-    fi
+    check_samplesheet.py $samplesheet samplesheet.valid.csv --step $step
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

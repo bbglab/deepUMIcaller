@@ -15,6 +15,12 @@ from pathlib import Path
 logger = logging.getLogger()
 
 
+requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
+                    "groupbyumi": ["bam"],
+                    "filterconsensus": ["bam"],
+                    "calling": ["duplexbam", "csi"],
+}
+
 class RowChecker:
     """
     Define a service that can validate and transform each given row.
@@ -33,9 +39,8 @@ class RowChecker:
     def __init__(
         self,
         sample_col="sample",
-        first_col="fastq_1",
-        second_col="fastq_2",
-        read_structure_col="read_structure",
+        init_cols = list(),
+        step='mapping',
         **kwargs,
     ):
         """
@@ -54,9 +59,11 @@ class RowChecker:
         """
         super().__init__(**kwargs)
         self._sample_col = sample_col
-        self._first_col = first_col
-        self._second_col = second_col
-        self._read_structure_col = read_structure_col
+        self._step = step       
+        self._columns = init_cols
+        self._read_structure_col = "read_structure"
+        self._first_col = "fastq_1"
+        self._second_col = "fastq_2"
         self._seen = set()
         self.modified = []
 
@@ -70,10 +77,11 @@ class RowChecker:
 
         """
         self._validate_sample(row)
-        self._validate_first(row)
-        self._validate_second(row)
-        self._validate_pair(row)
-        self._seen.add((row[self._sample_col], row[self._first_col], row[self._second_col]))
+        if self._step == "mapping":
+            self._validate_read_structure(row)
+            self._validate_pair(row)
+
+        self._seen.add(tuple(row[column] for column in self._columns))
         self.modified.append(row)
 
     def _validate_sample(self, row):
@@ -82,16 +90,6 @@ class RowChecker:
         # Sanitize samples slightly.
         row[self._sample_col] = row[self._sample_col].replace(" ", "_")
 
-    def _validate_first(self, row):
-        """Assert that the first FASTQ entry is non-empty and has the right format."""
-        assert len(row[self._first_col]) > 0, "The first FASTQ file is required."
-        self._validate_fastq_format(row[self._first_col])
-
-    def _validate_second(self, row):
-        """Assert that the second FASTQ entry has the right format if it exists."""
-        assert len(row[self._second_col]) > 0, "The second FASTQ file is required."
-        self._validate_fastq_format(row[self._second_col])
-
     def _validate_pair(self, row):
         """Assert that read pairs have the same file extension. Report pair status."""
         assert (
@@ -99,16 +97,9 @@ class RowChecker:
         ), "FASTQ pairs must have the same file extensions."
 
     def _validate_read_structure(self, row):
-        """Assert that the second FASTQ entry has the right format if it exists."""
+        """Assert that the read structure is a valid duplex read structure."""
         assert len(row[self._read_structure_col].split(' ')) == 2, (
             "Two read structures must be provided."
-        )
-
-    def _validate_fastq_format(self, filename):
-        """Assert that a given filename has one of the expected FASTQ extensions."""
-        assert any(filename.endswith(extension) for extension in self.VALID_FORMATS), (
-            f"The FASTQ file has an unrecognized extension: {filename}\n"
-            f"It should be one of: {', '.join(self.VALID_FORMATS)}"
         )
 
     def validate_unique_samples(self):
@@ -165,7 +156,7 @@ def sniff_format(handle):
     return dialect
 
 
-def check_samplesheet(file_in, file_out):
+def check_samplesheet(file_in, file_out, step = "mapping"):
     """
     Check that the tabular samplesheet has the structure expected by nf-core pipelines.
 
@@ -186,16 +177,14 @@ def check_samplesheet(file_in, file_out):
             SAMPLE_SINGLE_UMI,SAMPLE_SINGLE_UMI.R1.fq.gz,SAMPLE_SINGLE_UMI.R2.fq.gz,12M+T +T
 
     """
-    required_columns = {"sample", "fastq_1", "fastq_2", "read_structure"}
+    required_columns = {"sample"}
+    required_columns.update(requirementsDict[step])
+
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_in.open(newline="") as in_handle:
         reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))
-        # Validate the existence of the expected header columns.
-        if not required_columns.issubset(reader.fieldnames):
-            logger.critical(f"The sample sheet **must** contain the column headers: {', '.join(required_columns)}.")
-            sys.exit(1)
         # Validate each row.
-        checker = RowChecker()
+        checker = RowChecker(step = step, init_cols= required_columns)
         for i, row in enumerate(reader):
             try:
                 checker.validate_and_transform(row)
@@ -216,7 +205,7 @@ def parse_args(argv=None):
     """Define and immediately parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Validate and transform a tabular samplesheet.",
-        epilog="Example: python check_samplesheet.py samplesheet.csv samplesheet.valid.csv",
+        epilog="Example: python check_samplesheet.py samplesheet.csv samplesheet.valid.csv [--log-level INFO --step mapping]",
     )
     parser.add_argument(
         "file_in",
@@ -237,6 +226,13 @@ def parse_args(argv=None):
         choices=("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"),
         default="WARNING",
     )
+    parser.add_argument(
+        "-s",
+        "--step",
+        help="The desired step (default WARNING).",
+        choices=("mapping", "filterconsensus", "calling"),
+        default="mapping",
+    )
     return parser.parse_args(argv)
 
 
@@ -248,7 +244,7 @@ def main(argv=None):
         logger.error(f"The given input file {args.file_in} was not found!")
         sys.exit(2)
     args.file_out.parent.mkdir(parents=True, exist_ok=True)
-    check_samplesheet(args.file_in, args.file_out)
+    check_samplesheet(args.file_in, args.file_out, args.step)
 
 
 if __name__ == "__main__":

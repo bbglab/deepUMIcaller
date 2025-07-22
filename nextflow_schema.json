@@ -40,13 +40,6 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "email": {
-                    "type": "string",
-                    "description": "Email address for completion summary.",
-                    "fa_icon": "fas fa-envelope",
-                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
                 "multiqc_title": {
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
@@ -106,11 +99,11 @@
                     "description": "Enable for filtering Ns",
                     "help_text": ""
                 },
-                "filter_human": {
+                "filter_regions": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
-                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
+                    "help_text": "With this parameter, you can flag variants present in the defined regions."
                 },
                 "low_mappability_file": {
                     "type": "string",
@@ -414,12 +407,6 @@
                     "fa_icon": "fas fa-book",
                     "help_text": ""
                 },
-                "download_cache": {
-                    "type": "boolean",
-                    "description": "Do you want to download the cache? Activate it only if necessary.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "Do you want to download the cache? Activate it only if necessary."
-                },
                 "vep_cache": {
                     "type": "string",
                     "description": "Location of Ensembl VEP cache.",
@@ -479,6 +466,7 @@
                 "final_read_size": {
                     "type": "integer",
                     "description": "Parameter to define the maximum read size.",
+                    "default": 142,
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the maximum read size."
                 }
@@ -577,6 +565,12 @@
                 "help": {
                     "type": "boolean",
                     "description": "Display help text.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version information.",
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },

@@ -14,15 +14,14 @@ process BWA_MEM {
 
     output:
     tuple val(meta), path("*.bam"), emit: bam
-    path  "versions.yml"          , emit: versions
+    path  "versions.yml"          , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def samtools_command = sort_bam ? 'sort' : 'view'
     """
     INDEX=`find -L ./ -name "*.amb" | sed 's/\\.amb\$//'`

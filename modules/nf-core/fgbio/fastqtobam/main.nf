@@ -13,14 +13,13 @@ process FGBIO_FASTQTOBAM {
     output:
     tuple val(meta), path("*.bam") , emit: bam , optional: true
     tuple val(meta), path("*.cram"), emit: cram, optional: true
-    path "versions.yml"            , emit: versions
+    path "versions.yml"            , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def sample_name = args.contains("--sample") ? "" : "--sample ${prefix}"
     def library_name = args.contains("--library") ? "" : "--library ${prefix}"
     def output = prefix =~ /\.(bam|cram)$/ ? prefix : "${prefix}.bam"

@@ -43,6 +43,9 @@ nextflow run bbglab/deepUMIcaller \
   --outdir results/ 
 ```
 
+The first time that the pipeline is run and also when running with more than 50 samples we suggest requesting at least 8 CPUs and 20 GBs of memory to ensure that there is no problem in handling the multiple submissions and also for pulling containers.
+Otherwise when the pipeline is run with a small number of samples less resources should be enough.
+
 ## Running the pipeline. Additional run modes
 
 Additionally to the end to end mode. deepUMIcaller allows to start the pipeline from other specific steps among the following options:

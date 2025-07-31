@@ -35,23 +35,21 @@ include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICSONTARGET  
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
 
-include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERDUPLEX             } from '../modules/local/filter_reads/samtools/main'
+include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXSDUPLEX                  } from '../modules/local/filter_reads/asminusxs/main'
 
-include { FGBIO_CLIPBAM                     as CLIPBAMLOW                       } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMMED                       } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMHIGH                      } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAM                          } from '../modules/local/clipbam/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSMED          } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgbio/filterconsensusreads/main'
 
-include { CREATEBED_FROM_TSV                as CREATEBEDMED                     } from '../modules/local/createbed/main'
+include { CREATEBED_FROM_TSV                as CREATEBED                        } from '../modules/local/createbed/main'
 
-include { CALLING_VARDICT                   as CALLINGVARDICTMED                } from '../modules/local/calling_vardict/main'
+include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX             } from '../modules/local/calling_vardict/main'
 
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMED                   } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPUR               } from '../modules/local/sigprofiler/matrixgenerator/main'
-include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTMEDPYR               } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                      } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTPUR                   } from '../modules/local/sigprofiler/matrixgenerator/main'
+include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTPYR                   } from '../modules/local/sigprofiler/matrixgenerator/main'
 
 
 /*
@@ -73,12 +71,12 @@ include { BAMUTIL_TRIMBAM                   as TRIMBAM                     } fro
 include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } from '../modules/nf-core/picard/bedtointervallist/main'
 
 //  Metrics
-include { QUALIMAP_BAMQC                    as QUALIMAPQC                  } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCRAW               } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCALLMOLECULES      } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
-include { QUALIMAP_BAMQC                    as QUALIMAPQCMED               } from '../modules/nf-core/qualimap/bamqc/main'
 
 
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHMED             } from '../modules/nf-core/samtools/depth/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
 
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } from '../modules/nf-core/bedtools/coverage/main'
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
@@ -92,10 +90,10 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } fro
 include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCLEAN                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONSMED        } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEX               } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCLEAN          } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXFILTERED       } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES         } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMAMCLEAN              } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED           } from '../modules/nf-core/samtools/sort/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
@@ -107,10 +105,10 @@ include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } fro
 
 
 // Postprocessing of the BAM and the VCF
-include { RECOUNT_MUTS                      as RECOUNTMUTSMED          } from '../subworkflows/local/recount_muts/main'
+include { RECOUNT_MUTS                      as RECOUNTMUTS                 } from '../subworkflows/local/recount_muts/main'
 
 // Annotation
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATEMED          } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                 } from '../subworkflows/local/vcf_annotate_all/main'
 
 
 
@@ -124,11 +122,8 @@ workflow DEEPUMICALLER {
 
     
     if (params.ref_fasta) {
-        ch_ref_fasta = Channel.fromPath(params.ref_fasta).collect()
-    
-        // define additional fasta file names
-        ch_ref_fasta_file = file(params.ref_fasta, checkIfExists: true)
-        ch_ref_fasta_dict = file("${ch_ref_fasta_file.parent/ch_ref_fasta_file.baseName}.dict", checkIfExists: true)
+        ch_ref_fasta = file(params.ref_fasta, checkIfExists: true)
+        ch_ref_fasta_dict = file("${ch_ref_fasta.parent/ch_ref_fasta.baseName}.dict", checkIfExists: true)
     } else {
         log.error "No reference FASTA was specified (--ref_fasta)."
         exit 1
@@ -137,10 +132,6 @@ workflow DEEPUMICALLER {
     ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 
     ch_multiqc_files = Channel.empty()
-
-
-    vep_cache = params.vep_cache
-    vep_extra_files = []
     
 
     if (params.targetsfile) {
@@ -223,9 +214,9 @@ workflow DEEPUMICALLER {
 
         if (params.targetsfile){
             if (params.perform_qcs){
-                QUALIMAPQC(SORTBAM.out.bam, params.targetsfile)
+                QUALIMAPQCRAW(SORTBAM.out.bam, params.targetsfile)
                 
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             // truncate BAM to keep only the reads that are on target
             // TODO
@@ -249,9 +240,9 @@ workflow DEEPUMICALLER {
 
         } else {
             if (params.perform_qcs){
-                QUALIMAPQC(SORTBAM.out.bam, [])
+                QUALIMAPQCRAW(SORTBAM.out.bam, [])
                 
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQC.out.results.map{it[1]}.collect())
+                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             bam_to_group = SORTBAMCLEAN.out.bam
 
@@ -309,19 +300,19 @@ workflow DEEPUMICALLER {
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
 
-        SORTBAMDUPLEX(ALIGNDUPLEXCONSENSUSBAM.out.bam)
+        SORTBAMALLMOLECULES(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
-        SORTBAMDUPLEX.out.bam
-        .join( SORTBAMDUPLEX.out.csi )
-        .set { bam_n_index_duplex }
+        SORTBAMALLMOLECULES.out.bam
+        .join( SORTBAMALLMOLECULES.out.csi )
+        .set { bam_n_index_all_molecules }
 
-        ASMINUSXSDUPLEX(bam_n_index_duplex)
-        SAMTOOLSFILTERDUPLEX(ASMINUSXSDUPLEX.out.bam)
-        SORTBAMDUPLEXFILTERED(SAMTOOLSFILTERDUPLEX.out.bam)
+        ASMINUSXSDUPLEX(bam_n_index_all_molecules)
+        SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
+        SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
-        duplex_filtered_bam = SORTBAMDUPLEXFILTERED.out.bam
+        duplex_filtered_bam = SORTBAMAMFILTERED.out.bam
 
         ASMINUSXSDUPLEX.out.discarded_bam.map{it -> [it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
@@ -339,44 +330,44 @@ workflow DEEPUMICALLER {
 
 
     FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-    SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+    SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
     
     // join the bam and the bamindex channels to have
     // the ones from the same samples together
-    SORTBAMDUPLEXCLEAN.out.bam
-    .join( SORTBAMDUPLEXCLEAN.out.csi )
+    SORTBAMAMCLEAN.out.bam
+    .join( SORTBAMAMCLEAN.out.csi )
     .set { bam_n_index_duplex_clean }
 
     if (params.perform_qcs){
         // requires input coordinate sorted
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+        QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
+        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
     }
 
     //
-    // MEDIUM CONFIDENCE CALLS
+    // DUPLEX CALLS
     //
     if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
-        FILTERCONSENSUSREADSMED(duplex_filtered_bam, ch_ref_fasta)
+        FILTERCONSENSUSREADSDUPLEX(duplex_filtered_bam, ch_ref_fasta)
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
-        CLIPBAMMED(FILTERCONSENSUSREADSMED.out.bam, ch_ref_fasta)
+        CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
         
 
         // MODULE: Sort BAM file
-        SORTBAMDUPLEXCONSMED(CLIPBAMMED.out.bam)
+        SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
 
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
-        SORTBAMDUPLEXCONSMED.out.bam
-        .join( SORTBAMDUPLEXCONSMED.out.csi )
-        .set { cons_med_bam }
+        SORTBAMDUPLEXCONS.out.bam
+        .join( SORTBAMDUPLEXCONS.out.csi )
+        .set { cons_duplex_bam }
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCMED(SORTBAMDUPLEXCONSMED.out.bam, params.targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, params.targetsfile)
             
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCMED.out.results.map{it[1]}.collect())
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
         }
     }
 
@@ -384,51 +375,47 @@ workflow DEEPUMICALLER {
 
         // ASSIGN cons_med_bam = to our input bam
         if (params.step == 'calling') {
-            cons_med_bam = INPUT_CHECK.out.reads
+            cons_duplex_bam = INPUT_CHECK.out.reads
         }
 
-        cons_med_bam.map{it -> [it[0], it[1]] }
-        .set{ cons_med_bam_only }
+        cons_duplex_bam.map{it -> [it[0], it[1]] }
+        .set{ cons_duplex_bam_only }
 
         // Compute depth of the consensus reads aligned to the genome
-        COMPUTEDEPTHMED(cons_med_bam_only)
+        COMPUTEDEPTH(cons_duplex_bam_only)
 
-        CREATEBEDMED(COMPUTEDEPTHMED.out.tsv)
+        CREATEBED(COMPUTEDEPTH.out.tsv)
 
-        cons_med_bam
-        .join( CREATEBEDMED.out.bed )
-        .set { cons_med_bam_bed }
+        cons_duplex_bam
+        .join( CREATEBED.out.bed )
+        .set { cons_duplex_bam_bed }
 
         // Mutation calling for all reads
-        CALLINGVARDICTMED(cons_med_bam_bed,
-                            ch_ref_fasta, ch_ref_index_dir)
+        CALLINGVARDICTDUPLEX(cons_duplex_bam_bed,
+                                ch_ref_fasta, ch_ref_index_dir)
 
         // Postprocessing the BAM file to get exact coverage per position and allele
         //    also get the Ns per position
-        RECOUNTMUTSMED(cons_med_bam,
+        RECOUNTMUTS(cons_duplex_bam,
                         bam_n_index_duplex_clean,
-                        CALLINGVARDICTMED.out.vcf,
-                        CREATEBEDMED.out.bed,
+                        CALLINGVARDICTDUPLEX.out.vcf,
+                        CREATEBED.out.bed,
                         ch_ref_fasta)
-        
+
 
         if (params.annotate_mutations){
-            VCFANNOTATEMED(CALLINGVARDICTMED.out.vcf,
-                            ch_ref_fasta,
-                            vep_cache,
-                            vep_extra_files)
+            VCFANNOTATE(CALLINGVARDICTDUPLEX.out.vcf,
+                            ch_ref_fasta)
         }
 
-        RECOUNTMUTSMED.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_med }
-        SIGPROFPLOTMED(mutation_files_med.collect())
+        RECOUNTMUTS.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_duplex }
+        SIGPROFPLOT(mutation_files_duplex.collect())
 
-        RECOUNTMUTSMED.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_med }
-        SIGPROFPLOTMEDPUR(mutation_files_pur_med.collect())
-        
+        RECOUNTMUTS.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_duplex }
+        SIGPROFPLOTPUR(mutation_files_pur_duplex.collect())
 
-        RECOUNTMUTSMED.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_med }
-        SIGPROFPLOTMEDPYR(mutation_files_pyr_med.collect())
-        
+        RECOUNTMUTS.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_duplex }
+        SIGPROFPLOTPYR(mutation_files_pyr_duplex.collect())
 
     }
 

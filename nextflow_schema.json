@@ -246,24 +246,24 @@
             }
         },
         "consensus_filtering": {
-            "title": "Consensus filtering options for the medium confidence mutations",
+            "title": "Consensus filtering options for the duplex reads",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads for the medium confidence category.",
+            "description": "Options for when filtering consensus reads for the duplex reads.",
             "properties": {
-                "filter_min_reads_med": {
+                "filter_min_reads_duplex": {
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_min_baseq_med": {
+                "filter_min_baseq_duplex": {
                     "type": "integer",
                     "description": "Minimum consensus base quality",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_max_base_error_rate_med": {
+                "filter_max_base_error_rate_duplex": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",

@@ -9,14 +9,15 @@ workflow VCF_ANNOTATE_ALL {
     take:
     vcf          // channel: [ val(meta), vcf ]
     fasta
-    vep_cache
-    vep_extra_files
+    
 
     main:
     reports = Channel.empty()
     vcf_ann = Channel.empty()
     tab_ann = Channel.empty()
     json_ann = Channel.empty()
+
+    vep_extra_files = []
 
     // if (tools.split(',').contains('merge') || tools.split(',').contains('snpeff')) {
     //     VCF_ANNOTATE_SNPEFF(vcf, snpeff_db, snpeff_cache)
@@ -39,7 +40,7 @@ workflow VCF_ANNOTATE_ALL {
                             params.vep_genome,
                             params.vep_species,
                             params.vep_cache_version,
-                            vep_cache, vep_extra_files)
+                            params.vep_cache, vep_extra_files)
 
     reports = reports.mix(VCF_ANNOTATE_ENSEMBLVEP.out.reports)
     vcf_ann = vcf_ann.mix(VCF_ANNOTATE_ENSEMBLVEP.out.vcf)

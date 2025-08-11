@@ -18,7 +18,9 @@ include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/l
 
 include { FILTERMUTATIONS        as FILTERVCFSOMATIC  } from '../../../modules/local/filtervcf/main'
 include { FILTERMUTATIONS        as FILTERVCFPLOT     } from '../../../modules/local/filtervcf/main'
-include { MUTS_PER_POS           as MUTSPERPOS        } from '../../../modules/local/mutsperpos/main'
+
+include { MUTS_PER_POS           as MUTSPERPOS        } from '../../../modules/local/mutsperpos/compute/main'
+include { SUMMARIZE_MUTS_PER_POS as COHORTMUTSPERPOS  } from '../../../modules/local/mutsperpos/summarize/main'
 
 
 
@@ -127,6 +129,9 @@ workflow RECOUNT_MUTS {
     .set { ch_bam_bai_vcf }
     
     MUTSPERPOS(ch_bam_bai_vcf)
+    MUTSPERPOS.out.positions_csv.map{ it[1] }.collect().set{ mutations_position_csv }
+
+    COHORTMUTSPERPOS(mutations_position_csv)
 
     emit:
 

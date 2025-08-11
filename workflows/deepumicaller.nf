@@ -132,7 +132,7 @@ workflow DEEPUMICALLER {
     ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 
     ch_multiqc_files = Channel.empty()
-    
+   
 
     if (params.targetsfile) {
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
@@ -215,7 +215,6 @@ workflow DEEPUMICALLER {
         if (params.targetsfile){
             if (params.perform_qcs){
                 QUALIMAPQCRAW(SORTBAM.out.bam, params.targetsfile)
-                
                 ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             // truncate BAM to keep only the reads that are on target
@@ -241,7 +240,6 @@ workflow DEEPUMICALLER {
         } else {
             if (params.perform_qcs){
                 QUALIMAPQCRAW(SORTBAM.out.bam, [])
-                
                 ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             bam_to_group = SORTBAMCLEAN.out.bam
@@ -366,7 +364,6 @@ workflow DEEPUMICALLER {
         // Quality check
         if (params.perform_qcs){
             QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, params.targetsfile)
-            
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
         }
     }
@@ -401,7 +398,6 @@ workflow DEEPUMICALLER {
                         CALLINGVARDICTDUPLEX.out.vcf,
                         CREATEBED.out.bed,
                         ch_ref_fasta)
-
 
         if (params.annotate_mutations){
             VCFANNOTATE(CALLINGVARDICTDUPLEX.out.vcf,

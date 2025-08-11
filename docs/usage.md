@@ -43,6 +43,9 @@ nextflow run bbglab/deepUMIcaller \
   --outdir results/ 
 ```
 
+The first time that the pipeline is run and also when running with more than 50 samples we suggest requesting at least 8 CPUs and 20 GBs of memory to ensure that there is no problem in handling the multiple submissions and also for pulling containers.
+Otherwise when the pipeline is run with a small number of samples less resources should be enough.
+
 ## Running the pipeline. Additional run modes
 
 Additionally to the end to end mode. deepUMIcaller allows to start the pipeline from other specific steps among the following options:
@@ -82,8 +85,6 @@ sample1,sample1.bam
 
 ### Start with VarDict variant calling (`calling`)
 
-By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
-
 ```console
 nextflow run bbglab/deepUMIcaller \
   -profile singularity \
@@ -92,20 +93,6 @@ nextflow run bbglab/deepUMIcaller \
   --targetsfile file.bed \
   --outdir results/ \
   --step calling
-```
-
-If you prefer to do it only for medium confidence e.g.:
-
-```console
-nextflow run bbglab/deepUMIcaller \
-  -profile singularity \
-  --input input.csv \
-  --ref_fasta refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ \
-  --step calling \
-  --duplex_med_conf false \
-  --duplex_low_conf false
 ```
 
 The input.csv samplesheet must contain the following columns:

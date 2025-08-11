@@ -89,3 +89,16 @@ You can cite the `nf-core` publication as follows:
 
 [fgbio-best-practices-link]: https://github.com/fulcrumgenomics/fgbio/blob/main/docs/best-practice-consensus-pipeline.md
 [duplex-seq-link]: https://en.wikipedia.org/wiki/Duplex_sequencing
+
+## Downstream use via deepCSA
+
+The output of deepUMIcaller that is generated with a targeted gene panel and with the goal of computing clonal selection metrics can be analyzed with [deepCSA](https://https://github.com/bbglab/deepCSA).
+
+The repo contains a detailed explanation of the usage and outputs that it will provide, but here we list which files from deepUMIcaller need to be used for then running deepCSA.
+
+```csv
+sample,vcf,bam
+sample1,.../mutations_vcf/<sample1>.vcf,.../sortbamduplexconsmed/<sample1>.bam
+sample2,.../mutations_vcf/<sample2>.vcf,.../sortbamduplexconsmed/<sample2>.bam
+sample3,.../mutations_vcf/<sample3>.vcf,.../sortbamduplexconsmed/<sample3>.bam
+```

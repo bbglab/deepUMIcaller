@@ -361,19 +361,22 @@ workflow DEEPUMICALLER {
     }
 
 
-    FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-    SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
-    
-    // join the bam and the bamindex channels to have
-    // the ones from the same samples together
-    SORTBAMDUPLEXCLEAN.out.bam
-    .join( SORTBAMDUPLEXCLEAN.out.csi )
-    .set { bam_n_index_duplex_clean }
+    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
+        FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
+        SORTBAMDUPLEXCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+        
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMDUPLEXCLEAN.out.bam
+        .join( SORTBAMDUPLEXCLEAN.out.csi )
+        .set { bam_n_index_duplex_clean }
 
-    if (params.perform_qcs){
-        // requires input coordinate sorted
-        QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+        if (params.perform_qcs){
+            // requires input coordinate sorted
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCLEAN.out.bam, params.targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+        }
+
     }
 
     //
@@ -414,6 +417,7 @@ workflow DEEPUMICALLER {
 
             if (params.step == 'calling') {
                 cons_high_bam = INPUT_CHECK.out.reads
+                bam_n_index_duplex_clean = INPUT_CHECK.out.reads
             }
 
             cons_high_bam.map{it -> [it[0], it[1]] }
@@ -505,6 +509,7 @@ workflow DEEPUMICALLER {
             // ASSIGN cons_med_bam = to our input bam
             if (params.step == 'calling') {
                 cons_med_bam = INPUT_CHECK.out.reads
+                bam_n_index_duplex_clean = INPUT_CHECK.out.reads
             }
 
             cons_med_bam.map{it -> [it[0], it[1]] }
@@ -589,6 +594,7 @@ workflow DEEPUMICALLER {
 
             if (params.step == 'calling') {
                 cons_low_bam = INPUT_CHECK.out.reads
+                bam_n_index_duplex_clean = INPUT_CHECK.out.reads
             }
 
             cons_low_bam.map{it -> [it[0], it[1]] }

@@ -47,9 +47,10 @@ def create_input_channel(LinkedHashMap row, step) {
         if (!file(row.csi).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
         }
-        input_meta = [ meta, [ file(row.bam) ], [ file(row.csi) ] ]
+        input_meta = [ meta, [ file(row.duplexbam) ], [ file(row.csi) ] ]
     }
-    // Only the bam is required to the meta map for the other steps (e.g. groupreadsbyumi)
+
+    // Only the bam is required to the meta map for the other steps (e.g. filterconsensus)
     else{
         if (!file(row.bam).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${row.bam}"

@@ -28,33 +28,20 @@ snv_color = {
 
 
 def compute_ratios(df_valid, number_of_initial_positions):
+    df_valid["all"] = df_valid[mutation_types].sum(axis = 1)
     ratios = {}
-    for col in mutation_types:
+    for col in available_changes:
         values = df_valid[col].values
         first_positions = values[:number_of_initial_positions]
         rest = values[number_of_initial_positions:]
         mean_first_positions = first_positions.mean()
         mean_rest = rest.mean() if len(rest) > 0 else 0
         if mean_rest == 0:
-            ratio = -1 if mean_first_positions > 0 else 0
+            ratio = -1
         else:
             ratio = mean_first_positions / mean_rest
         ratios[col] = ratio
 
-    all_values = df_valid[mutation_types].values.flatten()
-    all_values = all_values[~pd.isnull(all_values)]
-    if len(all_values) > number_of_initial_positions:
-        first_positions_cum = all_values[:number_of_initial_positions]
-        rest_cum = all_values[number_of_initial_positions:]
-        mean_first_positions_cum = first_positions_cum.mean()
-        mean_rest_cum = rest_cum.mean() if len(rest_cum) > 0 else 0
-        if mean_rest_cum == 0:
-            ratio_cum = -1 if mean_first_positions_cum > 0 else 0
-        else:
-            ratio_cum = mean_first_positions_cum / mean_rest_cum
-        ratios['all'] = ratio_cum
-    else:
-        ratios['all'] = -1
     return ratios
 
 

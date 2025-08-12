@@ -13,7 +13,7 @@ process SUMMARIZE_MUTS_PER_POS {
     output:
     path 'ratios_per_sample.tsv'                , optional : true,  emit: ratios_table
     path 'mutation_ratios_summary.pdf'          , optional : true,  emit: summary_pdf
-    path 'samples_passing_ratio_threshold.tsv'  , optional : true,  emit: ratios_table
+    path 'samples_passing_ratio_threshold.tsv'  , optional : true,  emit: failing_samples
     path  "versions.yml"                        , topic: versions
 
     script:

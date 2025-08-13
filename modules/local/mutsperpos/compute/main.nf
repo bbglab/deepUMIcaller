@@ -3,19 +3,17 @@ process MUTS_PER_POS {
     label 'time_medium'
     label 'cpu_low'
     label 'process_medium_high_memory'
-    // conda "bioconda::pysam=0.21.0--py38h15b938a_1"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //     'https://depot.galaxyproject.org/singularity/pysam:0.21.0--py38h15b938a_1' :
-    //     'biocontainers/pysam:0.21.0--py38h15b938a_1' }"
+
     container 'docker.io/ferriolcalvet/pysam'
 
     input:
     tuple val(meta), path(bam), path(bam_index), path(vcf)
 
     output:
-    tuple val(meta), path("**.png")     , emit: plots
-    tuple val(meta), path("**")         , emit: others
-    path  "versions.yml"                , topic: versions
+    tuple val(meta), path("**.png")                 , emit: plots
+    tuple val(meta), path("**MutsPerCycle.dat.csv") , emit: positions_csv
+    tuple val(meta), path("**")                     , emit: others
+    path  "versions.yml"                            , topic: versions
 
 
     script:
@@ -23,7 +21,6 @@ process MUTS_PER_POS {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     """
-    # vcf is filtered for only low VAF variants in principle, but we could let the python script filter it itself
     grep -v '##' $vcf > ${prefix}.no_header.vcf;
     count_muts_per_cycle.py \\
                 --inFile ${bam} \\
@@ -53,5 +50,8 @@ process MUTS_PER_POS {
     """
 }
 
+// vcf is filtered for only low VAF variants in principle,
+//      but we could let the python script filter it itself
+
 // this was run here in the past
-// /workspace/projects/prominent/analysis/dev_pipeline/prom10/get_muts_per_position
+// /data/bbg/projects/prominent/analysis/dev_pipeline/prom10/get_muts_per_position

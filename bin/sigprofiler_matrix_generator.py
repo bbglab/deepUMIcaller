@@ -40,8 +40,8 @@ matGen.SigProfilerMatrixGeneratorFunc(project_name,
                                         exome=False, 
                                         bed_file=None, 
                                         chrom_based=False,
-                                        tsb_stat=False,
-                                        seqInfo=False,
+                                        tsb_stat=True,
+                                        seqInfo=True,
                                         cushion=100,
                                         )
 

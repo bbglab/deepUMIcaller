@@ -2,7 +2,7 @@ process SIGPROFILER_MATRIXGENERATOR {
     tag "${task.ext.prefix}"
     label 'process_single'
 
-    container 'docker.io/ferriolcalvet/sigprofiler:latest'
+    container 'docker.io/ferriolcalvet/sigprofilermatrixgenerator:ucsd_dockerfile'
 
     input:
     path (vcf)
@@ -18,15 +18,20 @@ process SIGPROFILER_MATRIXGENERATOR {
 
     script:
     def prefix = task.ext.prefix ?: "samples"
+    def args = task.ext.args ?: ""
     """
-    sigprofiler_matrix_generator.py \\
-                ${prefix} \\
-                ${params.vep_genome}
+    mkdir input_mutations
+    cp *.vcf input_mutations/.
 
+    SigProfilerMatrixGenerator matrix_generator \\
+                ${prefix} \\
+                ${params.vep_genome} \\
+                input_mutations/ \\
+                ${args}
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        sigprofiler: 1.2.1
+        SigProfilerMatrixGenerator: 1.2.31
     END_VERSIONS
     """
 
@@ -35,7 +40,7 @@ process SIGPROFILER_MATRIXGENERATOR {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        sigprofiler: 1.2.1
+        SigProfilerMatrixGenerator: 1.2.31
     END_VERSIONS
     """
 }

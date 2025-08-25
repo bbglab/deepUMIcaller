@@ -19,13 +19,14 @@ process SIGPROFILER_MATRIXGENERATOR {
     script:
     def prefix = task.ext.prefix ?: "samples"
     def args = task.ext.args ?: ""
+    def genome = task.ext.genome_assembly ?: "GRCh38"
     """
     mkdir input_mutations
     cp *.vcf input_mutations/.
 
     SigProfilerMatrixGenerator matrix_generator \\
                 ${prefix} \\
-                ${params.vep_genome} \\
+                ${genome} \\
                 input_mutations/ \\
                 ${args}
     cat <<-END_VERSIONS > versions.yml

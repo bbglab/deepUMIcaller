@@ -124,12 +124,11 @@ workflow DEEPUMICALLER {
     if (params.ref_fasta) {
         ch_ref_fasta = file(params.ref_fasta, checkIfExists: true)
         ch_ref_fasta_dict = file("${ch_ref_fasta.parent/ch_ref_fasta.baseName}.dict", checkIfExists: true)
+        ch_ref_index_dir = ch_ref_fasta.parent
     } else {
         log.error "No reference FASTA was specified (--ref_fasta)."
         exit 1
     }
-    
-    ch_ref_index_dir = ch_ref_fasta.map { it -> it.parent }
 
     ch_multiqc_files = Channel.empty()
    
@@ -137,7 +136,6 @@ workflow DEEPUMICALLER {
     if (params.targetsfile) {
         targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
         BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-        
     }
 
 
@@ -228,7 +226,7 @@ workflow DEEPUMICALLER {
                 .set { bam_n_index_clean }
 
                 BAM_FILTER_READS(bam_n_index_clean,
-                                BEDTOINTERVAL.out.interval_list.first().map{it -> it [1]})
+                                BEDTOINTERVAL.out.interval_list.first().map{it[1]})
                 
 
                 bam_to_group = BAM_FILTER_READS.out.bam
@@ -243,7 +241,6 @@ workflow DEEPUMICALLER {
                 ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             bam_to_group = SORTBAMCLEAN.out.bam
-
         }
     }
 
@@ -273,21 +270,21 @@ workflow DEEPUMICALLER {
 
         // Plot the family size metrics
         FAMILYMETRICS(COLLECTDUPLEXSEQMETRICS.out.metrics)
-        
-        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
-        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+
+        FAMILYMETRICS.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
-        COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
+        COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it[1]} )
         
 
 
         // Plot the family size metrics
         FAMILYMETRICSONTARGET(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
-        
-        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
-        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+
+        FAMILYMETRICSONTARGET.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CallDuplexConsensusReads
@@ -312,13 +309,11 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_bam = SORTBAMAMFILTERED.out.bam
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> [it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
-        
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
         DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
-        
 
     }
 
@@ -375,7 +370,7 @@ workflow DEEPUMICALLER {
             cons_duplex_bam = INPUT_CHECK.out.reads
         }
 
-        cons_duplex_bam.map{it -> [it[0], it[1]] }
+        cons_duplex_bam.map{[it[0], it[1]]}
         .set{ cons_duplex_bam_only }
 
         // Compute depth of the consensus reads aligned to the genome
@@ -404,13 +399,13 @@ workflow DEEPUMICALLER {
                             ch_ref_fasta)
         }
 
-        RECOUNTMUTS.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_duplex }
+        RECOUNTMUTS.out.somatic_vcf.map{it[1]}.set { mutation_files_duplex }
         SIGPROFPLOT(mutation_files_duplex.collect())
 
-        RECOUNTMUTS.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_duplex }
+        RECOUNTMUTS.out.purvcf.map{it[1]}.set { mutation_files_pur_duplex }
         SIGPROFPLOTPUR(mutation_files_pur_duplex.collect())
 
-        RECOUNTMUTS.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_duplex }
+        RECOUNTMUTS.out.pyrvcf.map{it[1]}.set { mutation_files_pyr_duplex }
         SIGPROFPLOTPYR(mutation_files_pyr_duplex.collect())
 
     }

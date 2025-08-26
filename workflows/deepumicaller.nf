@@ -82,6 +82,7 @@ include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } fro
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
 include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL              } from '../modules/nf-core/bedtools/coverage/main'
 
+include { PICARD_MERGESAMFILES              as MERGEBAMS                    } from '../modules/nf-core/picard/mergesamfiles/main'
 
 // Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
@@ -95,6 +96,7 @@ include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } fro
 include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES         } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMAMCLEAN              } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED           } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMMERGED               } from '../modules/nf-core/samtools/sort/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
@@ -308,14 +310,7 @@ workflow DEEPUMICALLER {
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
-        // store csv with all AM BAMs
-        SORTBAMAMFILTERED.out.bam
-            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
-            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
-            .set { bam_csv_file }
-
-
-        duplex_filtered_bam = SORTBAMAMFILTERED.out.bam
+        duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
 
         ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
@@ -326,8 +321,27 @@ workflow DEEPUMICALLER {
     }
 
     if (params.step == 'filterconsensus') {
-        duplex_filtered_bam = INPUT_CHECK.out.reads
+        duplex_filtered_init_bam = INPUT_CHECK.out.reads
     }
+
+    // Group by meta.parent_dna
+    ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
+            .groupTuple(by: 0)
+            .filter { meta, bams -> bams.size() >= 2 }
+    
+    // Run the concatenation process
+    MERGEBAMS(ch_grouped_bams)
+
+    // Run sorting by query
+    SORTBAMMERGED(MERGEBAMS.out.bam)
+
+    duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
+
+    // store csv with all AM BAMs
+    duplex_filtered_bam
+        .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
+        .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+        .set { bam_csv_file }
 
 
     FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)

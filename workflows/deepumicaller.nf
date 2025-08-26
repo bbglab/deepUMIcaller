@@ -308,6 +308,13 @@ workflow DEEPUMICALLER {
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
+        // store csv with all AM BAMs
+        SORTBAMAMFILTERED.out.bam
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+            .set { bam_csv_file }
+
+
         duplex_filtered_bam = SORTBAMAMFILTERED.out.bam
 
         ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }

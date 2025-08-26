@@ -98,6 +98,7 @@ include { SAMTOOLS_DEPTH                    as COMPUTEDEPTHHIGH            } fro
 
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } from '../modules/nf-core/bedtools/coverage/main'
 include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL              } from '../modules/nf-core/bedtools/coverage/main'
 
 
 // Versions and reports
@@ -495,8 +496,11 @@ workflow DEEPUMICALLER {
             // Quality check
             if (params.perform_qcs){
                 QUALIMAPQCMED(SORTBAMDUPLEXCONSMED.out.bam, params.targetsfile)
-                
                 ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCMED.out.results.map{it[1]}.collect())
+                
+                SORTBAMDUPLEXCONSMED.out.bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
+                COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
+
             }
         }
 

@@ -85,8 +85,6 @@ sample1,sample1.bam
 
 ### Start with VarDict variant calling (`calling`)
 
-By default, it will execute the variant calling for HIGH/MEDIUM/LOW configuration, using the input declared:
-
 ```console
 nextflow run bbglab/deepUMIcaller \
   -profile singularity \
@@ -95,20 +93,6 @@ nextflow run bbglab/deepUMIcaller \
   --targetsfile file.bed \
   --outdir results/ \
   --step calling
-```
-
-If you prefer to do it only for medium confidence e.g.:
-
-```console
-nextflow run bbglab/deepUMIcaller \
-  -profile singularity \
-  --input input.csv \
-  --ref_fasta refs/dnaNexus/hs38DH.fa \
-  --targetsfile file.bed \
-  --outdir results/ \
-  --step calling \
-  --duplex_med_conf false \
-  --duplex_low_conf false
 ```
 
 The input.csv samplesheet must contain the following columns:

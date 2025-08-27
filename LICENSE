@@ -1,7 +1,19 @@
-Placeholder License - Temporary Notice
+Copyright (C) 2025 Institute for Research in Biomedicine (IRB Barcelona)
 
-This repository is temporarily published without a definitive open-source license.
+deepUMIcaller is the property of the Institute for Research in Biomedicine 
+(IRB Barcelona), which hold the copyright thereto.
 
-The final license (GPLv3, AGPLv3, or other) will be confirmed and updated as soon as possible, and no later than the manuscript's publication.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
-Until the final license is in place, this code is provided for **review purposes only**, it can be run, but it must not be used, modified, or redistributed without explicit permission from the authors.
+The use of this software is restricted to academic and non-commercial purposes only.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>

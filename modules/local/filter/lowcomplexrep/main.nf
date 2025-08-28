@@ -29,7 +29,7 @@ process FILTER_LOW_COMPLEXITY {
 
     # if there is nothing in the intersection do not filter the VCF file
     if [ -s ${prefix}.lowcomplexrep_file.bed ]; then
-        add_filter_lowcomplexrep.py \\
+        add_filter_from_bed.py \\
                         ${vcf_file} \\
                         ${prefix}.lowcomplexrep_file.bed \\
                         ${prefix}.low_complex.vcf \\

@@ -27,7 +27,7 @@ process FILTER_LOW_MAPPABILITY {
 
     # if there is nothing in the intersection do not filter the VCF file
     if [ -s ${prefix}.lowmappable_file.bed ]; then
-        add_filter_lowmappability.py \\
+        add_filter_from_bed.py \\
                 ${vcf_file} \\
                 ${prefix}.lowmappable_file.bed \\
                 ${prefix}.low_mappable.vcf \\

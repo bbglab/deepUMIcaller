@@ -26,6 +26,8 @@ def create_input_channel(LinkedHashMap row, step) {
     // create meta map
     def meta = [:]
     meta.id             = row.sample
+    // Set parent_dna to row.parent_dna if present and not empty, else use sample
+    meta.parent_dna     = (row.containsKey('parent_dna') && row.parent_dna) ? row.parent_dna : row.sample
 
     // add path(s) of the fastq file(s) to the meta map
     def input_meta = []

@@ -1,0 +1,49 @@
+name: picard_mergesamfiles
+description: Merges multiple BAM files into a single file
+keywords:
+  - merge
+  - alignment
+  - bam
+  - sam
+tools:
+  - picard:
+      description: |
+        A set of command line tools (in Java) for manipulating high-throughput sequencing (HTS)
+        data and formats such as SAM/BAM/CRAM and VCF.
+      homepage: https://broadinstitute.github.io/picard/
+      documentation: https://broadinstitute.github.io/picard/
+      licence: ["MIT"]
+      identifier: biotools:picard_tools
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bams:
+        type: list
+        description: List of input BAM files to be merged
+        pattern: "*.{bam}"
+output:
+  bam:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.bam":
+          type: file
+          description: Merged BAM file
+          pattern: "*.{bam}"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750 # YAML
+authors:
+  - "@drpatelh"
+maintainers:
+  - "@drpatelh"

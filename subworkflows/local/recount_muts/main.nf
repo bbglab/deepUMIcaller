@@ -12,8 +12,10 @@ include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/l
 include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
 include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/local/patchdepth/main'
 
-include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
-include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
+include { FILTER_FROM_BED        as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/from_bed/main.nf'
+include { FILTER_FROM_BED        as FILTERLOWMAPPABLE } from '../../../modules/local/filter/from_bed/main.nf'
+// include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
+// include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
 include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
 
 include { FILTERMUTATIONS        as FILTERVCFSOMATIC  } from '../../../modules/local/filtervcf/main'
@@ -38,10 +40,11 @@ workflow RECOUNT_MUTS {
     main:
 
     low_complex_filter = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+    // low_complex_filter = params.low_complex_file ? file(params.low_complex_file) : file(params.input)
+    // low_mappability_filter = params.low_mappability_file ? file(params.low_mappability_file) : file(params.input)
     low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
 
     
-
     vcf_file
     .join( bed_file )
     .set { ch_vcf_bed }
@@ -99,25 +102,48 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    if (params.filter_regions) {
-        PATCHDPALL.out.patched_vcf
-        .join( READJUSTREGIONS.out.vcf_bed_mut_ids )
+    if (params.filter_regions && params.low_complex_file && params.low_mappability_file) {
+
+    PATCHDPALL.out.patched_vcf
+        .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
         .set { ch_vcf_vcfbed }
 
-        FILTERLOWCOMPLEX(ch_vcf_vcfbed, low_complex_filter)
-        FILTERLOWMAPPABLE(FILTERLOWCOMPLEX.out.filtered_vcf_bed, low_mappability_filter)
-        
-        FILTERLOWMAPPABLE.out.filtered_vcf
+    // FILTER LOW COMPLEXITY
+    ch_vcf_vcfbed
+        .combine(low_complex_filter)
+        .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+            [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
+        }
+        .set { ch_vcf_lowcomplex }
+
+    FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
+
+    // FILTER LOW MAPPABILITY
+    FILTERLOWCOMPLEX.out.filtered_vcf_bed
+        .combine(low_mappability_filter)
+        .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+            [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]
+        }
+        .set { ch_vcf_lowmappable }
+
+    FILTERLOWMAPPABLE(ch_vcf_lowmappable)
+
+    FILTERLOWMAPPABLE.out.filtered_vcf
         .join(NSXPOSITION.out.ns_tsv)
-        .set {ch_vcf_ns}
+        .set { ch_vcf_ns }
+
     } else {
+        println "No bed files provided or filter_regions=false; skipping bed-based region filters."
+
         PATCHDPALL.out.patched_vcf
-        .join(NSXPOSITION.out.ns_tsv)
-        .set {ch_vcf_ns}
+            .join(NSXPOSITION.out.ns_tsv)
+            .set { ch_vcf_ns }
     }
+    // FILTER N RICH
     FILTERNRICH(ch_vcf_ns)
     output_vcf = FILTERNRICH.out.filtered_vcf
 
+    // FILTER SOMATIC VARIANTS
     FILTERVCFSOMATIC(output_vcf)
     
 

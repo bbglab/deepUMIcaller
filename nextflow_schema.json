@@ -116,6 +116,18 @@
                     "description": "BED file with the low complex regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
+                },
+                "nanoseq_snp_file": {
+                    "type": "string",
+                    "description": "BED file with common SNPs.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be discarded in the analysis."
+                },
+                "nanoseq_noise_file": {
+                    "type": "string",
+                    "description": "BED file with noisy/variable genomic sites.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file that contains the regions to be discarded in the analysis."
                 }
             }
         },

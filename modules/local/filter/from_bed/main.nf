@@ -2,7 +2,7 @@ process FILTER_FROM_BED {
     tag "$meta.id"
     label 'cpu_single'
     label 'time_low'
-    label 'process_low_memory'
+    label 'process_medium_high_memory'
 
     // Use either conda or container, depending on profile
     conda "bioconda::pybedtools=0.9.1"
@@ -23,7 +23,11 @@ process FILTER_FROM_BED {
     def outfile = "${meta.id}${prefix}.${filter_name}.vcf"
     def bedfile = "${meta.id}${prefix}.${filter_name}_file.bed"
     """
-    bedtools intersect -a ${vcf_derived_bed} -b ${mask_bed} -u > ${bedfile}
+    if [[ "${mask_bed}" == *.gz ]]; then
+        bedtools intersect -a ${vcf_derived_bed} -b <(zcat ${mask_bed}) -u > ${bedfile}
+    else
+        bedtools intersect -a ${vcf_derived_bed} -b ${mask_bed} -u > ${bedfile}
+    fi
 
     # If there is nothing in the intersection, just copy the VCF
     if [ -s ${bedfile} ]; then

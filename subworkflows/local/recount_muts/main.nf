@@ -14,8 +14,8 @@ include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/l
 
 include { FILTER_FROM_BED        as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERLOWMAPPABLE } from '../../../modules/local/filter/from_bed/main.nf'
-// include { FILTER_LOW_COMPLEXITY  as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/lowcomplexrep/main.nf'
-// include { FILTER_LOW_MAPPABILITY as FILTERLOWMAPPABLE } from '../../../modules/local/filter/lowmappability/main.nf'
+include { FILTER_FROM_BED        as FILTERNANOSEQSNP  } from '../../../modules/local/filter/from_bed/main.nf'
+include { FILTER_FROM_BED        as FILTERNANOSEQNOISE} from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
 
 include { FILTERMUTATIONS        as FILTERVCFSOMATIC  } from '../../../modules/local/filtervcf/main'
@@ -40,11 +40,10 @@ workflow RECOUNT_MUTS {
     main:
 
     low_complex_filter = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
-    // low_complex_filter = params.low_complex_file ? file(params.low_complex_file) : file(params.input)
-    // low_mappability_filter = params.low_mappability_file ? file(params.low_mappability_file) : file(params.input)
     low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+    nanoseq_snp_filter = params.nanoseq_snp_file ? Channel.fromPath( params.nanoseq_snp_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+    nanoseq_noise_filter = params.nanoseq_noise_file ? Channel.fromPath( params.nanoseq_noise_file, checkIfExists: true).first() : Channel.fromPath(params.input)
 
-    
     vcf_file
     .join( bed_file )
     .set { ch_vcf_bed }
@@ -102,35 +101,55 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    if (params.filter_regions && params.low_complex_file && params.low_mappability_file) {
+    if (params.filter_regions && params.low_complex_file && params.low_mappability_file && params.nanoseq_snp_file && params.nanoseq_noise_file) {
 
-    PATCHDPALL.out.patched_vcf
-        .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
-        .set { ch_vcf_vcfbed }
+        PATCHDPALL.out.patched_vcf
+            .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
+            .set { ch_vcf_vcfbed }
 
-    // FILTER LOW COMPLEXITY
-    ch_vcf_vcfbed
-        .combine(low_complex_filter)
-        .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-            [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
-        }
-        .set { ch_vcf_lowcomplex }
+        // FILTER LOW COMPLEXITY
+        ch_vcf_vcfbed
+            .combine(low_complex_filter)
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
+            }
+            .set { ch_vcf_lowcomplex }
 
-    FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
+        FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
 
-    // FILTER LOW MAPPABILITY
-    FILTERLOWCOMPLEX.out.filtered_vcf_bed
-        .combine(low_mappability_filter)
-        .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-            [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]
-        }
-        .set { ch_vcf_lowmappable }
+        // FILTER LOW MAPPABILITY
+        FILTERLOWCOMPLEX.out.filtered_vcf_bed
+            .combine(low_mappability_filter)
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]
+            }
+            .set { ch_vcf_lowmappable }
 
-    FILTERLOWMAPPABLE(ch_vcf_lowmappable)
+        FILTERLOWMAPPABLE(ch_vcf_lowmappable)
 
-    FILTERLOWMAPPABLE.out.filtered_vcf
-        .join(NSXPOSITION.out.ns_tsv)
-        .set { ch_vcf_ns }
+        // FILTER COMMON SNP
+        FILTERLOWMAPPABLE.out.filtered_vcf_bed
+            .combine(nanoseq_snp_filter)
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_snp"]
+            }
+            .set { ch_vcf_nanoseqsnp }
+
+        FILTERNANOSEQSNP(ch_vcf_nanoseqsnp)
+
+        // FILTER NOISE
+        FILTERNANOSEQSNP.out.filtered_vcf_bed
+            .combine(nanoseq_noise_filter)
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_noise"]
+            }
+            .set { ch_vcf_nanoseqnoise }
+
+        FILTERNANOSEQNOISE(ch_vcf_nanoseqnoise)
+
+        FILTERNANOSEQNOISE.out.filtered_vcf
+            .join(NSXPOSITION.out.ns_tsv)
+            .set { ch_vcf_ns }
 
     } else {
         println "No bed files provided or filter_regions=false; skipping bed-based region filters."

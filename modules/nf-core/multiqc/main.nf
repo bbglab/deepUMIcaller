@@ -1,10 +1,10 @@
 process MULTIQC {
     label 'process_low'
-    
-    conda 'bioconda::multiqc=1.16'
+
+    conda 'bioconda::multiqc=1.29'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.16--pyhdfd78af_0' :
-        'biocontainers/multiqc:1.16--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.29--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.29--pyhdfd78af_0' }"
 
     input:
     path multiqc_files
@@ -15,8 +15,6 @@ process MULTIQC {
     path "*_plots"             , optional:true, emit: plots
     path "versions.yml"        , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

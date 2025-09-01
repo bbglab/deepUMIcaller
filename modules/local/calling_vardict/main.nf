@@ -16,15 +16,14 @@ process CALLING_VARDICT {
     tuple val(meta), path("*.vcf")                   , emit: vcf
     tuple val(meta), path("*.vcf.gz"), optional: true, emit: genome_vcf
     tuple val(meta), path("*.tsv.gz"), optional: true, emit: tsv
-    path  "versions.yml"                             , emit: versions
+    path  "versions.yml"                             , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
     def filter_args = task.ext.filter_args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
 
     # Split the targets file into ${task.cpus} chunks

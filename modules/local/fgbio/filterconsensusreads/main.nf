@@ -13,12 +13,13 @@ process FGBIO_FILTERCONSENSUSREADS {
 
     output:
     tuple val(meta), path("*.filtered.bam")  , emit: bam
-    path "versions.yml"                      , emit: versions
+    path "versions.yml"                      , topic: versions
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''
-    def samtools_args = task.ext.samtools_args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    // def samtools_args = task.ext.samtools_args ?: ''
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio FilterConsensusReads] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
@@ -39,7 +40,7 @@ process FGBIO_FILTERCONSENSUSREADS {
     // } else {
     fgbio_zipper_bams_output = prefix + ".filtered.bam"
     fgbio_zipper_bams_compression = 1
-    extra_command = ""
+    // extra_command = ""
     // }
     """
     fgbio \\

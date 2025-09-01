@@ -5,27 +5,27 @@ process SAMTOOLS_MPILEUP {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/samtools:1.17--h00cdaf9_0' :
         'biocontainers/samtools:1.17--h00cdaf9_0' }"
+
     input:
     tuple val(meta), path(bam), path(index), path(intervals)
     path fasta
 
     output:
     tuple val(meta), path("*.mpileup.gz"), path("*.mpileup.gz.tbi") , emit: mpileup
-    path  "versions.yml"                                            , emit: versions
+    path  "versions.yml"                                            , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def intervals = intervals ? "--positions ${intervals}" : ""
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
+    def intervals_var = intervals ? "--positions ${intervals}" : ""
     """
     samtools mpileup \\
         --fasta-ref ${fasta} \\
         --output ${prefix}.mpileup \\
         ${args} \\
-        ${intervals} \\
+        ${intervals_var} \\
         ${bam}
     bgzip -@${task.cpus} ${prefix}.mpileup
     tabix -s 1 -b 2 -e 2 ${prefix}.mpileup.gz

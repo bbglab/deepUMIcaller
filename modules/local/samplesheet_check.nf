@@ -13,15 +13,11 @@ process SAMPLESHEET_CHECK {
 
     output:
     path '*.csv'       , emit: csv
-    path "versions.yml", emit: versions
+    path "versions.yml", topic: versions
 
     script: // This script is bundled with the pipeline, in nf-core/fgcons/bin/
     """
-    if [ "$step" = "mapping" ]; then    
-        check_samplesheet.py $samplesheet samplesheet.valid.csv
-    else
-        check_samplesheet_bam.py $samplesheet samplesheet.valid.csv
-    fi
+    check_samplesheet.py $samplesheet samplesheet.valid.csv --step $step
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

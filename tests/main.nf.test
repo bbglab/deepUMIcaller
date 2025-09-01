@@ -1,0 +1,39 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+    config "./nextflow.config"
+
+    test("Should run and output matches expected") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/test_data/input/input_test.csv"
+                outdir = "${projectDir}/tests_results"
+            }
+        }
+        then {
+            assert workflow.success
+
+            def currentDir = file("tests_results/callingvardictmed")
+            def expectedDir = file("tests/test_data/expected_output")
+
+            // Find all VCF files in the actual results directory
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+
+            // Loop over each actual VCF and compare to expected
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "Expected file missing: ${expectedVcf}"
+
+            def cmd = "python3 bin/compare_vcfs.py ${currentVcf} ${expectedVcf}"
+            def proc = cmd.execute()
+            proc.waitFor()
+            def similarity = proc.in.text.trim() as Double
+
+            println "\nVCF similarity for ${currentVcf.name}: ${similarity}%"
+            assert similarity >= 95 : "NOT PASSED: VCF similarity below threshold for ${currentVcf.name}: ${similarity}%"
+            }
+        }
+    }
+}

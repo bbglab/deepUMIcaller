@@ -1,10 +1,10 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/fastquorum/master/nextflow_schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/bbglab/deepUMIcaller/master/nextflow_schema.json",
     "title": "bbglab/deepUMIcaller pipeline parameters",
-    "description": "Duplex sequencing, consensus building and variant calling pipeline.",
+    "description": "FASTQ to VCFs with Duplex-seq data",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -40,13 +40,6 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "email": {
-                    "type": "string",
-                    "description": "Email address for completion summary.",
-                    "fa_icon": "fas fa-envelope",
-                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
                 "multiqc_title": {
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
@@ -70,7 +63,6 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Choose to remove offtargets",
-                    "default": false,
                     "help_text": "This will slightly speed up the analysis by focusing on the regions of interest according to the provided BED file"
                 },
                 "step": {
@@ -91,34 +83,27 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
-                    "default": false,
                     "help_text": ""
                 }
             }
         },
-        "main_filtering_options": {
-            "title": "Main filtering options",
+        "mutation_filtering_options": {
+            "title": "Mutation filtering options",
             "type": "object",
-            "description": "Main filtering options",
+            "description": "Mutation filtering options",
             "default": "",
             "properties": {
-                "asminusxs_thres": {
-                    "type": "integer",
-                    "description": "Avoid multiple mapping.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": ""
-                },
                 "filter_mutations": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
                     "help_text": ""
                 },
-                "filter_human": {
+                "filter_regions": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering low_mappability and low_complex regions from the analysis.",
-                    "help_text": "With this parameter, the workflow discards variables present in the defined regions."
+                    "help_text": "With this parameter, you can flag variants present in the defined regions."
                 },
                 "low_mappability_file": {
                     "type": "string",
@@ -131,12 +116,26 @@
                     "description": "BED file with the low complex regions.",
                     "fa_icon": "fas fa-book",
                     "help_text": "BED file that contains the regions to be discarded in the analysis."
-                },
-                "final_read_size": {
-                    "type": "string",
-                    "description": "Parameter to define the read size.",
+                }
+            }
+        },
+        "asxs_filtering_params": {
+            "title": "AS-XS filtering options",
+            "type": "object",
+            "description": "AS-XS filtering options",
+            "default": "",
+            "properties": {
+                "asminusxs_thres": {
+                    "type": "integer",
+                    "description": "Avoid multiple mapping.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Parameter to define the read size."
+                    "help_text": ""
+                },
+                "global_exons_file": {
+                    "type": "string",
+                    "description": "BED file with global regions to annotate coverage of AS-XS discarded reads.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "BED file with global regions to annotate coverage of AS-XS discarded reads."
                 }
             }
         },
@@ -171,12 +170,6 @@
                     "description": "Minimum input base quality",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum input base quality to use when calling a consensus for fgbio's CallMolecularConsensusReads/CallDuplexConsensusReads."
-                },
-                "call_min_reads": {
-                    "type": "string",
-                    "description": "Minimum reads to call a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to call a consensus for fgbio's CallMolecularConsensusReads."
                 },
                 "call_min_reads_duplex": {
                     "type": "string",
@@ -232,95 +225,45 @@
                 }
             }
         },
-        "consensus_filtering_high": {
-            "title": "Consensus filtering options for the high confidence mutations",
+        "calling_parameters": {
+            "title": "Variant calling options",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads",
+            "description": "Options for variant calling and variant filtering. ",
             "properties": {
-                "duplex_high_conf": {
-                    "type": "boolean",
-                    "description": "Activate medium confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The medium confidence level output will be generated."
-                },
-                "filter_min_reads_high": {
+                "vardict_params": {
                     "type": "string",
-                    "description": "Minimum reads to keep a consensus",
+                    "description": "Parameters for VarDict calling step",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "Parameters for VarDict calling step."
                 },
-                "filter_min_baseq_high": {
-                    "type": "integer",
-                    "description": "Minimum consensus base quality",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_max_base_error_rate_high": {
+                "vardict_filter_params": {
                     "type": "string",
-                    "description": "The maximum error rate for a single consensus base",
+                    "description": "Parameters for the filtering step in VarDict",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "Parameters for the filtering step in VarDict"
                 }
             }
         },
-        "consensus_filtering_medium": {
-            "title": "Consensus filtering options for the medium confidence mutations",
+        "consensus_filtering": {
+            "title": "Consensus filtering options for the duplex reads",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads for the medium confidence category.",
+            "description": "Options for when filtering consensus reads for the duplex reads.",
             "properties": {
-                "duplex_med_conf": {
-                    "type": "boolean",
-                    "description": "Activate medium confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The medium confidence level output will be generated."
-                },
-                "filter_min_reads_med": {
+                "filter_min_reads_duplex": {
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_min_baseq_med": {
+                "filter_min_baseq_duplex": {
                     "type": "integer",
                     "description": "Minimum consensus base quality",
                     "fa_icon": "fas fa-book",
                     "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
                 },
-                "filter_max_base_error_rate_med": {
-                    "type": "string",
-                    "description": "The maximum error rate for a single consensus base",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
-                }
-            }
-        },
-        "consensus_filtering_low": {
-            "title": "Consensus filtering options for the low confidence mutations",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Options for when filtering consensus reads for the low confidence category.",
-            "properties": {
-                "duplex_low_conf": {
-                    "type": "boolean",
-                    "description": "Activate low confidence level",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The low confidence level output will be generated."
-                },
-                "filter_min_reads_low": {
-                    "type": "string",
-                    "description": "Minimum reads to keep a consensus",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_min_baseq_low": {
-                    "type": "integer",
-                    "description": "Minimum consensus base quality",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
-                },
-                "filter_max_base_error_rate_low": {
+                "filter_max_base_error_rate_duplex": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
@@ -339,16 +282,6 @@
                     "description": "Name of iGenomes reference.",
                     "fa_icon": "fas fa-book",
                     "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details.",
-                    "hidden": true
-                },
-                "fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code",
                     "hidden": true
                 },
                 "igenomes_base": {
@@ -403,12 +336,6 @@
                     "description": "Additional parameters for running Ensembl VEP.",
                     "fa_icon": "fas fa-book",
                     "help_text": ""
-                },
-                "download_cache": {
-                    "type": "boolean",
-                    "description": "Do you want to download the cache? Activate it only if necessary.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "Do you want to download the cache? Activate it only if necessary."
                 },
                 "vep_cache": {
                     "type": "string",
@@ -478,6 +405,13 @@
                     "fa_icon": "fas fa-book",
                     "help_text": "",
                     "hidden": true
+                },                
+                "final_read_size": {
+                    "type": "integer",
+                    "description": "Parameter to define the maximum read size.",
+                    "default": 142,
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Parameter to define the maximum read size."
                 }
             }
         },
@@ -577,6 +511,12 @@
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version information.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
                 "publish_dir_mode": {
                     "type": "string",
                     "default": "copy",
@@ -620,17 +560,9 @@
                     "fa_icon": "fas fa-cog",
                     "hidden": true
                 },
-                "tracedir": {
-                    "type": "string",
-                    "description": "Directory to keep pipeline Nextflow logs and reports.",
-                    "default": "${params.outdir}/pipeline_info",
-                    "fa_icon": "fas fa-cogs",
-                    "hidden": true
-                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
-                    "default": true,
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
                 },
@@ -640,40 +572,58 @@
                     "description": "Show all params when using `--help`",
                     "hidden": true,
                     "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
-                },
-                "enable_conda": {
-                    "type": "boolean",
-                    "description": "Run this workflow with Conda. You can also use '-profile conda' instead of providing this parameter.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-bacon"
                 }
             }
         }
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/definitions/main_options"
+            "$ref": "#/$defs/main_options"
         },
         {
-            "$ref": "#/definitions/grouping"
+            "$ref": "#/$defs/consensus_filtering_general"
         },
         {
-            "$ref": "#/definitions/consensus_calling"
+            "$ref": "#/$defs/all_molecules_filtering"
         },
         {
-            "$ref": "#/definitions/main_filtering_options"
+            "$ref": "#/$defs/calling_parameters"
         },
         {
-            "$ref": "#/definitions/reference_genome_options"
+            "$ref": "#/$defs/consensus_filtering"
         },
         {
-            "$ref": "#/definitions/max_job_request_options"
+            "$ref": "#/$defs/ensembl_vep_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/$defs/read_processing_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/grouping"
+        },
+        {
+            "$ref": "#/$defs/consensus_calling"
+        },
+        {
+            "$ref": "#/$defs/mutation_filtering_options"
+        },
+        {
+            "$ref": "#/$defs/asxs_filtering_params"
+        },        
+        {
+            "$ref": "#/$defs/reference_genome_options"
+        },
+        {
+            "$ref": "#/$defs/max_job_request_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }

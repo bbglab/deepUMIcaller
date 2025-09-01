@@ -14,11 +14,12 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     output:
     tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
     tuple val(meta), path("*.pdf")                   , optional: true, emit: report
-    path "versions.yml"                                              , emit: versions
+    path "versions.yml"                                              , topic: versions
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def coords_file = intervals_file ? "--intervals ${intervals_file}" : ""
     def mem_gb = 8
     if (!task.memory) {

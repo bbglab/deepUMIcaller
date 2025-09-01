@@ -17,20 +17,16 @@ process FILTER_LOW_COMPLEXITY {
     
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
+    path (low_complex_bed)
 
     output:
-    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed) , emit: filtered_vcf_bed
-    path  "versions.yml"                      , emit: versions
+    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed)   , emit: filtered_vcf_bed
+    path  "versions.yml"                                                , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def low_complex_bed = task.ext.low_complex ?: ''
-
-    // TODO add condition to check if the file argument is empty, if it is, return same vcf file
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_complex_bed} -u  > ${prefix}.lowcomplexrep_file.bed
 
@@ -52,7 +48,8 @@ process FILTER_LOW_COMPLEXITY {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.low_complex.vcf
 

@@ -122,7 +122,7 @@ workflow RECOUNT_MUTS {
         FILTERLOWMAPPABLE(ch_vcf_lowmappable)
         ch_vcf_for_next = FILTERLOWMAPPABLE.out.filtered_vcf_bed
     } else {
-        println "No bed files provided for low mappability filter or filter_regions=false; skipping bed-based region filters."
+        log.warn "No bed files provided for low mappability filter or filter_regions=false; skipping bed-based region filters."
         ch_vcf_for_next = ch_vcf_vcfbed
     }
 
@@ -150,7 +150,7 @@ workflow RECOUNT_MUTS {
             .join(NSXPOSITION.out.ns_tsv)
             .set { ch_vcf_final }
     } else {
-        println "No bed files provided for nanoseq filters or filter_regions=false; skipping bed-based region filters."
+        log.warn "No bed files provided for nanoseq filters or filter_regions=false; skipping bed-based region filters."
 
         ch_vcf_for_next
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->

@@ -100,13 +100,18 @@ workflow RECOUNT_MUTS {
     PATCHDPALL(ch_pileup_vcfpatched1)
 
 
-    if (params.filter_regions && params.low_complex_file && params.low_mappability_file && params.nanoseq_snp_file && params.nanoseq_noise_file) {
+    def do_filter_regions = params.filter_regions
+    def has_low_mappability_file = params.low_mappability_file
+    def has_nanoseq_snp_file = params.nanoseq_snp_file
+    def has_nanoseq_noise_file = params.nanoseq_noise_file
 
-        PATCHDPALL.out.patched_vcf
-            .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
-            .set { ch_vcf_vcfbed }
+    // First, always create ch_vcf_vcfbed
+    PATCHDPALL.out.patched_vcf
+        .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
+        .set { ch_vcf_vcfbed }
 
-        // FILTER LOW MAPPABILITY
+    // FILTER LOW MAPPABILITY
+    if (do_filter_regions && has_low_mappability_file) {
         ch_vcf_vcfbed
             .combine(low_mappability_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
@@ -115,9 +120,15 @@ workflow RECOUNT_MUTS {
             .set { ch_vcf_lowmappable }
 
         FILTERLOWMAPPABLE(ch_vcf_lowmappable)
+        ch_vcf_for_next = FILTERLOWMAPPABLE.out.filtered_vcf_bed
+    } else {
+        println "No bed files provided for low mappability filter or filter_regions=false; skipping bed-based region filters."
+        ch_vcf_for_next = ch_vcf_vcfbed
+    }
 
-        // FILTER COMMON SNP
-        FILTERLOWMAPPABLE.out.filtered_vcf_bed
+    // FILTER COMMON SNP & NOISE
+    if (do_filter_regions && has_nanoseq_snp_file && has_nanoseq_noise_file) {
+        ch_vcf_for_next
             .combine(nanoseq_snp_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_snp"]
@@ -126,7 +137,6 @@ workflow RECOUNT_MUTS {
 
         FILTERNANOSEQSNP(ch_vcf_nanoseqsnp)
 
-        // FILTER NOISE
         FILTERNANOSEQSNP.out.filtered_vcf_bed
             .combine(nanoseq_noise_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
@@ -138,17 +148,24 @@ workflow RECOUNT_MUTS {
 
         FILTERNANOSEQNOISE.out.filtered_vcf
             .join(NSXPOSITION.out.ns_tsv)
-            .set { ch_vcf_ns }
-
+            .set { ch_vcf_final }
     } else {
-        println "No bed files provided or filter_regions=false; skipping bed-based region filters."
+        println "No bed files provided for nanoseq filters or filter_regions=false; skipping bed-based region filters."
 
-        PATCHDPALL.out.patched_vcf
+        ch_vcf_for_next
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                // If you need to keep the same structure, just pass through
+                [meta, vcf_file, vcf_derived_bed, mask_bed]
+            }
+            .set { ch_vcf_passthrough }
+
+        ch_vcf_for_next
             .join(NSXPOSITION.out.ns_tsv)
-            .set { ch_vcf_ns }
+            .set { ch_vcf_final }
     }
+
     // FILTER N RICH
-    FILTERNRICH(ch_vcf_ns)
+    FILTERNRICH(ch_vcf_final)
     output_vcf = FILTERNRICH.out.filtered_vcf
 
     // FILTER SOMATIC VARIANTS

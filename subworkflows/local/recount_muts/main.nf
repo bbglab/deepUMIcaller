@@ -105,6 +105,19 @@ workflow RECOUNT_MUTS {
     def has_nanoseq_snp_file = params.nanoseq_snp_file
     def has_nanoseq_noise_file = params.nanoseq_noise_file
 
+    // Validate if specie is human to use nanoseq filters
+    if (
+        params.vep_species != "homo_sapiens"
+        && (
+            params.nanoseq_snp_file
+            || params.nanoseq_noise_file
+        )
+    ) {
+        params.nanoseq_snp_file = null
+        params.nanoseq_noise_file = null
+        log.warn "Nanoseq filters unset for other species than homo sapiens"
+    }
+
     // First, always create ch_vcf_vcfbed
     PATCHDPALL.out.patched_vcf
         .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
@@ -151,13 +164,6 @@ workflow RECOUNT_MUTS {
             .set { ch_vcf_final }
     } else {
         log.warn "No bed files provided for nanoseq filters or filter_regions=false; skipping bed-based region filters."
-
-        ch_vcf_for_next
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                // If you need to keep the same structure, just pass through
-                [meta, vcf_file, vcf_derived_bed, mask_bed]
-            }
-            .set { ch_vcf_passthrough }
 
         ch_vcf_for_next
             .join(NSXPOSITION.out.ns_tsv)

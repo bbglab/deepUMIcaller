@@ -12,7 +12,6 @@ include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/l
 include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
 include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/local/patchdepth/main'
 
-include { FILTER_FROM_BED        as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERLOWMAPPABLE } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERNANOSEQSNP  } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERNANOSEQNOISE} from '../../../modules/local/filter/from_bed/main.nf'
@@ -107,18 +106,8 @@ workflow RECOUNT_MUTS {
             .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
             .set { ch_vcf_vcfbed }
 
-        // FILTER LOW COMPLEXITY
-        ch_vcf_vcfbed
-            .combine(low_complex_filter)
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
-            }
-            .set { ch_vcf_lowcomplex }
-
-        FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
-
         // FILTER LOW MAPPABILITY
-        FILTERLOWCOMPLEX.out.filtered_vcf_bed
+        ch_vcf_vcfbed
             .combine(low_mappability_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]

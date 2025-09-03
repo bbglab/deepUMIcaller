@@ -220,11 +220,9 @@ workflow DEEPUMICALLER {
         
 
 
-        //PENDING
-
-        if (params.perform_qcs){
+        // PENDING
+        if (params.perform_qcs | params.splitted_original_sample){
             SORTBAM(ALIGNRAWBAM.out.bam)
-            
         }
 
         // template coordinate sorting for the GroupByUMI
@@ -265,28 +263,35 @@ workflow DEEPUMICALLER {
             bam_to_group = SORTBAMCLEAN.out.bam
         }
     }
-
-    // Group BAMs by original sample name
-    SORTBAM.out.bam
-        .map { meta, bam -> 
-            def original_sample = meta.original_sample ?: meta.id.split('_LPART')[0]
-            tuple(original_sample, meta, bam)
-        }
-        .groupTuple(by: 0)
-        .map { original_sample, metas, bams -> 
-            def new_meta = metas[0].clone()
-            new_meta.id = original_sample
-            new_meta.original_sample = original_sample
-            tuple(new_meta, bams)
-        }
-        .set { grouped_bams }
-
-    // Merge BAMs for each sample
-    MERGEBAM(grouped_bams)
     
+    
+
+    if (params.splitted_original_sample){
+        // Group BAMs by original sample name
+        SORTBAM.out.bam
+            .map { meta, bam -> 
+                def original_sample = meta.original_sample ?: meta.id.split('_LPART')[0]
+                tuple(original_sample, meta, bam)
+            }
+            .groupTuple(by: 0)
+            .map { original_sample, metas, bams -> 
+                def new_meta = metas[0].clone()
+                new_meta.id = original_sample
+                new_meta.original_sample = original_sample
+                tuple(new_meta, bams)
+            }
+            .set { grouped_bams }
+
+        // Merge BAMs for each sample
+        MERGEBAM(grouped_bams)
+        
+        bam_to_group = MERGEBAM.out.bam_bai
+    }
+
+
     if (params.split_by_chrom) {
         // Split merged BAMs by chromosome
-        SPLITBAMCHROM(MERGEBAM.out.bam_bai) 
+        SPLITBAMCHROM(bam_to_group)
 
         def process_bams = { meta, bams ->
             bams.sort { it.name }.collect { bam ->
@@ -312,9 +317,9 @@ workflow DEEPUMICALLER {
             .map { meta, bam -> [meta, bam] } // Ensure correct structure
             //    .view { meta, bam -> "Debug: Final - Meta: $meta, BAM: $bam" }
     } else {
-    // If not splitting by chromosome, just pass the merged BAMs directly
-    non_duplex_bams = MERGEBAM.out.bam_bai
-        .map { meta, bam, bai -> [meta, bam] }
+        // If not splitting by chromosome,
+        // just pass the BAMs directly (either from the merge or the original ones)
+        non_duplex_bams = bam_to_group
     }
 
     //

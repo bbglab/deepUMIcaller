@@ -84,7 +84,24 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
                     "help_text": ""
+                },
+                "split_by_chrom": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable splitting of BAM files by chromosome."
+                },
+                "splitfastq_parts": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Number of parts to split FASTQ files into.",
+                    "default": 20
+                },
+                "splitted_original_sample": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Input CSV contains several FASTQs from the same original library (sample)."
                 }
+
             }
         },
         "mutation_filtering_options": {

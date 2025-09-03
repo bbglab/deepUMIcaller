@@ -22,11 +22,15 @@ process SPLITFASTQ {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def read1 = fastqs[0]
-    def read2 = fastqs.size() > 1 ? fastqs[1] : ''
-    def split_parts = task.ext.split_parts ?: params.splitfastq_parts ?: 20
+    def read1 = fastqs[0]
+    def read2 = fastqs[1]  // assume second read exists
+
+    // Only check workflow parameter, default to 20
+    def split_parts = params.splitfastq_parts ?: 20
+
     """
     mkdir -p split_fastq
-    seqkit split2 -p ${split_parts} -O split_fastq $args -1 ${read1} ${read2 ? "-2 ${read2}" : ""}
+    seqkit split2 -p ${split_parts} -O split_fastq $args -1 ${read1} -2 ${read2}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

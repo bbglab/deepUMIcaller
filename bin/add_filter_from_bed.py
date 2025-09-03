@@ -19,23 +19,17 @@ def update_filter_field(row, filter_name) -> pd.Series:
     Respects alphabetical ordering of the values
     in the updated FILTER column
     """
-    if row[filter_name] == filter_name: 
-        filters = row["FILTER"].split(";")
-        filters.append(row[filter_name])
-        filters.sort(reverse = False)
-        row["FILTER"] = ";".join(filters)
-    
-    # if row[filter_name] == filter_name:
+    if row[filter_name] == filter_name:
 
-    #     if row["FILTER"] != "PASS":
+        if row["FILTER"] != "PASS":
 
-    #         filters = row["FILTER"].split(";")
-    #         filters.append(row[filter_name])
-    #         filters.sort(reverse = False)
-    #         row["FILTER"] = ";".join(filters)
+            filters = row["FILTER"].split(";")
+            filters.append(row[filter_name])
+            filters.sort(reverse = False)
+            row["FILTER"] = ";".join(filters)
         
-    #     else:
-    #         row["FILTER"] = row[filter_name]
+        else:
+            row["FILTER"] = row[filter_name]
     
     return row
 

@@ -2,6 +2,18 @@
 
 Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
+## Pipeline Overview
+
+**deepUMIcaller** is a Nextflow bioinformatics pipeline for duplex sequencing data analysis that:
+- Processes paired-end FASTQ files from duplex sequencing libraries
+- Extracts UMI (Unique Molecular Identifier) information
+- Generates duplex consensus reads for improved accuracy
+- Performs variant calling with VarDict
+- Provides comprehensive quality control and metrics
+- Outputs VCF files and processed BAM files ready for downstream analysis
+
+The pipeline implements the [fgbio Best Practices FASTQ to Consensus Pipeline](https://github.com/fulcrumgenomics/fgbio/blob/main/docs/best-practice-consensus-pipeline.md) with additional quality control and variant calling capabilities.
+
 ## Working Effectively
 
 ### Bootstrap and Setup
@@ -231,3 +243,36 @@ results/
 - Check output file generation and MultiQC reports after runs
 - Document new parameters in nextflow_schema.json
 - This is a bioinformatics pipeline - execution times are expected to be long
+
+## Quick Reference Commands
+
+### Essential Validation Commands
+```bash
+# Validate samplesheet
+python bin/check_samplesheet.py assets/samplesheet.csv /tmp/output.csv --step mapping
+
+# Quick test run (15-30 minutes)
+./nextflow run . -profile test,docker --outdir test_results/
+
+# Full pipeline run
+./nextflow run . -profile docker \
+  --input samplesheet.csv \
+  --ref_fasta reference.fa \
+  --targetsfile targets.bed \
+  --outdir results/
+```
+
+### Common Development Tasks
+```bash
+# Check configuration syntax
+./nextflow config
+
+# List available profiles
+./nextflow run . --help
+
+# Resume failed run
+./nextflow run . -resume -profile docker --input samplesheet.csv --outdir results/
+
+# Clean work directory
+rm -rf work/ .nextflow*
+```

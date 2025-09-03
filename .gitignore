@@ -8,3 +8,7 @@ testing/
 testing*
 *.pyc
 diff*
+test_output*/
+validation_test*/
+nextflow
+nxf-tmp.*

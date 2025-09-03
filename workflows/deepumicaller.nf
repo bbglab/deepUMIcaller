@@ -364,11 +364,12 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
 
-
         SORTBAMALLMOLECULES(ALIGNDUPLEXCONSENSUSBAM.out.bam)
 
-        // Group BAMs by original sample name
-        SORTBAMALLMOLECULES.out.bam
+        if (params.split_by_chrom) {
+
+            // Group BAMs by original sample name
+            SORTBAMALLMOLECULES.out.bam
             .map { meta, bam -> 
                 def original_sample = meta.original_sample ?: meta.id.split('_')[0..-2].join('_')
                 tuple(original_sample, meta, bam)
@@ -382,15 +383,15 @@ workflow DEEPUMICALLER {
             }
             .set { bam_n_index_all_molecules }
 
-        if (params.split_by_chrom) {
             // Merge BAMs for each sample
             MERGEBAMDUPLEX(bam_n_index_all_molecules)
             preASMINUSXSDUPLEXbams = MERGEBAMDUPLEX.out.bam_bai
-        }else{
-            preASMINUSXSDUPLEXbams = bam_n_index_all_molecules.out.bam_bai  
+        } else {
+            SORTBAMALLMOLECULES.out.bam
+                .join( SORTBAMALLMOLECULES.out.csi )
+                .set { preASMINUSXSDUPLEXbams }
         }
 
-        //ASMINUSXSDUPLEX(bam_n_index_duplex)
         ASMINUSXSDUPLEX(preASMINUSXSDUPLEXbams)
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)

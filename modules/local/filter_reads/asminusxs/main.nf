@@ -17,6 +17,7 @@ process ASMINUSXS {
 
 
     script:
+    def args = task.ext.args ?: ''
     def threshold = task.ext.threshold ?: "50"
     def prefix = task.ext.prefix ?: ".filtered.AS-XS_${threshold}"
     prefix = "${meta.id}${prefix}"
@@ -25,7 +26,7 @@ process ASMINUSXS {
     
     // TODO think of reimplementing with click
     """
-    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} $task.cpus
+    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

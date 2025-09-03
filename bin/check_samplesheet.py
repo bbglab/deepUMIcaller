@@ -19,6 +19,7 @@ requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
                     "groupbyumi": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
+                    "allmoleculesfile": ["duplexbam", "csi"]
 }
 
 class RowChecker:
@@ -230,7 +231,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "filterconsensus", "calling"),
+        choices=("mapping", "filterconsensus", "calling", "allmoleculesfile", "groupbyumi"),
         default="mapping",
     )
     return parser.parse_args(argv)

@@ -306,6 +306,11 @@ workflow DEEPUMICALLER {
         .join( SORTBAMALLMOLECULES.out.csi )
         .set { bam_n_index_all_molecules }
 
+    } else {
+        bam_n_index_all_molecules = INPUT_CHECK.out.reads
+    }
+
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile']) {
         ASMINUSXSDUPLEX(bam_n_index_all_molecules)
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
@@ -327,7 +332,7 @@ workflow DEEPUMICALLER {
     // Group by meta.parent_dna
     ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
             .groupTuple(by: 0)
-            .filter { meta, bams -> bams.size() >= 2 }
+            .filter { _meta, bams -> bams.size() >= 2 }
     
     // Run the concatenation process
     MERGEBAMS(ch_grouped_bams)

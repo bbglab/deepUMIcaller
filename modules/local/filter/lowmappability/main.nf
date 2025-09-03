@@ -6,13 +6,6 @@ process FILTER_LOW_MAPPABILITY {
             'https://depot.galaxyproject.org/singularity/pybedtools:0.9.1--py38he0f268d_0' : 
             'biocontainers/pybedtools:0.9.1--py38he0f268d_0' }"
 
-    containerOptions = {
-        def low_mappable_bed = task.ext.low_mappable ? file(task.ext.low_mappable).parent : ''
-        workflow.containerEngine == 'singularity' && low_mappable_bed ? 
-            "--bind ${low_mappable_bed}:${low_mappable_bed}" : 
-            ""
-    }
-
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
     path (low_mappable_bed)

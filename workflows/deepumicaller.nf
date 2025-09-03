@@ -196,7 +196,7 @@ workflow DEEPUMICALLER {
         }
 
         FASTQTOBAM(split_fastqs_ch)
-        ch_versions = ch_versions.mix(FASTQTOBAM.out.versions.first())
+
 
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
@@ -296,7 +296,7 @@ workflow DEEPUMICALLER {
             }
         }
 
-        split_bams = SPLITBAMCHROM.out.chrom_bams
+        non_duplex_bams = SPLITBAMCHROM.out.chrom_bams
             .map { meta, bams -> process_bams(meta, bams) }
             .flatMap { it }
             .toSortedList { a, b -> a[0].id <=> b[0].id }
@@ -313,7 +313,7 @@ workflow DEEPUMICALLER {
             //    .view { meta, bam -> "Debug: Final - Meta: $meta, BAM: $bam" }
     } else {
     // If not splitting by chromosome, just pass the merged BAMs directly
-    split_bams = MERGEBAM.out.bam_bai
+    non_duplex_bams = MERGEBAM.out.bam_bai
         .map { meta, bam, bai -> [meta, bam] }
     }
 
@@ -330,7 +330,7 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio GroupReadsByUmi
         // requires input template coordinate sorted
-        GROUPREADSBYUMIDUPLEX(split_bams, "Paired")
+        GROUPREADSBYUMIDUPLEX(non_duplex_bams, "Paired")
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
 
 
@@ -380,14 +380,18 @@ workflow DEEPUMICALLER {
                 new_meta.original_sample = original_sample
                 tuple(new_meta, bams)
             }
-            .set { grouped_bamsduplex }
+            .set { bam_n_index_all_molecules }
 
-
-        // Merge BAMs for each sample
-        MERGEBAMDUPLEX(grouped_bamsduplex)
+        if (params.split_by_chrom) {
+            // Merge BAMs for each sample
+            MERGEBAMDUPLEX(bam_n_index_all_molecules)
+            preASMINUSXSDUPLEXbams = MERGEBAMDUPLEX.out.bam_bai
+        }else{
+            preASMINUSXSDUPLEXbams = bam_n_index_all_molecules.out.bam_bai  
+        }
 
         //ASMINUSXSDUPLEX(bam_n_index_duplex)
-        ASMINUSXSDUPLEX(MERGEBAMDUPLEX.out.bam_bai)
+        ASMINUSXSDUPLEX(preASMINUSXSDUPLEXbams)
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 

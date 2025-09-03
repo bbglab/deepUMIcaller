@@ -24,25 +24,37 @@ process SPLITBAMCHROM {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+
+    // Define chromosomes based on species
+    def chromosomes = ""
+    if (params.vep_species == "homo_sapiens") {
+        chromosomes = "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X Y M"
+    } else if (params.vep_species == "mus_musculus") {
+        chromosomes = "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 X Y M"
+    } else {
+        error "Unsupported species: ${params.vep_species}. Only 'homo_sapiens' and 'mus_musculus' are supported."
+    }
+
+
     """
     # Get total reads in the input BAM
     total_reads=\$(samtools view -@ $task.cpus -c $bam)
     echo "Chromosome Total_Reads Unpaired_Reads Paired_Reads Percentage_Unpaired((unpaired/unpaired+paired)*100) Percentage_Paired(paired/total)" > ${prefix}_filtering_stats.txt
 
     # Define chromosomes to process
-    CHROMOSOMES='1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X Y M'
+    CHROMOSOMES='${chromosomes}'
 
     # Split for standard chromosomes and their associated sequences
     for chrom in \$CHROMOSOMES; do
         refs=\$(samtools idxstats $bam | cut -f1 | grep -E '^chr'\$chrom'\$|^chr'\$chrom'_')
         if [ ! -z "\$refs" ]; then
-            samtools view  -f 3 -F 2304  $args -@ $task.cpus -b $bam \$refs -o ${prefix}.chr\${chrom}.bam
+            samtools view $args -@ $task.cpus -b $bam \$refs -o ${prefix}.chr\${chrom}.bam
             samtools index -@ $task.cpus ${prefix}.chr\${chrom}.bam
 
             # Count reads for this chromosome
             chrom_total=\$(samtools view -@ $task.cpus -c $bam \$refs)
             unpaired=\$(samtools view -@ $task.cpus -c -f 1 -F 2 $bam \$refs)
-            paired=\$(samtools view -@ $task.cpus -c -f 3 -F 2304 ${prefix}.chr\${chrom}.bam)
+            paired=\$(samtools view -@ $task.cpus -c $args ${prefix}.chr\${chrom}.bam)
             percentage_unpaired=\$(awk -v unpaired="\$unpaired" -v paired="\$paired" 'BEGIN {total = unpaired + paired; if (total > 0) printf "%.2f", (unpaired / total) * 100; else print "0.00"}')
             percentage_paired=\$(awk -v paired="\$paired" -v total="\$chrom_total" 'BEGIN {if (total > 0) printf "%.2f", (paired / total) * 100; else print "0.00"}')
             echo "chr\${chrom} \$chrom_total \$unpaired \$paired \$percentage_unpaired \$percentage_paired" >> ${prefix}_filtering_stats.txt
@@ -56,7 +68,7 @@ process SPLITBAMCHROM {
     samtools idxstats $bam | cut -f1 | grep -E 'chrUn|HLA|chrEBV' > unknown_refs.txt
     if [ -s unknown_refs.txt ]; then
         # Create unknown.bam with chrUn, HLA, and chrEBV sequences (excluding unpaired)
-        samtools view  -f 3 -F 2304  $args -@ $task.cpus -b $bam \$(cat unknown_refs.txt) -o ${prefix}.unknown.bam
+        samtools view  $args -@ $task.cpus -b $bam \$(cat unknown_refs.txt) -o ${prefix}.unknown.bam
         samtools index -@ $task.cpus ${prefix}.unknown.bam
 
         # Count reads for unknown sequences

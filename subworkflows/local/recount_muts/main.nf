@@ -13,6 +13,7 @@ include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/l
 include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/local/patchdepth/main'
 
 include { FILTER_FROM_BED        as FILTERLOWMAPPABLE } from '../../../modules/local/filter/from_bed/main.nf'
+include { FILTER_FROM_BED        as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERNANOSEQSNP  } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERNANOSEQNOISE} from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_N_RICH          as FILTERNRICH       } from '../../../modules/local/filter/nrich/main.nf'
@@ -102,6 +103,7 @@ workflow RECOUNT_MUTS {
 
     def do_filter_regions = params.filter_regions
     def has_low_mappability_file = params.low_mappability_file
+    def has_low_complex_file = params.low_complex_file
 
     // Validate if specie is human to use nanoseq filters
     def has_nanoseq_snp_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_snp_file : null
@@ -116,55 +118,71 @@ workflow RECOUNT_MUTS {
         .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
         .set { ch_vcf_vcfbed }
 
+    def ch_vcf_current = ch_vcf_vcfbed
+
     // FILTER LOW MAPPABILITY
     if (do_filter_regions && has_low_mappability_file) {
-        ch_vcf_vcfbed
+        ch_vcf_current
             .combine(low_mappability_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]
             }
             .set { ch_vcf_lowmappable }
-
         FILTERLOWMAPPABLE(ch_vcf_lowmappable)
-        ch_vcf_for_next = FILTERLOWMAPPABLE.out.filtered_vcf_bed
+        ch_vcf_current = FILTERLOWMAPPABLE.out.filtered_vcf_bed
     } else {
         log.warn "No bed files provided for low mappability filter or filter_regions=false; skipping bed-based region filters."
-        ch_vcf_for_next = ch_vcf_vcfbed
+    }
+
+    // FILTER LOW COMPLEX REPETITIVE
+    if (do_filter_regions && has_low_complex_file) {
+        ch_vcf_current
+            .combine(low_complex_filter)
+            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
+                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
+            }
+            .set { ch_vcf_lowcomplex }
+        FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
+        ch_vcf_current = FILTERLOWCOMPLEX.out.filtered_vcf_bed
+    } else {
+        log.warn "No bed files provided for low complex repetitive filter or filter_regions=false; skipping bed-based region filters."
     }
 
     // FILTER COMMON SNP & NOISE
     if (do_filter_regions && has_nanoseq_snp_file && has_nanoseq_noise_file) {
-        ch_vcf_for_next
+        ch_vcf_current
             .combine(nanoseq_snp_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_snp"]
             }
             .set { ch_vcf_nanoseqsnp }
-
         FILTERNANOSEQSNP(ch_vcf_nanoseqsnp)
-
         FILTERNANOSEQSNP.out.filtered_vcf_bed
             .combine(nanoseq_noise_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_noise"]
             }
             .set { ch_vcf_nanoseqnoise }
-
         FILTERNANOSEQNOISE(ch_vcf_nanoseqnoise)
-
-        FILTERNANOSEQNOISE.out.filtered_vcf
+        FILTERNANOSEQNOISE.out.filtered_vcf_bed
             .join(NSXPOSITION.out.ns_tsv)
             .set { ch_vcf_final }
     } else {
-        log.warn "No bed files provided for nanoseq filters or filter_regions=false; skipping bed-based region filters."
-
-        ch_vcf_for_next
+        log.warn "No bed files provided for nanoseq filters, filter_regions=false or species is not homo sapiens; skipping bed-based region filters."
+        ch_vcf_current
             .join(NSXPOSITION.out.ns_tsv)
             .set { ch_vcf_final }
     }
 
     // FILTER N RICH
-    FILTERNRICH(ch_vcf_final)
+    ch_vcf_final
+    .map { tuple -> 
+        def (meta, vcf_file, vcf_derived_bed, ns_position_file, ns_position_index) = tuple
+        [meta, vcf_file, ns_position_file, ns_position_index]
+    }
+    .set { ch_vcf_nrich_input }
+
+    FILTERNRICH(ch_vcf_nrich_input)
     output_vcf = FILTERNRICH.out.filtered_vcf
 
     // FILTER SOMATIC VARIANTS

@@ -114,11 +114,20 @@ It should be a BED file in BED4-5-6 format with a single row per exon or continu
 
 To get more accurate metrics for on target proportion and possibly other downstream sequencing metrics we recommend providing a BED file with the targeted regions with an extension of 250 bp on each boundary. This will include reads that partially overlap with the target region but not fully.
 
-### Low complexity file
+### Filtering bed files
+#### Low complexity file
 
-This file comes from RepeatMasker regions and informs of genomic regions that are repetitive and can cause problems when aligning or calling variants in them.
+This file identifies repetitive genomic regions from [RepeatMasker annotations](https://repeatmasker.org/species/hg.html) that can cause alignment artifacts and variant calling errors.
 
-### Low mappability
+To generate this file from RepeatMasker output, we provide a conversion script:
+
+```console
+python assets/generate_low_complex_rep_bed.py --input hg38.fa.out.gz --output low_complexity_regions.bed
+```
+
+The script accepts RepeatMasker `.out` files (compressed or uncompressed) and generates a BED format file containing filtered repetitive regions suitable for variant calling exclusion. Quality filtering removes short repeats and low-confidence annotations.
+
+#### Low mappability
 
 This file comes from an article describing [The ENCODE Blacklist: Identification of Problematic Regions of the Genome](https://www.nature.com/articles/s41598-019-45839-z#data-availability).
 Use the appropriate version for your genome version.

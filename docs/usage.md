@@ -117,15 +117,17 @@ To get more accurate metrics for on target proportion and possibly other downstr
 ### Filtering bed files
 #### Low complexity file
 
-This file identifies repetitive genomic regions from [RepeatMasker annotations](https://repeatmasker.org/species/hg.html) that can cause alignment artifacts and variant calling errors.
+This file identifies repetitive genomic regions from [RepeatMasker annotations](https://repeatmasker.org/) that can cause alignment artifacts and variant calling errors. RepeatMasker output files for commonly used human reference genomes can be downloaded from the [RepeatMasker human pages](https://repeatmasker.org/species/hg.html).
 
 To generate this file from RepeatMasker output, we provide a conversion script:
 
 ```console
-python assets/generate_low_complex_rep_bed.py --input hg38.fa.out.gz --output low_complexity_regions.bed
+python assets/generate_low_complex_rep_bed.py hg38.fa.out.gz low_complexity_regions.bed
 ```
 
-The script accepts RepeatMasker `.out` files (compressed or uncompressed) and generates a BED format file containing filtered repetitive regions suitable for variant calling exclusion. Quality filtering removes short repeats and low-confidence annotations.
+The script accepts RepeatMasker `.out` files (compressed or uncompressed) and generates a BED format file containing filtered repetitive regions suitable for variant calling exclusion. Optional chromosome filtering is available to restrict output to specific chromosomes (e.g., `--valid-chromosomes chr1,chr2,chrX`).
+
+This can be done for any species.
 
 #### Low mappability
 

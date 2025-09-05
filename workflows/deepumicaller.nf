@@ -196,7 +196,7 @@ workflow DEEPUMICALLER {
         }
 
         FASTQTOBAM(split_fastqs_ch)
-
+        FASTQTOBAM.out.bam.view { meta, bam -> "Debug FASTQTOBAM: BAM - Meta: $meta, BAM: $bam" }
 
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
@@ -252,6 +252,7 @@ workflow DEEPUMICALLER {
                 bam_to_group = BAM_FILTER_READS.out.bam
             } else {
                 bam_to_group = SORTBAMCLEAN.out.bam
+                bam_n_index_split =  SORTBAMCLEAN.out.bam.join(SORTBAMCLEAN.out.csi)
             }
 
 
@@ -261,6 +262,7 @@ workflow DEEPUMICALLER {
                 ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
             }
             bam_to_group = SORTBAMCLEAN.out.bam
+            bam_n_index_split =  SORTBAMCLEAN.out.bam.join(SORTBAMCLEAN.out.csi)
         }
     }
     
@@ -281,17 +283,21 @@ workflow DEEPUMICALLER {
                 tuple(new_meta, bams)
             }
             .set { grouped_bams }
+        grouped_bams.view { meta, bams -> "Debug: Grouped - Meta: $meta, BAMs: ${bams*.name}" }
 
         // Merge BAMs for each sample
         MERGEBAM(grouped_bams)
-        
-        bam_to_group = MERGEBAM.out.bam_bai
+
+        bam_n_index_merge = MERGEBAM.out.bam_bai
     }
 
-
+    bam_n_index_ch = params.splitted_original_sample ? bam_n_index_merge : bam_n_index_split
     if (params.split_by_chrom) {
         // Split merged BAMs by chromosome
-        SPLITBAMCHROM(bam_to_group)
+        //bam_n_index_ch = params.remove_offtargets ? bam_n_index_clean : SORTBAMCLEAN.out.bam.join(SORTBAMCLEAN.out.csi)
+
+        //bam_to_group = MERGEBAM.out.bam_bai
+        SPLITBAMCHROM(bam_n_index_ch)
 
         def process_bams = { meta, bams ->
             bams.sort { it.name }.collect { bam ->

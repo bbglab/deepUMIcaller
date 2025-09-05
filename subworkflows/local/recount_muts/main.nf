@@ -1,7 +1,8 @@
 
 // Import required modules
 
-include { BEDTOOLS_MERGE         as READJUSTREGIONS   } from '../../../modules/local/bedtools/merge/main'
+include { BEDTOOLS_MERGE         as READJUSTREGIONS_AMP   } from '../../../modules/local/bedtools/merge/main'
+include { BEDTOOLS_MERGE         as READJUSTREGIONS_NOAMP   } from '../../../modules/local/bedtools/merge/main'
 
 include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/nf-core/samtools/mpileup/main'
 include { SAMTOOLS_MPILEUP       as PILEUPBAMALL      } from '../../../modules/nf-core/samtools/mpileup/main'
@@ -48,14 +49,16 @@ workflow RECOUNT_MUTS {
     .join( bed_file )
     .set { ch_vcf_bed }
 
-    READJUSTREGIONS(ch_vcf_bed)
-
+    // With amplification
+    READJUSTREGIONS_AMP(ch_vcf_bed)
+    // Without amplification
+    READJUSTREGIONS_NOAMP(ch_vcf_bed)
     
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
     bam_n_index
-    .join( READJUSTREGIONS.out.regions_plus_variants_bed )
+    .join( READJUSTREGIONS_AMP.out.regions_plus_variants_bed )
     .set { ch_bam_bai_bed }
 
     PILEUPBAM(ch_bam_bai_bed, reference_fasta)
@@ -66,20 +69,18 @@ workflow RECOUNT_MUTS {
     
 
     PILEUPBAM.out.mpileup
-    .join( READJUSTREGIONS.out.vcf_bed )
+    .join( READJUSTREGIONS_AMP.out.vcf_bed )
     .set { ch_pileup_vcfbed }
 
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
     bam_n_index_all_mol
-    .join( READJUSTREGIONS.out.vcf_bed )
+    .join( READJUSTREGIONS_AMP.out.vcf_bed )
     .set { ch_bamall_bai_bed }
 
     PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
     
-
-
     QUERYTABIX(ch_pileup_vcfbed)
 
     QUERYTABIX.out.mutated_tsv
@@ -115,9 +116,9 @@ workflow RECOUNT_MUTS {
 
     // First, always create ch_vcf_vcfbed
     PATCHDPALL.out.patched_vcf
-        .join(READJUSTREGIONS.out.vcf_bed_mut_ids)
+        .join(READJUSTREGIONS_AMP.out.vcf_bed_mut_ids)
         .set { ch_vcf_vcfbed }
-
+    
     def ch_vcf_current = ch_vcf_vcfbed
 
     // FILTER LOW MAPPABILITY
@@ -148,9 +149,16 @@ workflow RECOUNT_MUTS {
         log.warn "No bed files provided for low complex repetitive filter or filter_regions=false; skipping bed-based region filters."
     }
 
+    ch_vcf_current
+        .join(READJUSTREGIONS_NOAMP.out.vcf_bed_mut_ids)
+        .map { meta, vcf_file, vcf_derived_bed, vcf_derived_bed_noamp ->
+             [meta, vcf_file, vcf_derived_bed_noamp]
+         }
+        .set { ch_vcf_current_noamp }
+        
     // FILTER COMMON SNP & NOISE
     if (do_filter_regions && has_nanoseq_snp_file && has_nanoseq_noise_file) {
-        ch_vcf_current
+        ch_vcf_current_noamp
             .combine(nanoseq_snp_filter)
             .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
                 [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_snp"]

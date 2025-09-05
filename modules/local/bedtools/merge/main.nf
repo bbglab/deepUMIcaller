@@ -23,7 +23,7 @@ process BEDTOOLS_MERGE {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def amplify = task.ext.amplify ?: 5             // how many bases do you want to extend the region surrounding the variable
+    def amplify = task.ext.amplify ?: 0             // how many bases do you want to extend the region surrounding the variable
 
     if ("$bed" == "${prefix}.bed") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     //  awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\

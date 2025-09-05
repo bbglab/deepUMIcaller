@@ -146,6 +146,13 @@ These files identify sites overlapping common SNPs and noisy or variable genomic
 
 Both files are available for GRCh37 and GRCh38 at the [shared folder](https://drive.google.com/drive/folders/1wqkgpRTuf4EUhqCGSLA4fIg9qEEw3ZcL) from the Martincorena Group, at the Wellcome Sanger Institute.
 
+#### **Overlap between BED files**
+
+There is some overlap between the BED files used for filtering:
+
+<p align="center">
+  <img src="../assets/images/venn_diagram_masks.png" alt="Alt text" width="500"/>
+</p>
 
 ### Global exons file
 

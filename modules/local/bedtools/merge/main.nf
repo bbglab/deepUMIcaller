@@ -29,7 +29,7 @@ process BEDTOOLS_MERGE {
     //  awk '{ sum = length(\$4) + length(\$5); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum }' | \\
     """
     grep -v '#' ${vcf} | \\
-        awk '{ sum = length(\$4); print \$1"\\t"\$2-$amplify"\\t"\$2 + sum + $amplify"\\t"\$1";"\$2";"\$4";"\$5}' | \\
+        awk '{ sum = length(\$4); print \$1"\\t"\$2-1-$amplify"\\t"\$2 -1 + sum + $amplify"\\t"\$1";"\$2";"\$4";"\$5}' | \\
         sort -k1,1 -k2,3n \\
         > ${prefix}.vcf_derived.many.withID.bed
     

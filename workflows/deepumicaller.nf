@@ -306,11 +306,14 @@ workflow DEEPUMICALLER {
         .join( SORTBAMALLMOLECULES.out.csi )
         .set { bam_n_index_all_molecules }
 
-    } else {
-        bam_n_index_all_molecules = INPUT_CHECK.out.reads
     }
 
     if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile']) {
+
+        if (params.step == 'allmoleculesfile') {
+            bam_n_index_all_molecules = INPUT_CHECK.out.reads
+        }
+
         ASMINUSXSDUPLEX(bam_n_index_all_molecules)
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)

@@ -325,49 +325,50 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step == 'filterconsensus') {
-        duplex_filtered_init_bam = INPUT_CHECK.out.reads
-    }
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus']) {
 
-    // Group by meta.parent_dna
-    ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
-            .groupTuple(by: 0)
-            .filter { _meta, bams -> bams.size() >= 2 }
-    
-    // Run the concatenation process
-    MERGEBAMS(ch_grouped_bams)
+        if (params.step == 'filterconsensus') {
+            duplex_filtered_init_bam = INPUT_CHECK.out.reads
+        }
 
-    // Run sorting by query
-    SORTBAMMERGED(MERGEBAMS.out.bam)
+        // Group by meta.parent_dna
+        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
+                .groupTuple(by: 0)
+                .filter { _meta, bams -> bams.size() >= 2 }
+        
+        // Run the concatenation process
+        MERGEBAMS(ch_grouped_bams)
 
-    duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
+        // Run sorting by query
+        SORTBAMMERGED(MERGEBAMS.out.bam)
 
-    // store csv with all AM BAMs
-    duplex_filtered_bam
-        .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
-        .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
-        .set { bam_csv_file }
+        duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
+
+        // store csv with all AM BAMs
+        duplex_filtered_bam
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+            .set { bam_csv_file }
 
 
-    FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-    SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
-    
-    // join the bam and the bamindex channels to have
-    // the ones from the same samples together
-    SORTBAMAMCLEAN.out.bam
-    .join( SORTBAMAMCLEAN.out.csi )
-    .set { bam_n_index_duplex_clean }
+        FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
+        SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+        
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMAMCLEAN.out.bam
+        .join( SORTBAMAMCLEAN.out.csi )
+        .set { bam_n_index_duplex_clean }
 
-    if (params.perform_qcs){
-        // requires input coordinate sorted
-        QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
-    }
+        if (params.perform_qcs){
+            // requires input coordinate sorted
+            QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
+        }
 
-    //
-    // DUPLEX CALLS
-    //
-    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
+        //
+        // DUPLEX CALLS
+        //
         FILTERCONSENSUSREADSDUPLEX(duplex_filtered_bam, ch_ref_fasta)
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
@@ -393,7 +394,7 @@ workflow DEEPUMICALLER {
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus', 'calling']) {
     
         // ASSIGN cons_med_bam = to our input bam
         if (params.step == 'calling') {

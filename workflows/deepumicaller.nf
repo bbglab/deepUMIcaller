@@ -399,6 +399,7 @@ workflow DEEPUMICALLER {
         // ASSIGN cons_med_bam = to our input bam
         if (params.step == 'calling') {
             cons_duplex_bam = INPUT_CHECK.out.reads
+            bam_n_index_duplex_clean = INPUT_CHECK.out.reads
         }
 
         cons_duplex_bam.map{[it[0], it[1]]}

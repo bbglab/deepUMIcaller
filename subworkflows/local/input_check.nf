@@ -26,8 +26,8 @@ def create_input_channel(LinkedHashMap row, step) {
     
     // create meta map
     def meta = [:]
-    meta.id             = row.sample
-    meta.sample = row.sample.split('_T')[0] 
+    meta.id             = row.id
+    meta.sample         = row.sample
 
     // add path(s) of the fastq file(s) to the meta map
     def input_meta = []

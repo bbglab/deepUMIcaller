@@ -120,18 +120,15 @@ class RowChecker:
 
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
-        if len({pair[0] for pair in self._seen}) < len(self._seen):
-            counts = Counter(pair[0] for pair in self._seen)
-            seen = Counter()
-            for row in self.modified:
-                sample = row[self._sample_col]
-                row['original_sample'] = sample
-                seen[sample] += 1
-                if counts[sample] > 1:
-                    row[self._sample_col] = f"{sample}_LPART{seen[sample]}"
-        else:
-            for row in self.modified:
-                row['original_sample'] = row[self._sample_col]
+        counts = Counter(pair[0] for pair in self._seen)
+        seen = Counter()
+        for row in self.modified:
+            sample = row[self._sample_col]
+            seen[sample] += 1
+            if counts[sample] > 1:
+                row['id'] = f"{sample}_LPART{seen[sample]}"
+            else:
+                row['id'] = sample
 
 
 def read_head(handle, num_lines=10):
@@ -207,8 +204,8 @@ def check_samplesheet(file_in, file_out):
                 logger.critical(f"{str(error)} On line {i + 2}.")
                 sys.exit(1)
         checker.validate_unique_samples()
-    # Add 'original_sample' to the list of fieldnames
-    header = list(reader.fieldnames) + ['original_sample']
+    # Remove 'original_sample' from the output header
+    header = list(reader.fieldnames) + ['id']
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_out.open(mode="w", newline="") as out_handle:
         writer = csv.DictWriter(out_handle, header, delimiter=",")

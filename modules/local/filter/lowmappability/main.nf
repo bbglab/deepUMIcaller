@@ -1,39 +1,23 @@
-// /workspace/projects/bladder_ts/scripts/add_filters_vcf
-
 process FILTER_LOW_MAPPABILITY {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_low_memory'
     
     conda "bioconda::pybedtools=0.9.1--py38he0f268d_0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
             'https://depot.galaxyproject.org/singularity/pybedtools:0.9.1--py38he0f268d_0' : 
             'biocontainers/pybedtools:0.9.1--py38he0f268d_0' }"
 
-    containerOptions = {
-        def low_mappable_bed = task.ext.low_mappable ? file(task.ext.low_mappable).parent : ''
-        workflow.containerEngine == 'singularity' && low_mappable_bed ? 
-            "--bind ${low_mappable_bed}:${low_mappable_bed}" : 
-            ""
-    }
-
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
+    path (low_mappable_bed)
 
     output:
     tuple val(meta), path("*.low_mappable.vcf"), emit: filtered_vcf
-    path  "versions.yml"                       , emit: versions
+    path  "versions.yml"                       , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def low_mappable_bed = task.ext.low_mappable ?: ''
-
-    // TODO add condition to check if the file argument is empty, if it is, return same vcf file
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_mappable_bed} -u  > ${prefix}.lowmappable_file.bed
 
@@ -55,7 +39,8 @@ process FILTER_LOW_MAPPABILITY {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.low_mappable.vcf
 

@@ -28,16 +28,15 @@ process ENSEMBLVEP_VEP {
     tuple val(meta), path("*.tab.gz")  , optional:true, emit: tab
     tuple val(meta), path("*.json.gz") , optional:true, emit: json
     path "*.summary.html"              , optional:true, emit: report
-    path "versions.yml"                               , emit: versions
+    path "versions.yml"                               , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
     def file_extension = args.contains("--vcf") ? 'vcf' : args.contains("--json")? 'json' : args.contains("--tab")? 'tab' : 'vcf'
     def compress_cmd = args.contains("--compress_output") ? '' : '--compress_output bgzip'
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def dir_cache = cache ? "\${PWD}/${cache}" : "/.vep"
     def reference = fasta ? "--fasta $fasta" : ""
 
@@ -68,7 +67,8 @@ process ENSEMBLVEP_VEP {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.ann.vcf.gz
     touch ${prefix}.ann.tab.gz

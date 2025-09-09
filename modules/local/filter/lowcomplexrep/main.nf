@@ -2,38 +2,24 @@
 
 process FILTER_LOW_COMPLEXITY {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_low_memory'
     
     conda "bioconda::pybedtools=0.9.1--py38he0f268d_0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
             'https://depot.galaxyproject.org/singularity/pybedtools:0.9.1--py38he0f268d_0' : 
             'biocontainers/pybedtools:0.9.1--py38he0f268d_0' }"
-
-    containerOptions = {
-        def low_complex_path = task.ext.low_complex ? file(task.ext.low_complex).parent : ''
-        workflow.containerEngine == 'singularity' && low_complex_path ? 
-            "--bind ${low_complex_path}:${low_complex_path}" : 
-            ""
-    }
     
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)
+    path (low_complex_bed)
 
     output:
-    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed) , emit: filtered_vcf_bed
-    path  "versions.yml"                      , emit: versions
+    tuple val(meta), path("*.low_complex.vcf"), path(vcf_derived_bed)   , emit: filtered_vcf_bed
+    path  "versions.yml"                                                , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def low_complex_bed = task.ext.low_complex ?: ''
-
-    // TODO add condition to check if the file argument is empty, if it is, return same vcf file
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     bedtools intersect -a ${vcf_derived_bed} -b ${low_complex_bed} -u  > ${prefix}.lowcomplexrep_file.bed
 
@@ -55,7 +41,8 @@ process FILTER_LOW_COMPLEXITY {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.low_complex.vcf
 

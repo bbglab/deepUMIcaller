@@ -1,6 +1,5 @@
 process PICARD_BEDTOINTERVALLIST {
     tag "$meta.id"
-    label 'process_single'
 
     conda "bioconda::picard=3.0.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -14,14 +13,13 @@ process PICARD_BEDTOINTERVALLIST {
 
     output:
     tuple val(meta), path('*.interval_list'), emit: interval_list
-    path  "versions.yml"                    , emit: versions
+    path  "versions.yml"                    , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def args_file = arguments_file ? "--arguments_file ${arguments_file}" : ""
 
     def avail_mem = 3072
@@ -47,17 +45,9 @@ process PICARD_BEDTOINTERVALLIST {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
-    echo "picard \\
-        -Xmx${avail_mem}M \\
-        BedToIntervalList \\
-        --INPUT $bed \\
-        --OUTPUT ${prefix}.interval_list \\
-        --SEQUENCE_DICTIONARY $dict \\
-        --TMP_DIR . \\
-        $args_file $args"
-
     touch ${prefix}.interval_list
 
     cat <<-END_VERSIONS > versions.yml

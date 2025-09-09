@@ -1,8 +1,7 @@
 process ASMINUSXS {
     tag "$meta.id"
-    label 'process_medium'
-    label 'process_medium_high_memory'
-
+    label 'process_memory_intensive'
+    
     conda "bioconda::pysam-0.21.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pysam-0.21.0--py38h15b938a_1' :
@@ -14,29 +13,30 @@ process ASMINUSXS {
     output:
     tuple val(meta), path("*.AS-XS_*.bam"), emit: bam
     tuple val(meta), path("*.discarded_AS-XS_*.bam"), emit: discarded_bam
-    path  "versions.yml"                  , emit: versions
+    path  "versions.yml"                  , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
     def threshold = task.ext.threshold ?: "50"
-    def prefix = task.ext.prefix ?: "${meta.id}.filtered.AS-XS_${threshold}"
-    def prefix_discard = task.ext.prefix_discard ?: "${meta.id}.discarded_AS-XS_${threshold}"
+    def prefix = task.ext.prefix ?: ".filtered.AS-XS_${threshold}"
+    prefix = "${meta.id}${prefix}"
+    def prefix_discard = task.ext.prefix_discard ?: ".discarded_AS-XS_${threshold}"
+    prefix_discard = "${meta.id}${prefix_discard}"
     
+    // TODO think of reimplementing with click
     """
-    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} $task.cpus
+    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        pysam: 0.21.0
     END_VERSIONS
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def prefix_discard = task.ext.prefix_discard ?: "${meta.id}"
     """
     touch ${prefix}.bam
@@ -46,7 +46,7 @@ process ASMINUSXS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        pysam: 0.21.0
     END_VERSIONS
     """
 }

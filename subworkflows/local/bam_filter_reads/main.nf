@@ -19,10 +19,10 @@ workflow BAM_FILTER_READS {
 
     main:
 
-    ch_versions = Channel.empty()
+    
 
     FGSELECTREADS(bam_n_index, intervals_file)
-    ch_versions = ch_versions.mix(FGSELECTREADS.out.versions.first())
+    
 
     // join the created channel with the filtered reads to have
     // the ones from the same samples together
@@ -32,15 +32,13 @@ workflow BAM_FILTER_READS {
     .set { ch_bam_bai_reads }
 
     FILTERBAM(ch_bam_bai_reads,  [])
-    ch_versions = ch_versions.mix(FILTERBAM.out.versions.first())
+    
 
     SORTBAMFIXED(FILTERBAM.out.bam)
-    ch_versions = ch_versions.mix(SORTBAMFIXED.out.versions.first())
+    
 
 
     emit:
 
-    bam        = SORTBAMFIXED.out.bam     // channel: [ val(meta), [ bam ] ]
-    versions   = ch_versions              // channel: [ versions.yml ]
-    
+    bam        = SORTBAMFIXED.out.bam     // channel: [ val(meta), [ bam ] ]    
 }

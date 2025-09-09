@@ -1,7 +1,7 @@
 process SAMTOOLS_DEPTH {
     tag "$meta.id"
-    label 'process_medium'
-
+    label 'process_low'
+    
     conda "bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/samtools:1.20--h50ea8bc_1' :
@@ -12,14 +12,13 @@ process SAMTOOLS_DEPTH {
 
     output:
     tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     samtools \\
         depth \\

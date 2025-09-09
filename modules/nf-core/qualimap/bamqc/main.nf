@@ -1,8 +1,6 @@
 process QUALIMAP_BAMQC {
     tag "$meta.id"
-    label 'process_medium'
     label 'process_high_memory'
-    label 'process_superhigh_cpus'
 
     conda "bioconda::qualimap=2.2.2d"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -15,14 +13,13 @@ process QUALIMAP_BAMQC {
 
     output:
     tuple val(meta), path("${prefix}"), emit: results
-    path  "versions.yml"              , emit: versions
+    path  "versions.yml"              , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args   ?: ''
-    prefix   = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
 
     def collect_pairs = meta.single_end ? '' : '--collect-overlap-pairs'
     def memory = (task.memory.mega*0.8).intValue() + 'M'

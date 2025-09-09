@@ -18,7 +18,6 @@ workflow INPUT_CHECK {
 
     emit:
     reads                                     // channel: [ val(meta), [ reads ] ]
-    versions = SAMPLESHEET_CHECK.out.versions // channel: [ versions.yml ]
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
@@ -26,8 +25,12 @@ def create_input_channel(LinkedHashMap row, step) {
     
     // create meta map
     def meta = [:]
+
     meta.id             = row.id
     meta.sample         = row.sample
+
+    // Set parent_dna to row.parent_dna if present and not empty, else use sample
+    meta.parent_dna     = (row.containsKey('parent_dna') && row.parent_dna) ? row.parent_dna : row.sample
 
     // add path(s) of the fastq file(s) to the meta map
     def input_meta = []
@@ -41,20 +44,21 @@ def create_input_channel(LinkedHashMap row, step) {
         }
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
-    // For all the calling, only bams/indexes are required
+    // For all the calling, only BAMs/indexes are required
     else if (step=='calling'){
-        if (!file(row.bam).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
+        if (!file(row.duplexbam).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Duplex BAM file does not exist!\n${row.duplexbam}"
         }
         if (!file(row.csi).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
         }
-        input_meta = [ meta, [ file(row.bam) ], [ file(row.csi) ] ]
+        input_meta = [ meta, [ file(row.duplexbam) ], [ file(row.csi) ] ]
     }
-    // Only the bam is required to the meta map for the other steps (e.g. groupreadsbyumi)
+
+    // Only the bam is required to the meta map for the other steps (e.g. filterconsensus)
     else{
         if (!file(row.bam).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> Bam file does not exist!\n${row.bam}"
+            exit 1, "ERROR: Please check input samplesheet -> BAM file does not exist!\n${row.bam}"
         }
         input_meta = [ meta, [ file(row.bam) ]]
     }

@@ -1,9 +1,7 @@
 process BEDTOOLS_MERGE {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_low_memory'
-
+    label 'process_single'
+    
     conda "bioconda::bedtools=2.31.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bedtools:2.31.0--hf5e1c6e_2' :
@@ -16,14 +14,13 @@ process BEDTOOLS_MERGE {
     tuple val(meta), path('*.vcf_derived.bed')              , emit: vcf_bed
     tuple val(meta), path('*.vcf_derived.many.withID.bed')  , emit: vcf_bed_mut_ids
     tuple val(meta), path('*.regions_n_mutations.bed')      , emit: regions_plus_variants_bed
-    path  "versions.yml"                                    , emit: versions
+    path  "versions.yml"                                    , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def amplify = task.ext.amplify ?: 5             // how many bases do you want to extend the region surrounding the variable
 
     if ("$bed" == "${prefix}.bed") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
@@ -58,7 +55,8 @@ process BEDTOOLS_MERGE {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.bed
 

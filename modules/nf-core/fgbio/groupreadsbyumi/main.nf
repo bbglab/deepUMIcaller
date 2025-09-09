@@ -1,9 +1,8 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
-    label 'process_low_multicpu'
-    label 'time_medium'
     cache 'lenient'
-
+    label 'process_low_memory'
+    
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
@@ -16,15 +15,14 @@ process FGBIO_GROUPREADSBYUMI {
     output:
     tuple val(meta), path("*_umi-grouped.bam")  , emit: bam
     tuple val(meta), path("*_umi_histogram.txt"), emit: histogram
-    path "versions.yml"                         , emit: versions
+    path "versions.yml"                         , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
 
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio GroupReadsByUmi] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'

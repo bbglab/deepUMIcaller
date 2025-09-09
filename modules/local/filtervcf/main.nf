@@ -1,39 +1,38 @@
 process FILTERMUTATIONS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_low'
     
     // TODO
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
     conda "anaconda::seaborn=0.12.2"
     container "biocontainers/seaborn:0.12.2_cv1"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-    //         'https://depot.galaxyproject.org/singularity/seaborn:0.12.2_cv1' : 
-    //         'biocontainers/seaborn:0.12.2_cv1' }"
 
 
     input:
     tuple val(meta), path(vcf)
 
     output:
-    tuple val(meta), path("*.filter_mutations.vcf"), emit: vcf
-    tuple val(meta), path("*.png") , optional:true , emit: png
-    path "versions.yml"                            , emit: versions
+    tuple val(meta), path("*.filter_mutations.vcf")                             , emit: vcf
+    tuple val(meta), path("*.filter_mutations.purine.vcf")      , optional:true , emit: pur_vcf
+    tuple val(meta), path("*.filter_mutations.pyrimidine.vcf")  , optional:true , emit: pyr_vcf
+    tuple val(meta), path("*.png")                              , optional:true , emit: png
+    path "versions.yml"                                                         , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     def vaf_filter = task.ext.vaf_filter ?: ''
     def filters = task.ext.filters ?: ''
+    def splitting = task.ext.splitting ?: ''
     """
     filtervcf.py \\
                 ${prefix} \\
                 ${vcf} \\
                 ${filters} \\
                 ${vaf_filter} \\
-                ${prefix}.filter_mutations.vcf
+                ${prefix} \\
+                ${splitting}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -42,7 +41,8 @@ process FILTERMUTATIONS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filter_mutations.vcf
 

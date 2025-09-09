@@ -1,6 +1,6 @@
 process CREATEBED_FROM_TSV {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_single'
     
     conda "bioconda::bedtools=2.31.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -13,14 +13,13 @@ process CREATEBED_FROM_TSV {
 
     output:
     tuple val(meta), path("*.bed"), emit: bed
-    path "versions.yml"           , emit: versions
+    path "versions.yml"           , topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     tail -n +2 ${tsv} | awk -F'\\t' '{print \$1, \$2, \$2}' OFS='\\t' > ${prefix}.positions.tsv
     bedtools merge -i ${prefix}.positions.tsv \\
@@ -34,7 +33,8 @@ process CREATEBED_FROM_TSV {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
     """
     touch ${prefix}.filter_mutations.vcf
 

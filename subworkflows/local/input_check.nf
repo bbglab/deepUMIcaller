@@ -42,7 +42,7 @@ def create_input_channel(LinkedHashMap row, step) {
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
     // For all the calling, only BAMs/indexes are required
-    else if (step=='calling'){
+    else if (step=='calling' || step=='allmoleculesfile'){
         if (!file(row.duplexbam).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Duplex BAM file does not exist!\n${row.duplexbam}"
         }

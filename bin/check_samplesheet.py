@@ -19,6 +19,7 @@ requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
                     "groupbyumi": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
+                    "allmoleculesfile": ["duplexbam", "csi"]
 }
 
 class RowChecker:
@@ -182,7 +183,7 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
 
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_in.open(newline="") as in_handle:
-        reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))
+        reader = csv.DictReader(in_handle)
         # Validate each row.
         checker = RowChecker(step = step, init_cols= required_columns)
         for i, row in enumerate(reader):
@@ -230,7 +231,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "filterconsensus", "calling"),
+        choices=("mapping", "filterconsensus", "calling", "allmoleculesfile", "groupbyumi"),
         default="mapping",
     )
     return parser.parse_args(argv)

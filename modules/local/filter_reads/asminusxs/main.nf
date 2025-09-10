@@ -50,12 +50,3 @@ process ASMINUSXS {
     END_VERSIONS
     """
 }
-    // samtools \\
-    //     view \\
-    //     --threads ${task.cpus-1} \\
-    //     $args \\
-    //     ${reference} \\
-    //     ${readnames} \\
-    //     -o ${prefix}.${file_type} \\
-    //     $input \\
-    //     $args2

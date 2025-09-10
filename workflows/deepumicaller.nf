@@ -272,14 +272,13 @@ workflow DEEPUMICALLER {
         // Group BAMs by original sample name
         SORTBAM.out.bam
         .map { meta, bam -> 
-            def sample = meta.sample ?: meta.id.split('_LPART')[0]
+            def sample = meta.sample
             tuple(sample, meta, bam)
         }
         .groupTuple(by: 0)
         .map { sample, metas, bams -> 
             def new_meta = metas[0].clone()
             new_meta.id = sample
-            new_meta.sample = sample
             tuple(new_meta, bams)
         }
         .view { meta, bams -> "Debug grouped_bams: meta.id=${meta.id}, meta.sample=${meta.sample}, bams=${bams*.name}" }
@@ -383,7 +382,7 @@ workflow DEEPUMICALLER {
             // Group BAMs by original sample name
             SORTBAMALLMOLECULES.out.bam
             .map { meta, bam -> 
-                def sample = meta.sample ?: meta.id.split('_')[0..-2].join('_')
+                def sample = meta.sample
                 tuple(sample, meta, bam)
             }
             .groupTuple(by: 0)

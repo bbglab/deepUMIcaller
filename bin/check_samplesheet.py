@@ -111,14 +111,20 @@ class RowChecker:
 
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
+        # Count how many times each sample name appears in the input (e.g., for multi-lane samples)
         counts = Counter(pair[0] for pair in self._seen)
         seen = Counter()
         for row in self.modified:
             sample = row[self._sample_col]
             seen[sample] += 1
+            # If a sample appears more than once (e.g., multiple lanes/files for the same sample),
+            # assign a unique id by appending '_LPART{n}' where n is the occurrence count.
+            # This ensures that each part (lane/file) from the same sample gets a distinct id,
+            # which is important for downstream grouping and processing.
             if counts[sample] > 1:
                 row['id'] = f"{sample}_LPART{seen[sample]}"
             else:
+                # If the sample is unique, use the sample name as the id.
                 row['id'] = sample
 
 

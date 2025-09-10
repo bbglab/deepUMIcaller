@@ -40,43 +40,44 @@ workflow RECOUNT_MUTS {
 
     main:
 
-    low_complex_filter = params.low_complex_file ? Channel.fromPath( params.low_complex_file, checkIfExists: true).first() : Channel.fromPath(params.input)
-    low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.fromPath(params.input)
-    nanoseq_snp_filter = params.nanoseq_snp_file ? Channel.fromPath( params.nanoseq_snp_file, checkIfExists: true).first() : Channel.fromPath(params.input)
-    nanoseq_noise_filter = params.nanoseq_noise_file ? Channel.fromPath( params.nanoseq_noise_file, checkIfExists: true).first() : Channel.fromPath(params.input)
+    low_complex_filter = params.low_complex_file ? Channel.fromPath(params.low_complex_file, checkIfExists: true).first() : Channel.empty()
+    low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.empty()
+    nanoseq_snp_filter = params.nanoseq_snp_file ? Channel.fromPath( params.nanoseq_snp_file, checkIfExists: true).first() : Channel.empty()
+    nanoseq_noise_filter = params.nanoseq_noise_file ? Channel.fromPath( params.nanoseq_noise_file, checkIfExists: true).first() : Channel.empty()
 
     vcf_file
     .join( bed_file )
     .set { ch_vcf_bed }
 
     // With amplification
-    READJUSTREGIONS_AMP(ch_vcf_bed)
+    readjust_amp_out = READJUSTREGIONS_AMP(ch_vcf_bed)
+    ch_readjustregions_amp = readjust_amp_out.vcf_bed_mut_ids
     // Without amplification
-    READJUSTREGIONS_NOAMP(ch_vcf_bed)
-    
+    readjust_noamp_out = READJUSTREGIONS_NOAMP(ch_vcf_bed)
+    ch_readjustregions_noamp = readjust_noamp_out.vcf_bed_mut_ids
+
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
     bam_n_index
-    .join( READJUSTREGIONS_AMP.out.regions_plus_variants_bed )
+    .join( readjust_amp_out.regions_plus_variants_bed )
     .set { ch_bam_bai_bed }
 
     PILEUPBAM(ch_bam_bai_bed, reference_fasta)
     
 
-
-    NSXPOSITION(PILEUPBAM.out.mpileup)
+    ch_nsxposition =  NSXPOSITION(PILEUPBAM.out.mpileup)
     
 
     PILEUPBAM.out.mpileup
-    .join( READJUSTREGIONS_AMP.out.vcf_bed )
+    .join( readjust_amp_out.vcf_bed )
     .set { ch_pileup_vcfbed }
 
 
     // join the channel with the BAM file and the corresponding VCF
     // from the same samples together
     bam_n_index_all_mol
-    .join( READJUSTREGIONS_AMP.out.vcf_bed )
+    .join( readjust_amp_out.vcf_bed )
     .set { ch_bamall_bai_bed }
 
     PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
@@ -116,77 +117,59 @@ workflow RECOUNT_MUTS {
 
     // First, always create ch_vcf_vcfbed
     PATCHDPALL.out.patched_vcf
-        .join(READJUSTREGIONS_AMP.out.vcf_bed_mut_ids)
+        .join(ch_readjustregions_amp)
         .set { ch_vcf_vcfbed }
     
     def ch_vcf_current = ch_vcf_vcfbed
 
-    // FILTER LOW MAPPABILITY
-    if (do_filter_regions && has_low_mappability_file) {
+    // Apply low mappability filter if enabled
+    ch_vcf_lowmappable = do_filter_regions && has_low_mappability_file ?
+        FILTERLOWMAPPABLE(
+            ch_vcf_current.combine(low_mappability_filter)
+                .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path -> 
+                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "low_mappability"]
+                }
+        ).filtered_vcf_bed :
         ch_vcf_current
-            .combine(low_mappability_filter)
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_mappability"]
-            }
-            .set { ch_vcf_lowmappable }
-        FILTERLOWMAPPABLE(ch_vcf_lowmappable)
-        ch_vcf_current = FILTERLOWMAPPABLE.out.filtered_vcf_bed
-    } else {
-        log.warn "No bed files provided for low mappability filter or filter_regions=false; skipping bed-based region filters."
-    }
+    
+    // Apply low complex filter if enabled
+    ch_vcf_lowcomplex = do_filter_regions && has_low_complex_file ?
+        FILTERLOWCOMPLEX(
+            ch_vcf_lowmappable.combine(low_complex_filter)
+                .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
+                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "low_complex"]
+                }
+        ).filtered_vcf_bed :
+        ch_vcf_lowmappable
+    
+    // Join with readjusted regions
+    ch_vcf_current_noamp = ch_vcf_lowcomplex
+        .join(ch_readjustregions_noamp)
+        .map { meta, vcf_file_path, vcf_derived_bed_path, vcf_derived_bed_noamp -> [meta, vcf_file_path, vcf_derived_bed_noamp] }
 
-    // FILTER LOW COMPLEX REPETITIVE
-    if (do_filter_regions && has_low_complex_file) {
-        ch_vcf_current
-            .combine(low_complex_filter)
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                [meta, vcf_file, vcf_derived_bed, mask_bed, "low_complex_repetitive"]
-            }
-            .set { ch_vcf_lowcomplex }
-        FILTERLOWCOMPLEX(ch_vcf_lowcomplex)
-        ch_vcf_current = FILTERLOWCOMPLEX.out.filtered_vcf_bed
-    } else {
-        log.warn "No bed files provided for low complex repetitive filter or filter_regions=false; skipping bed-based region filters."
-    }
-
-    ch_vcf_current
-        .join(READJUSTREGIONS_NOAMP.out.vcf_bed_mut_ids)
-        .map { meta, vcf_file, vcf_derived_bed, vcf_derived_bed_noamp ->
-             [meta, vcf_file, vcf_derived_bed_noamp]
-         }
-        .set { ch_vcf_current_noamp }
-        
-    // FILTER COMMON SNP & NOISE
+    // Apply nanoseq SNP and noise filters if enabled
     if (do_filter_regions && has_nanoseq_snp_file && has_nanoseq_noise_file) {
-        ch_vcf_current_noamp
-            .combine(nanoseq_snp_filter)
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_snp"]
+        ch_vcf_nanoseqsnp = FILTERNANOSEQSNP(
+            ch_vcf_current_noamp.combine(nanoseq_snp_filter)
+            .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
+                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "nanoseq_snp"]
             }
-            .set { ch_vcf_nanoseqsnp }
-        FILTERNANOSEQSNP(ch_vcf_nanoseqsnp)
-        FILTERNANOSEQSNP.out.filtered_vcf_bed
-            .combine(nanoseq_noise_filter)
-            .map { meta, vcf_file, vcf_derived_bed, mask_bed ->
-                [meta, vcf_file, vcf_derived_bed, mask_bed, "nanoseq_noise"]
-            }
-            .set { ch_vcf_nanoseqnoise }
-        FILTERNANOSEQNOISE(ch_vcf_nanoseqnoise)
-        FILTERNANOSEQNOISE.out.filtered_vcf_bed
-            .join(NSXPOSITION.out.ns_tsv)
-            .set { ch_vcf_final }
+            ).filtered_vcf_bed
+        ch_vcf_nanoseqnoise = FILTERNANOSEQNOISE(ch_vcf_nanoseqsnp.combine(nanoseq_noise_filter)
+            .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
+                [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "nanoseq_noise"]
+            }).filtered_vcf_bed
+        ch_vcf_final = ch_vcf_nanoseqnoise.join(ch_nsxposition.ns_tsv)
     } else {
         log.warn "No bed files provided for nanoseq filters, filter_regions=false or species is not homo sapiens; skipping bed-based region filters."
-        ch_vcf_current
-            .join(NSXPOSITION.out.ns_tsv)
-            .set { ch_vcf_final }
+        ch_vcf_final = ch_vcf_lowcomplex.join(ch_nsxposition.ns_tsv)
     }
 
     // FILTER N RICH
     ch_vcf_final
     .map { tuple -> 
-        def (meta, vcf_file, vcf_derived_bed, ns_position_file, ns_position_index) = tuple
-        [meta, vcf_file, ns_position_file, ns_position_index]
+        def (meta, vcf_file_path, vcf_derived_bed_path, ns_position_file, ns_position_index) = tuple
+        [meta, vcf_file_path, ns_position_file, ns_position_index]
     }
     .set { ch_vcf_nrich_input }
 
@@ -211,7 +194,7 @@ workflow RECOUNT_MUTS {
 
     emit:
 
-    ns_file         = NSXPOSITION.out.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
+    ns_file         = ch_nsxposition.ns_tsv     // channel: [ val(meta), [ bed ], tbi ]
 
     filtered_vcf    = output_vcf                 // channel: [ val(meta), [ vcf ] ]
     somatic_vcf     = FILTERVCFSOMATIC.out.vcf   // channel: [ val(meta), [ vcf ] ]

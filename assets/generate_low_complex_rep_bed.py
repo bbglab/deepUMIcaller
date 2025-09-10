@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-RepeatMasker Output Parser 
+RepeatMasker Output Parser to low complex repetitive elements BED file
 
 This script parses RepeatMasker files to extract genomic repetitive elements
 and low complexity regions into a bed file for filtering.
 
 Usage:
-    python parse_repeatmasker.py INPUT_FILE OUTPUT_FILE [OPTIONS]
+    python generate_low_complex_rep_bed.py INPUT_FILE OUTPUT_FILE [OPTIONS]
 
 Examples:
-    python parse_repeatmasker.py input.out.gz output.csv
-    python parse_repeatmasker.py input.out.gz output.csv --valid-chromosomes chr1,chr2,chrX
-    python parse_repeatmasker.py input.out.gz output.csv --skip-quality-checks
+    python generate_low_complex_rep_bed.py input.out.gz output.bed
+    python generate_low_complex_rep_bed.py input.out.gz output.bed --valid-chromosomes chr1,chr2,chrX
+    python generate_low_complex_rep_bed.py input.out.gz output.bed --skip-quality-checks
 """
+
+# https://genome-blog.gi.ucsc.edu/blog/2016/12/12/the-ucsc-genome-browser-coordinate-counting-systems/
 
 import click
 import pandas as pd
@@ -120,6 +122,9 @@ def parse_repeatmasker_file(file_path: Union[str, Path],
         if filtered_count > 0:
             logger.info(f"Filtered out {filtered_count} rows with invalid chromosomes")
     
+    # Substract 1 from start to convert to 0-based indexing
+    df['start'] = df['start'] - 1
+
     logger.info(f"Parsed {len(df)} repetitive elements")
     return df
 
@@ -184,7 +189,7 @@ def validate_data_quality(df: pd.DataFrame) -> pd.DataFrame:
 
 def save_results(df: pd.DataFrame, output_path: Union[str, Path]) -> None:
     """
-    Save results to CSV file.
+    Save results to BED-like format file.
     
     Args:
         df: DataFrame to save
@@ -199,7 +204,7 @@ def save_results(df: pd.DataFrame, output_path: Union[str, Path]) -> None:
         # Create output directory if it doesn't exist
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Save to CSV
+        # Save to BED-like format
         df[['chr', 'start', 'end']].to_csv(output_path, index=False, sep="\t", header=False)
         logger.info(f"Results saved to: {output_path}")
         
@@ -231,7 +236,7 @@ def main(input_file, output_file, valid_chromosomes, skip_quality_checks):
     """Parse RepeatMasker .out files into structured format.
     
     INPUT_FILE: Input RepeatMasker .out file (can be gzipped)
-    OUTPUT_FILE: Output CSV file path
+    OUTPUT_FILE: Output BED-like format file path
     """
     logging.getLogger().setLevel(logging.DEBUG)
     

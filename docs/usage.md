@@ -162,14 +162,45 @@ It should be a BED file in BED4-5-6 format with a single row per exon or continu
 
 To get more accurate metrics for on target proportion and possibly other downstream sequencing metrics we recommend providing a BED file with the targeted regions with an extension of 250 bp on each boundary. This will include reads that partially overlap with the target region but not fully.
 
-### Low complexity file
+### Filtering BED files
 
-This file comes from RepeatMasker regions and informs of genomic regions that are repetitive and can cause problems when aligning or calling variants in them.
+Filtering using these BED files is optional although recommended.
 
-### Low mappability
+#### **Low complexity**
+
+This file identifies repetitive genomic regions from [RepeatMasker annotations](https://repeatmasker.org/) that can cause alignment artifacts and variant calling errors. RepeatMasker output files for commonly used human reference genomes can be downloaded from the [RepeatMasker human pages](https://repeatmasker.org/species/hg.html).
+
+To generate this file from RepeatMasker output, we provide a conversion script:
+
+```console
+python assets/generate_low_complex_rep_bed.py hg38.fa.out.gz low_complexity_regions.bed
+```
+
+The script accepts RepeatMasker `.out` files (compressed or uncompressed) and generates a BED format file containing filtered repetitive regions suitable for variant calling exclusion. Optional chromosome filtering is available to restrict output to specific chromosomes (e.g., `--valid-chromosomes chr1,chr2,chrX`).
+
+This can be done for any species.
+
+#### **Low mappability**
 
 This file comes from an article describing [The ENCODE Blacklist: Identification of Problematic Regions of the Genome](https://www.nature.com/articles/s41598-019-45839-z#data-availability).
 Use the appropriate version for your genome version.
+
+#### **Nanoseq genomic masks**
+
+These files identify sites overlapping common SNPs and noisy or variable genomic regions, as described in [Abascal et al, 2021](https://www.nature.com/articles/s41586-021-03477-4) and used in the [Nanoseq pipeline](https://github.com/cancerit/NanoSeq). Two BED files are available to be used:
+
+- Nanoseq SNP: Common SNP positions that should be excluded from analysis
+- Nanoseq Noise: Regions with high noise or variability
+
+Both files are available for GRCh37 and GRCh38 at the [shared folder](https://drive.google.com/drive/folders/1wqkgpRTuf4EUhqCGSLA4fIg9qEEw3ZcL) from the Martincorena Group, at the Wellcome Sanger Institute.
+
+#### **Overlap between BED files**
+
+There is some overlap between the BED files used for filtering:
+
+<p align="center">
+  <img src="../assets/images/venn_diagram_masks.png" alt="Alt text" width="500"/>
+</p>
 
 ### Global exons file
 

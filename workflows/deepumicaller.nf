@@ -267,22 +267,22 @@ workflow DEEPUMICALLER {
     }
     
     
-
+    
     if (params.splitted_original_sample){
         // Group BAMs by original sample name
         SORTBAM.out.bam
-            .map { meta, bam -> 
-                def original_sample = meta.original_sample ?: meta.id.split('_LPART')[0]
-                tuple(original_sample, meta, bam)
-            }
-            .groupTuple(by: 0)
-            .map { original_sample, metas, bams -> 
-                def new_meta = metas[0].clone()
-                new_meta.id = original_sample
-                new_meta.original_sample = original_sample
-                tuple(new_meta, bams)
-            }
-            .set { grouped_bams }
+        .map { meta, bam -> 
+            def sample = meta.sample
+            tuple(sample, meta, bam)
+        }
+        .groupTuple(by: 0)
+        .map { sample, metas, bams -> 
+            def new_meta = metas[0].clone()
+            new_meta.id = sample
+            tuple(new_meta, bams)
+        }
+        .view { meta, bams -> "Debug grouped_bams: meta.id=${meta.id}, meta.sample=${meta.sample}, bams=${bams*.name}" }
+        .set { grouped_bams }
         grouped_bams.view { meta, bams -> "Debug: Grouped - Meta: $meta, BAMs: ${bams*.name}" }
 
         // Merge BAMs for each sample
@@ -382,14 +382,14 @@ workflow DEEPUMICALLER {
             // Group BAMs by original sample name
             SORTBAMALLMOLECULES.out.bam
             .map { meta, bam -> 
-                def original_sample = meta.original_sample ?: meta.id.split('_')[0..-2].join('_')
-                tuple(original_sample, meta, bam)
+                def sample = meta.sample
+                tuple(sample, meta, bam)
             }
             .groupTuple(by: 0)
-            .map { original_sample, metas, bams -> 
+            .map { sample, metas, bams -> 
                 def new_meta = metas[0].clone()
-                new_meta.id = original_sample
-                new_meta.original_sample = original_sample
+                new_meta.id = sample
+                new_meta.sample = sample
                 tuple(new_meta, bams)
             }
             .set { bam_n_index_all_molecules }

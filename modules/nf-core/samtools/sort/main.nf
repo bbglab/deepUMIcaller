@@ -20,6 +20,9 @@ process SAMTOOLS_SORT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    if ("$bam".contains(".sorted.")) {
+        prefix = prefix.replace(".sorted", ".resorted")
+    }
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     mkdir tmp

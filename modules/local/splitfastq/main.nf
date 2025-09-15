@@ -12,7 +12,7 @@ process SPLITFASTQ {
     tuple val(meta), path(fastqs)
 
     output:
-    tuple val(meta), path("split_fastq/*_{1,2}.part_*.fastq.gz"), emit: split_fastqs
+    tuple val(meta),  path("**/*.gz"), emit: split_fastqs
     path "versions.yml", emit: versions
 
     when:

@@ -492,6 +492,12 @@ workflow DEEPUMICALLER {
         RECOUNTMUTS.out.pyrvcf.map{it[1]}.set { mutation_files_pyr_duplex }
         SIGPROFPLOTPYR(mutation_files_pyr_duplex.collect())
 
+        // Generate deepCSA input example
+        RECOUNTMUTS.out.filtered_vcf
+        .join(cons_duplex_bam_only)
+        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/sortbamduplexcons/${bam.name}\n" }
+        .collectFile(name: 'deepCSA_input_template.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
+
     }
 
 

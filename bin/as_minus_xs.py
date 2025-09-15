@@ -3,22 +3,25 @@
 import pysam
 import argparse
 
-def filter_bam(input_bam, output_bam, output_bam_discarded, threshold):
-    with pysam.AlignmentFile(input_bam, "rb") as in_bam:
-        header = in_bam.header
-        with pysam.AlignmentFile(output_bam, "wb", header=header) as out_bam:
-            with pysam.AlignmentFile(output_bam_discarded, "wb", header=header) as out_bam_discarded:
+def filter_bam(input_bam, output_bam, output_bam_discarded, threshold, tthreads):
+    with pysam.AlignmentFile(input_bam, "rb", threads=tthreads) as in_bam:
+        with pysam.AlignmentFile(output_bam, "wb", header=in_bam.header, threads=tthreads) as out_bam:
+            with pysam.AlignmentFile(output_bam_discarded, "wb", header=in_bam.header) as out_bam_discarded:
                 # Create a set to store query names
                 query_names = set()
                 # Dictionary to store discarded reads
                 reads_discarded = {}
+
                 for read in in_bam:
                     if read.is_secondary:
                         # Skip secondary alignments
                         continue
-
-                    as_tag = read.get_tag("AS", with_value_type=False)
-                    xs_tag = read.get_tag("XS", with_value_type=False)
+                    
+                    try:
+                        as_tag = read.get_tag("AS", with_value_type=False)
+                        xs_tag = read.get_tag("XS", with_value_type=False)
+                    except KeyError:
+                        continue  # Skip reads without AS/XS tags
                     
                     # Check if the query name is not in the set of (already checked) query names
                     if read.query_name not in query_names:
@@ -57,9 +60,10 @@ def main():
     parser.add_argument("output_bam", help="Output BAM file")
     parser.add_argument("output_bam_discarded", help="Output discarded BAM file")
     parser.add_argument("threshold", type=int, help="Threshold for AS minus XS")
+    parser.add_argument("tthreads", type=int, help="threads")
     args = parser.parse_args()
 
-    filter_bam(args.input_bam, args.output_bam, args.output_bam_discarded, args.threshold)
+    filter_bam(args.input_bam, args.output_bam, args.output_bam_discarded, args.threshold, args.tthreads)
 
 if __name__ == "__main__":
     main()

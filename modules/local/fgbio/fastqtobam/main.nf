@@ -1,8 +1,6 @@
 process FGBIO_FASTQTOBAM {
     tag "$meta.id"
-    label 'process_low'
-    label 'process_low_memory'
-
+    
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
@@ -38,8 +36,8 @@ process FGBIO_FASTQTOBAM {
         --input ${fastqs} \\
         --output "${prefix}.unmapped.bam" \\
         --read-structures ${read_structure} \\
-        --sample ${meta.id} \\
-        --library ${meta.id} \\
+        --sample ${meta.sample} \\
+        --library ${meta.sample} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

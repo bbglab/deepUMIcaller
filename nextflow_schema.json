@@ -84,7 +84,24 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
                     "help_text": ""
+                },
+                "splitted_original_sample": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Input CSV contains several FASTQs from the same original library (sample)."
+                },
+                "splitfastq_parts": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Number of parts to split FASTQ files into.",
+                    "default": 20
+                },
+                "split_by_chrom": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable splitting of BAM files by chromosome."
                 }
+
             }
         },
         "mutation_filtering_options": {
@@ -242,6 +259,12 @@
                     "description": "Parameters for the filtering step in VarDict",
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameters for the filtering step in VarDict"
+                },
+                "use_teststrandbias": {
+                    "type": "boolean",
+                    "description": "Whether to use teststrandbias.R script in VarDict calling",
+                    "default": true,
+                    "fa_icon": "fas fa-dna"
                 }
             }
         },

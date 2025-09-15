@@ -1,7 +1,7 @@
 process CALLING_VARDICT {
     tag "$meta.id"
-    label 'process_medium'
-
+    label 'process_very_high'
+    
     conda "bioconda::vardict-java=1.8.3"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/vardict-java:1.8.3--hdfd78af_0' :
@@ -56,13 +56,15 @@ process CALLING_VARDICT {
     echo "Concatenated. teststrandbias running..."
 
     for chunk in chunk_*.raw.tsv; do
-        (
-            cat \$chunk \
-            | teststrandbias.R \
-            | var2vcf_valid.pl \
+        echo "Processing chunk: \$chunk"
+
+        if ${params.use_teststrandbias}; then
+            cat "\$chunk" | teststrandbias.R | var2vcf_valid.pl \
                 -N ${prefix} $filter_args \
-            > \${chunk}.genome.vcf
-        ) &
+                > "\${chunk}.genome.vcf"
+        else
+            awk 'BEGIN { FS=OFS="\\t" } { if (NF < 34) { print "ERROR: Unexpected column count " NF > "/dev/stderr"; exit 1; } for (i = 1; i <= 20; i++) printf "%s\\t", \$i; printf "1.0\\t1.0\\t"; for (i = 21; i <= NF; i++) { printf "%s", \$i; if (i < NF) printf "\\t";} printf "\\n"; }' "\$chunk" | var2vcf_valid.pl -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 > "\${chunk}.genome.vcf"
+        fi
     done
     
     # Wait for all parallel processes to finish
@@ -83,16 +85,16 @@ process CALLING_VARDICT {
     # Apply the AWK filter to create the final VCF
     awk '\$5!="."' ${prefix}.genome.vcf > ${prefix}.vcf
 
-    echo "Done. Removing tmp files..."
-
-    # Cleanup intermediate files (optional)
-    rm chunk_*
-
     echo "Done. Gzip results..."
 
     gzip ${prefix}.raw.tsv;
     gzip ${prefix}.genome.vcf;
 
+    echo "Done. Removing tmp files..."
+
+    # Cleanup intermediate files
+    rm chunk_*
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         vardict-java: 1.8.3

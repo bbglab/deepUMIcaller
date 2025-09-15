@@ -1,14 +1,10 @@
 process FILTER_LOW_MAPPABILITY {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_low_memory'
     
     conda "bioconda::pybedtools=0.9.1--py38he0f268d_0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
             'https://depot.galaxyproject.org/singularity/pybedtools:0.9.1--py38he0f268d_0' : 
             'biocontainers/pybedtools:0.9.1--py38he0f268d_0' }"
-
 
     input:
     tuple val(meta), path(vcf_file), path(vcf_derived_bed)

@@ -150,11 +150,31 @@ CH_pat2B,G5_B_1_downsampled.fastq.gz,G5_B_2_downsampled.fastq.gz,8M1S+T 8M1S+T,C
 
 Here, samples CH_pat2a and CH_pat2b will be merged and the resulting variant calling will be run for : CH_pat1, CH_pat2a, CH_pat2b and CH_pat2 (which is the merge of 2a and 2b).
 
-## Other required parameters
+## Required parameters
 
 ### Reference fasta file
 
-The reference fasta has to be **uncompressed** and it must contain it's own bwa index in the same directory.
+The reference fasta has to be **uncompressed** and it must contain it's own bwa index in the same directory. To make sure this happens you can follow the instructions below.
+
+We recommend to get the genome fasta from [UCSC downloads page](https://hgdownload.soe.ucsc.edu/downloads.html) and then run the following commands to generate the corresponding index files and dict file. We are showing an example with the mice genome below.
+
+for uncompressing:
+
+```console
+gunzip mm39.fa.gz
+```
+
+generating the index file ([source](https://bio-bwa.sourceforge.net/bwa.shtml#:~:text=SYNOPSIS-,bwa%20index%20ref.fa,-bwa%20mem%20ref)):
+
+```console
+bwa index mm39.fa
+```
+
+for `.dict` file:
+
+```console
+gatk-launch CreateSequenceDictionary -R mm39.fa
+```
 
 ### Targets BED file
 

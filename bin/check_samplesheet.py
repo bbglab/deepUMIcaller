@@ -112,7 +112,7 @@ class RowChecker:
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
         # Count how many times each sample name appears in the input (e.g., for multi-lane samples)
-        counts = Counter(pair[0] for pair in self._seen)
+        counts = Counter(row[self._sample_col] for row in self.modified)
         seen = Counter()
         for row in self.modified:
             sample = row[self._sample_col]

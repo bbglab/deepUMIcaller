@@ -17,7 +17,7 @@ process FAMILYSIZEMETRICS {
     def prefix = task.ext.prefix ?: ""
     def sample_name = "${meta.id}"
     prefix = "${meta.id}${prefix}"
-    def confidence = task.ext.confidence ? "--confidence-level ${task.ext.confidence} " : ""
+    def confidence = task.ext.confidence ? "--confidence-level '${task.ext.confidence}' " : ""
     """
     family_size_plots.py \\
                 --sample-name ${sample_name} \\

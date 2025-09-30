@@ -120,7 +120,7 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
 
 
-    keys = ['sample', 'quality', 'raw_reads',
+    keys = ['sample', 'quality', 'quality_threshold', 'raw_reads',
                 'duplicates', 'sscs', 'dscs',
                 'expected_dscs', 'recovery_of_dscs', 'unique_reads', 'uq_reads_duplex', 'unique_molecules',
                 'raw_x_dscs', 'raw_x_sscs', 'sscs_x_dscs',
@@ -128,7 +128,7 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
                 'noduplex_raw_reads', 'noduplex_sscs', 'noduplex_raw_x_sscs',
                 'peak_size']
 
-    values = [sample, confidence_name, total_reads,
+    values = [sample, confidence_name, confidence, total_reads,
                 round(percent_duplicates, 3), total_scss,
                 total_duplex,
                 expected_dscs, round(recovery_of_dscs, 3), unique_reads, round(total_duplex/unique_reads*100, 3), round(unique_reads/2),

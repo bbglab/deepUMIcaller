@@ -18,10 +18,12 @@ This document describes the output produced by the pipeline.
 
 ```{console}
 {outdir}
-├──callingvardictmed
+├──callingvardictduplex
+├──cohortmutsperpos
 ├──collectduplexseqmetrics
 ├──collectduplexseqmetricsontarget
-├──computedepthmed
+├──computedepth
+├──coverageglobal
 ├──createbedmed
 ├──discardedcoverageglobal
 ├──discardedcoveragetargeted
@@ -36,18 +38,16 @@ This document describes the output produced by the pipeline.
 ├──mutsperpos
 ├──nsxposition
 ├──pipeline_info
-├──qualimapqc
+├──qualimapqcallmolecules
 ├──qualimapqcduplex
-├──qualimapqcmed
-├──sigprofplotmed
-├──sigprofplotmedpur
-├──sigprofplotmedpyr
-├──sortbamduplexconsmed
-│   └── <sample>.bam
-└──sortbamduplexfiltered
+├──qualimapqcraw
+├──sigprofplot
+├──sigprofplotpur
+├──sigprofplotpyr
+├──sortbamamfiltered
+└──sortbamduplexcons
+   └── <sample>.bam
 ```
-
-In case the pipeline was run, activating the `duplex_high_conf` and `duplex_low_conf` parameters, several folders would be replicated with the respective confidence level's data.
 
 ## Input and configuration
 
@@ -73,12 +73,12 @@ Mutations VCF
 ### Key role
 
 - BAM files are essential for the downstream analysis to compute the sequencing depth at each position.
-- Having the `duplexfiltered` BAM file allows you to merge sequencing data from the same sample coming from different libraries and doing the calling together.
+- Having the `amfiltered` BAM file allows you to merge sequencing data from the same sample coming from different libraries and doing the calling together.
 
 ### Outputs
 
-- sortbamduplexconsmed
-- sortbamduplexfiltered
+- sortbamduplexcons
+- sortbamamfiltered
 
 ## QC metrics
 
@@ -106,9 +106,9 @@ Metrics to assess the quality of the duplex library prep.
 
 - multiqc
 
-- qualimapqc
+- qualimapqcallmolecules
 - qualimapqcduplex
-- qualimapqcmed
+- qualimapqcraw
 
 ## Basic mutations QC
 
@@ -118,10 +118,11 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
+- cohortmutsperpos
 - mutsperpos
-- sigprofplotmed
-- sigprofplotmedpur
-- sigprofplotmedpyr
+- sigprofplot
+- sigprofplotpur
+- sigprofplotpyr
 
 ## Internal files
 
@@ -132,7 +133,7 @@ Metrics to assess the quality of the duplex library prep.
 ### Outputs
 
 - pipeline_info
-- callingvardictmed
-- computedepthmed
-- createbedmed
+- callingvardictduplex
+- computedepth
+- createbed
 - nsxposition

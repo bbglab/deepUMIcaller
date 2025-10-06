@@ -43,8 +43,10 @@ nextflow run bbglab/deepUMIcaller \
   --outdir results/ 
 ```
 
-The first time that the pipeline is run and also when running with more than 50 samples we suggest requesting at least 8 CPUs and 20 GBs of memory to ensure that there is no problem in handling the multiple submissions and also for pulling containers.
+**NOTE 1:** The first time that the pipeline is run and also when running with more than 50 samples we suggest requesting at least 8 CPUs and 20 GBs of memory to ensure that there is no problem in handling the multiple submissions and also for pulling containers.
 Otherwise when the pipeline is run with a small number of samples less resources should be enough.
+
+**NOTE 2:** If the user is not interested in all the implemented QCs, we recommend turning off the generation of these QCs since it can be time- and resource-intensive. (perform_qcs = false)
 
 ## Running the pipeline. Additional run modes
 
@@ -182,6 +184,15 @@ It should be a BED file in BED4-5-6 format with a single row per exon or continu
 
 To get more accurate metrics for on target proportion and possibly other downstream sequencing metrics we recommend providing a BED file with the targeted regions with an extension of 250 bp on each boundary. This will include reads that partially overlap with the target region but not fully.
 
+### Global exons file
+
+It should be a BED file in BED4-5-6 format with a single row per exon or continuous genomic region that was targeted.
+
+This file will be used to compute general coverage metrics optionally outside the desired targeted areas. We recommend that this is a BED file of all the exonic or potentially interesting regions of the genome.
+Optionally the user can set it as the same targets BED file.
+
+## Optional parameters
+
 ### Filtering BED files
 
 Filtering using these BED files is optional although recommended.
@@ -214,7 +225,7 @@ These files identify sites overlapping common SNPs and noisy or variable genomic
 
 Both files are available for GRCh37 and GRCh38 at the [shared folder](https://drive.google.com/drive/folders/1wqkgpRTuf4EUhqCGSLA4fIg9qEEw3ZcL) from the Martincorena Group, at the Wellcome Sanger Institute.
 
-#### **Overlap between BED files**
+#### **Overlap between BED files for the hg38 genome**
 
 There is some overlap between the BED files used for filtering:
 
@@ -225,6 +236,10 @@ There is some overlap between the BED files used for filtering:
 ### Global exons file
 
 This file will be used to report the depth of discarded reads because of AS-XS filter. This can be useful for seeing which regions of the genome outside the panel you targeted are getting some coverage, that is lost because of ambiguous mappability.
+
+## Running deepCSA downsteam
+
+If you are interested in running deepCSA, you can take the `deepCSA_input_template.csv` file generated in the `pipeline_info` directory, and combine it with those template CSVs of other deepUMIcaller runs.
 
 ## Additional Nextflow configurations
 

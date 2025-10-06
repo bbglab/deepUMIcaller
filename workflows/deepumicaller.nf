@@ -134,13 +134,14 @@ workflow DEEPUMICALLER {
     }
 
     ch_multiqc_files = Channel.empty()
-   
 
-    if (params.targetsfile) {
-        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
-        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-    }
+    // Create value channels for targets and global exons files (if provided)
+    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : Channel.empty()
+    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : file(params.targetsfile, checkIfExists: true)
 
+
+    targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
+    BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
 
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -213,36 +214,27 @@ workflow DEEPUMICALLER {
         
 
 
-        if (params.targetsfile){
-            if (params.perform_qcs){
-                QUALIMAPQCRAW(SORTBAM.out.bam, params.targetsfile)
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
-            }
-            // truncate BAM to keep only the reads that are on target
-            // TODO
-            // see how BAMFILTERREADS requires the BAM file sorted....
-            if (params.remove_offtargets){
-                // join the bam and the bamindex channels to have
-                // the ones from the same samples together
-                SORTBAMCLEAN.out.bam
-                .join( SORTBAMCLEAN.out.csi )
-                .set { bam_n_index_clean }
+        if (params.perform_qcs){
+            QUALIMAPQCRAW(SORTBAM.out.bam, ch_targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
+        }
 
-                BAM_FILTER_READS(bam_n_index_clean,
-                                BEDTOINTERVAL.out.interval_list.first().map{it[1]})
-                
+        // truncate BAM to keep only the reads that are on target
+        // TODO
+        // see how BAMFILTERREADS requires the BAM file sorted....
+        if (params.remove_offtargets){
+            // join the bam and the bamindex channels to have
+            // the ones from the same samples together
+            SORTBAMCLEAN.out.bam
+            .join( SORTBAMCLEAN.out.csi )
+            .set { bam_n_index_clean }
 
-                bam_to_group = BAM_FILTER_READS.out.bam
-            } else {
-                bam_to_group = SORTBAMCLEAN.out.bam
-            }
+            BAM_FILTER_READS(bam_n_index_clean,
+                            BEDTOINTERVAL.out.interval_list.first().map{it[1]})
+            
 
-
+            bam_to_group = BAM_FILTER_READS.out.bam
         } else {
-            if (params.perform_qcs){
-                QUALIMAPQCRAW(SORTBAM.out.bam, [])
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
-            }
             bam_to_group = SORTBAMCLEAN.out.bam
         }
     }
@@ -320,10 +312,10 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
         DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
 
     }
@@ -364,7 +356,7 @@ workflow DEEPUMICALLER {
 
         if (params.perform_qcs){
             // requires input coordinate sorted
-            QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
+            QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
         }
 
@@ -388,10 +380,10 @@ workflow DEEPUMICALLER {
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, params.targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
 
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
             COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
         }
     }

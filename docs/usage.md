@@ -178,6 +178,12 @@ for `.dict` file:
 gatk-launch CreateSequenceDictionary -R mm39.fa
 ```
 
+VarDict also requires to have a `.fai` index of the genome, for this you should run [samtools faidx](https://www.htslib.org/doc/samtools-faidx.html):
+
+```console
+samtools faidx mm39.fa
+```
+
 ### Targets BED file
 
 It should be a BED file in BED4-5-6 format with a single row per exon or continuous genomic region that was targeted.

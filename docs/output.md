@@ -10,7 +10,7 @@ This document describes the output produced by the pipeline.
 - [Input and configuration](#input-and-configuration)
 - [Mutations](#mutations)
 - [BAM files](#bam-files)
-- [QC metrics](#qc-metrics)
+- [Duplex QC metrics](#duplex-qc-metrics)
 - [Basic mutations QC](#basic-mutations-qc)
 - [Interal processing files](#internal-files)
 
@@ -18,10 +18,12 @@ This document describes the output produced by the pipeline.
 
 ```{console}
 {outdir}
-├──callingvardictmed
+├──callingvardictduplex
+├──cohortmutsperpos
 ├──collectduplexseqmetrics
 ├──collectduplexseqmetricsontarget
-├──computedepthmed
+├──computedepth
+├──coverageglobal
 ├──createbedmed
 ├──discardedcoverageglobal
 ├──discardedcoveragetargeted
@@ -36,18 +38,16 @@ This document describes the output produced by the pipeline.
 ├──mutsperpos
 ├──nsxposition
 ├──pipeline_info
-├──qualimapqc
+├──qualimapqcallmolecules
 ├──qualimapqcduplex
-├──qualimapqcmed
-├──sigprofplotmed
-├──sigprofplotmedpur
-├──sigprofplotmedpyr
-├──sortbamduplexconsmed
-│   └── <sample>.bam
-└──sortbamduplexfiltered
+├──qualimapqcraw
+├──sigprofplot
+├──sigprofplotpur
+├──sigprofplotpyr
+├──sortbamamfiltered
+└──sortbamduplexcons
+   └── <sample>.bam
 ```
-
-In case the pipeline was run, activating the `duplex_high_conf` and `duplex_low_conf` parameters, several folders would be replicated with the respective confidence level's data.
 
 ## Input and configuration
 
@@ -73,14 +73,14 @@ Mutations VCF
 ### Key role
 
 - BAM files are essential for the downstream analysis to compute the sequencing depth at each position.
-- Having the `duplexfiltered` BAM file allows you to merge sequencing data from the same sample coming from different libraries and doing the calling together.
+- Having the `amfiltered` BAM file allows you to merge sequencing data from the same sample coming from different libraries and doing the calling together.
 
 ### Outputs
 
-- sortbamduplexconsmed
-- sortbamduplexfiltered
+- sortbamduplexcons
+- sortbamamfiltered
 
-## QC metrics
+## Duplex QC metrics
 
 Metrics to assess the quality of the duplex library prep.
 
@@ -91,6 +91,8 @@ Metrics to assess the quality of the duplex library prep.
 - FASTQC is important for identifying preexisting problems in the sequencing data.
 - QualiMap outputs basic coverage, on target percentage, and other metrics of the different aligned BAM files.
 - Discarded coverage files provide a view on the regions of the genome where reads are being lost due to poor mapping.
+- Compute depth contains the values of depth per position for each sample. (third column of the .tsv files)
+- Coverage global includes a summary of the depth per each region in the global_exons_file provided in the pipeline, in this way there is a bit more useful information on the coverage per region.
 
 ### Outputs
 
@@ -106,9 +108,13 @@ Metrics to assess the quality of the duplex library prep.
 
 - multiqc
 
-- qualimapqc
+- qualimapqcallmolecules
 - qualimapqcduplex
-- qualimapqcmed
+- qualimapqcraw
+
+- computedepth
+
+- coverageglobal
 
 ## Basic mutations QC
 
@@ -116,12 +122,15 @@ Metrics to assess the quality of the duplex library prep.
 
 - Quickly assess the quality of the variants called in the duplex reads. Via simple checks such as the plot of position of the variant in th reads and the mutation frequencies per trinucleotide, you can quickly tell if the variants are occurring based on the expected mutational processes or it is enriched in artifacts. You can also compare the variant calls in purine vs pyrimidine sites and see if there is any obvious differences. No apparent differences a this point does not mean that mutations are all clean.
 
+- cohortmutsperpos includes a representation of the enrichment of mutations at the beginning of the reads for each of the samples in the cohort and for each of the single base substitution types. It also includes a couple of tsv files showing which samples failed the QCs and what are the values of the ratio of mean number of mutations per position found in the first 5 (by default) positions of the read vs the rest of the read.
+
 ### Outputs
 
+- cohortmutsperpos
 - mutsperpos
-- sigprofplotmed
-- sigprofplotmedpur
-- sigprofplotmedpyr
+- sigprofplot
+- sigprofplotpur
+- sigprofplotpyr
 
 ## Internal files
 
@@ -131,8 +140,12 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
-- pipeline_info
-- callingvardictmed
-- computedepthmed
-- createbedmed
-- nsxposition
+- pipeline_info: compiles basic information of the nextflow run
+
+- callingvardictduplex: contains all the outputs of the variant calling done by VarDict ([click here for more info](https://github.com/AstraZeneca-NGS/VarDictJava))
+
+- createbed: each BED file contains a definition of the regions that have been sequenced in that sample.
+
+- nsxposition: each file has 4 columns: chromosome, position, total_depth (including Ns), and N count.
+
+- readjustregions: this directory contains BED files per sample with information on the regions surrounding mutation calls, targetted regions and others that are used internally for searching and recounting specific mutations. We include it as part of the output just in case it is useful.

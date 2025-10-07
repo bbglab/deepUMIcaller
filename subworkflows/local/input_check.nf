@@ -26,6 +26,8 @@ def create_input_channel(LinkedHashMap row, step) {
     // create meta map
     def meta = [:]
     meta.id             = row.sample
+    // Set parent_dna to row.parent_dna if present and not empty, else use sample
+    meta.parent_dna     = (row.containsKey('parent_dna') && row.parent_dna) ? row.parent_dna : row.sample
 
     // add path(s) of the fastq file(s) to the meta map
     def input_meta = []
@@ -40,7 +42,7 @@ def create_input_channel(LinkedHashMap row, step) {
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
     // For all the calling, only BAMs/indexes are required
-    else if (step=='calling'){
+    else if (step=='calling' || step=='allmoleculesfile'){
         if (!file(row.duplexbam).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Duplex BAM file does not exist!\n${row.duplexbam}"
         }

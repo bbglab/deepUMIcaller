@@ -1,0 +1,4 @@
+sample,duplexbam,csi
+CH_pat1_ts,/path/to/file/sortbamduplexcons/CH_pat1.sorted.bam,/path/to/file/sortbamduplexcons/CH_pat1.sorted.bam.csi
+CH_pat2B_ts,/path/to/file/sortbamduplexcons/CH_pat2B.sorted.bam,/path/to/file/sortbamduplexcons/CH_pat2B.sorted.bam.csi
+CH_pat2_ts,/path/to/file/sortbamduplexcons/CH_pat2.sorted.bam,/path/to/file/sortbamduplexcons/CH_pat2.sorted.bam.csi

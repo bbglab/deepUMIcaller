@@ -28,7 +28,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Pipeline summary
 
-![deepUMIcaller_diagram](https://github.com/bbglab/deepUMIcaller/assets/6456499/f04ab401-3237-4e3a-aeb7-5827585d732c)
+![deepUMIcaller_diagram](docs/images/deepUMIcaller.png)
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
@@ -37,11 +37,12 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 4. Group reads by UMI ([`fgbio GroupReadsByUmi`](http://fulcrumgenomics.github.io/fgbio/tools/latest/GroupReadsByUmi.html))
 5. Call [duplex consensus][duplex-seq-link] reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))
       1. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
+      2. In house plotting of single strand consensus reads family size distribution.
 6. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
 7. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
-8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)), from stringent (HIGH) to permissive (LOW), we are generally using MED.
+8. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)).
 9. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
-10. Varient calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allelle depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
+10. Variant calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allele depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
 11. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.
 12. (optional) Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
 13. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
@@ -54,21 +55,22 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Credits
 
-[bbglab/deepUMIcaller](https://github.com/bbglab/deepUMIcaller) was written by [Ferriol Calvet](https://github.com/FerriolCalvet) and [Miquel L. Grau](https://github.com/migrau).
+[bbglab/deepUMIcaller](https://github.com/bbglab/deepUMIcaller) was written mainly by [Ferriol Calvet](https://github.com/FerriolCalvet) and [Miquel L. Grau](https://github.com/migrau), with contributions from [Raquel Blanco](https://github.com/rblancomi) and [Marta Huertas](https://github.com/m-huertasp)
 
 Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pipeline at commit 09a6ae27ce917f2a4b15d2c5396acb562f9047aa. This was originally written by [Nils Homer](https://github.com/nh13). This original pipeline implemented the [fgbio Best Practices FASTQ to Consensus Pipeline][fgbio-best-practices-link].
 
 ## Documentation
 
-**NOTE THAT: the reference fasta must contain it's own bwa index in the same directory.**
+For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
 
-1. [Read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet.
+For information on the [read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet, check this link.
 
 ## Acknowledgements
 
 <a href="https://fulcrumgenomics.com">
   <img src="docs/images/Fulcrum.svg" alt="Fulcrum Genomics" width="120">
 </a>
+
 
 <a href="http://nf-co.re">
   <img src="docs/images/nf-core-logo.png" alt="nf-core" width="120">

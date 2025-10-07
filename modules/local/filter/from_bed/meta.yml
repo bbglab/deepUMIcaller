@@ -1,0 +1,72 @@
+name: filter_from_bed
+description: |
+  Adds a custom filter to a VCF file for variants overlapping regions defined in a BED file.
+  Used to annotate variants in low mappability, low complexity, or other masked regions.
+keywords:
+  - vcf
+  - bed
+  - filter
+  - annotation
+  - mask
+tools:
+  - bedtools:
+      description: |
+        A set of tools for genomic analysis tasks, specifically enabling genome arithmetic (merge, count, complement) on various file types.
+      documentation: https://bedtools.readthedocs.io/en/latest/content/tools/merge.html
+      licence: ["MIT"]
+  - python:
+      description: Python interpreter for running the add_filter_from_bed.py script.
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+      licence: ["PSF"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information.
+        e.g. [ id:'test',  parent_dna:'test', read_structure:'8M1S+T 8M1S+T']
+  - vcf_file:
+      type: file
+      description: |
+        Input VCF file to be filtered.
+      pattern: "*.vcf"
+  - vcf_derived_bed:
+      type: file
+      description: |
+        BED file derived from the VCF, with variant intervals and IDs.
+      pattern: "*.bed"
+  - mask_bed:
+      type: file
+      description: |
+        BED file with regions to be masked (can be gzipped).
+      pattern: "*.bed{,.gz}"
+  - filter_name:
+      type: string
+      description: |
+        Name of the filter to be added to the VCF FILTER column (e.g. "low_mappability", "low_complex_repetitive", "nanoseq_snp", "nanoseq_noise").
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information.
+        e.g. [ id:'test',  parent_dna:'test', read_structure:'8M1S+T 8M1S+T']
+  - filtered_vcf_bed:
+      type: file
+      description: |
+        Tuple output: filtered VCF file and the corresponding BED file after filtering.
+      pattern: "*.vcf"
+  - filtered_vcf:
+      type: file
+      description: |
+        Output VCF file after filtering.
+      pattern: "*.vcf"
+  - versions:
+      type: file
+      description: File containing software versions.
+      pattern: "versions.yml"
+
+authors:
+  - "@FerriolCalvet"
+  - "@bbglab"

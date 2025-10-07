@@ -1,4 +1,4 @@
 sample,bam
-CH_pat1_ts,/data/bbg/datasets/transfer/ferriol_deepumicaller/sortbamduplexcons/CH_pat1.sorted.bam
-CH_pat2B_ts,/data/bbg/datasets/transfer/ferriol_deepumicaller/sortbamduplexcons/CH_pat2B.sorted.bam
-CH_pat2_ts,/data/bbg/datasets/transfer/ferriol_deepumicaller/sortbamduplexcons/CH_pat2.sorted.bam
+CH_pat1_ts,/path/to/file/sortbamduplexcons/CH_pat1.sorted.bam
+CH_pat2B_ts,/path/to/file/sortbamduplexcons/CH_pat2B.sorted.bam
+CH_pat2_ts,/path/to/file/sortbamduplexcons/CH_pat2.sorted.bam

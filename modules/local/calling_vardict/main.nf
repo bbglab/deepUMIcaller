@@ -81,9 +81,6 @@ process CALLING_VARDICT {
         echo "One or more teststrandbias jobs failed. Aborting." >&2
         exit 1
     fi
-    
-    # Wait for all parallel processes to finish
-    wait
 
     echo "Done. Concatenating..."
 

@@ -55,6 +55,8 @@ process CALLING_VARDICT {
 
     echo "Concatenated. teststrandbias running..."
 
+    pids=()
+
     for chunk in chunk_*.raw.tsv; do
         (
             cat \$chunk \
@@ -63,10 +65,22 @@ process CALLING_VARDICT {
                 -N ${prefix} $filter_args \
             > \${chunk}.genome.vcf
         ) &
+        pids+=(\$!)
     done
-    
-    # Wait for all parallel processes to finish
-    wait
+
+    # Wait for all background jobs and check their exit codes
+    status=0
+    for pid in "\${pids[@]}"; do
+        if ! wait "\$pid"; then
+            echo "Error: process with PID \$pid failed." >&2
+            status=1
+        fi
+    done
+
+    if [ \$status -ne 0 ]; then
+        echo "One or more teststrandbias jobs failed. Aborting." >&2
+        exit 1
+    fi
 
     echo "Done. Concatenating..."
 

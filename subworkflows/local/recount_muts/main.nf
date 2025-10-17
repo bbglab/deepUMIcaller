@@ -102,15 +102,15 @@ workflow RECOUNT_MUTS {
 
     PATCHDPALL(ch_pileup_vcfpatched1)
 
+    // def do_filter_regions = params.filter_regions
+    // def has_low_mappability_file = params.low_mappability_file
+    // def has_low_complex_file = params.low_complex_file
 
-    def do_filter_regions = params.filter_regions
-    def has_low_mappability_file = params.low_mappability_file
-    def has_low_complex_file = params.low_complex_file
+    // // Validate if specie is human to use nanoseq filters
+    // def has_nanoseq_snp_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_snp_file : null
+    // def has_nanoseq_noise_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_noise_file : null
 
-    // Validate if specie is human to use nanoseq filters
-    def has_nanoseq_snp_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_snp_file : null
-    def has_nanoseq_noise_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_noise_file : null
-
+    // Warn if nanoseq filters are provided for non-human species
     if (params.vep_species != "homo_sapiens" && (params.nanoseq_snp_file || params.nanoseq_noise_file)) {
         log.warn "Nanoseq filters unset for other species than homo sapiens"
     }
@@ -118,52 +118,76 @@ workflow RECOUNT_MUTS {
     // First, always create ch_vcf_vcfbed
     PATCHDPALL.out.patched_vcf
         .join(ch_readjustregions_amp)
-        .set { ch_vcf_vcfbed }
-    
-    def ch_vcf_current = ch_vcf_vcfbed
+        .set { ch_vcf_with_bed }
 
-    // Apply low mappability filter if enabled
-    ch_vcf_lowmappable = do_filter_regions && has_low_mappability_file ?
+    // Apply low mappability filter if conditions are met
+    if (params.filter_regions && params.low_mappability_file) {
         FILTERLOWMAPPABLE(
-            ch_vcf_current.combine(low_mappability_filter)
-                .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path -> 
-                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "low_mappability"]
+            ch_vcf_with_bed
+                .combine(low_mappability_filter)
+                .map { meta, vcf, bed, mask -> 
+                    [meta, vcf, bed, mask, "low_mappability"]
                 }
-        ).filtered_vcf_bed :
-        ch_vcf_current
-    
-    // Apply low complex filter if enabled
-    ch_vcf_lowcomplex = do_filter_regions && has_low_complex_file ?
-        FILTERLOWCOMPLEX(
-            ch_vcf_lowmappable.combine(low_complex_filter)
-                .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
-                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "low_complex"]
-                }
-        ).filtered_vcf_bed :
-        ch_vcf_lowmappable
-    
-    // Join with readjusted regions
-    ch_vcf_current_noamp = ch_vcf_lowcomplex
-        .join(ch_readjustregions_noamp)
-        .map { meta, vcf_file_path, vcf_derived_bed_path, vcf_derived_bed_noamp -> [meta, vcf_file_path, vcf_derived_bed_noamp] }
-
-    // Apply nanoseq SNP and noise filters if enabled
-    if (do_filter_regions && has_nanoseq_snp_file && has_nanoseq_noise_file) {
-        ch_vcf_nanoseqsnp = FILTERNANOSEQSNP(
-            ch_vcf_current_noamp.combine(nanoseq_snp_filter)
-            .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
-                    [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "nanoseq_snp"]
-            }
-            ).filtered_vcf_bed
-        ch_vcf_nanoseqnoise = FILTERNANOSEQNOISE(ch_vcf_nanoseqsnp.combine(nanoseq_noise_filter)
-            .map { meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path ->
-                [meta, vcf_file_path, vcf_derived_bed_path, mask_bed_path, "nanoseq_noise"]
-            }).filtered_vcf_bed
-        ch_vcf_final = ch_vcf_nanoseqnoise.join(ch_nsxposition.ns_tsv)
+        )
+        ch_after_lowmap = FILTERLOWMAPPABLE.out.filtered_vcf_bed
     } else {
-        log.warn "No bed files provided for nanoseq filters, filter_regions=false or species is not homo sapiens; skipping bed-based region filters."
-        ch_vcf_final = ch_vcf_lowcomplex.join(ch_nsxposition.ns_tsv)
+        ch_after_lowmap = ch_vcf_with_bed
     }
+    
+    // Apply low complexity filter if conditions are met
+    if (params.filter_regions && params.low_complex_file) {
+        FILTERLOWCOMPLEX(
+            ch_after_lowmap
+                .combine(low_complex_filter)
+                .map { meta, vcf, bed, mask ->
+                    [meta, vcf, bed, mask, "low_complex"]
+                }
+        )
+        ch_after_lowcomplex = FILTERLOWCOMPLEX.out.filtered_vcf_bed
+    } else {
+        ch_after_lowcomplex = ch_after_lowmap
+    }
+    
+    // Switch from amplified to non-amplified BED regions
+    ch_after_lowcomplex
+        .join(ch_readjustregions_noamp)
+        .map { meta, vcf, bed_amp, bed_noamp -> 
+            [meta, vcf, bed_noamp] 
+        }
+        .set { ch_with_noamp_bed }
+    
+    // Apply nanoseq SNP filter (human-specific)
+    if (params.filter_regions && params.vep_species == "homo_sapiens" && params.nanoseq_snp_file) {
+        FILTERNANOSEQSNP(
+            ch_with_noamp_bed
+                .combine(nanoseq_snp_filter)
+                .map { meta, vcf, bed, mask ->
+                    [meta, vcf, bed, mask, "nanoseq_snp"]
+                }
+        )
+        ch_after_snp = FILTERNANOSEQSNP.out.filtered_vcf_bed
+    } else {
+        ch_after_snp = ch_with_noamp_bed
+    }
+
+    // Apply nanoseq noise filter (human-specific)
+    if (params.filter_regions && params.vep_species == "homo_sapiens" && params.nanoseq_noise_file) {
+        FILTERNANOSEQNOISE(
+            ch_after_snp
+                .combine(nanoseq_noise_filter)
+                .map { meta, vcf, bed, mask ->
+                    [meta, vcf, bed, mask, "nanoseq_noise"]
+                }
+        )
+        ch_after_noise = FILTERNANOSEQNOISE.out.filtered_vcf_bed
+    } else {
+        ch_after_noise = ch_after_snp
+    }
+
+    // Join with N-position file for final filtering
+    ch_after_noise
+        .join(ch_nsxposition.ns_tsv)
+        .set { ch_vcf_final }
 
     // FILTER N RICH
     ch_vcf_final

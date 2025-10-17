@@ -102,14 +102,6 @@ workflow RECOUNT_MUTS {
 
     PATCHDPALL(ch_pileup_vcfpatched1)
 
-    // def do_filter_regions = params.filter_regions
-    // def has_low_mappability_file = params.low_mappability_file
-    // def has_low_complex_file = params.low_complex_file
-
-    // // Validate if specie is human to use nanoseq filters
-    // def has_nanoseq_snp_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_snp_file : null
-    // def has_nanoseq_noise_file = (params.vep_species == "homo_sapiens") ? params.nanoseq_noise_file : null
-
     // Warn if nanoseq filters are provided for non-human species
     if (params.vep_species != "homo_sapiens" && (params.nanoseq_snp_file || params.nanoseq_noise_file)) {
         log.warn "Nanoseq filters unset for other species than homo sapiens"

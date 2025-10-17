@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,read_structure
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/SRX3224121_SRR6109262_1.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/SRX3224121_SRR6109262_2.fastq.gz,10M1S+T 10M1S+T

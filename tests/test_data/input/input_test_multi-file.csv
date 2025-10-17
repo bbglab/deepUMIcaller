@@ -1,0 +1,3 @@
+sample,fastq_1,fastq_2,read_structure
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_1.part_001.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_2.part_001.fastq.gz,10M1S+T 10M1S+T
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_1.part_002.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_2.part_002.fastq.gz,10M1S+T 10M1S+T

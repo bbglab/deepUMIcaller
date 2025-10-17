@@ -1,38 +1,372 @@
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    TEST SUITE: deepUMIcaller Pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Description: Comprehensive test suite for the deepUMIcaller pipeline
+    
+    Purpose: Validates pipeline functionality across different input configurations
+    and parameter combinations to ensure robust variant calling performance.
+    
+    Test Categories:
+    1. BASIC FUNCTIONALITY
+       - Normal run: Standard single-file processing
+       - Split by chromosome: Chromosome-based parallelization
+    
+    2. MULTI-FILE HANDLING  
+       - Multi-file: Technical replicates (lanes) per sample
+       - Multi-sample: Biological replicates per patient
+       - MultiAll: Combined multi-file + multi-sample + chromosome splitting
+    
+    3. PARAMETER COMBINATIONS
+       - splitted_original_sample: Controls sample-level merging
+       - split_by_chrom: Controls chromosome-based processing
+       - parent_dna: Controls patient-level aggregation
+    
+    Expected Outcomes: All tests should achieve ≥99% VCF precision when compared
+    to validated reference outputs.
+    
+    Test Data: Located in tests/test_data/input/
+    Expected Results: Located in tests/test_data/expected_output/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
 nextflow_pipeline {
 
     name "Test Workflow main.nf"
     script "main.nf"
     config "./nextflow.config"
 
-    test("Should run and output matches expected") {
+    /*
+    ========================================================================================
+        TEST 1: BASIC FUNCTIONALITY - Standard Processing
+    ========================================================================================
+    Purpose: Validates core pipeline functionality with default parameters
+    
+    Input: Single FASTQ pair per sample
+    Parameters: 
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Processes each FASTQ pair independently
+        - Generates one VCF per input sample
+        - No sample merging or chromosome splitting
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("Basic functionality - standard processing") {
+        tag "normal"
 
         when {
             params {
+                // Input: Single FASTQ pair per sample (baseline test data)
                 input = "${projectDir}/tests/test_data/input/input_test.csv"
-                outdir = "${projectDir}/tests_results"
+                
+                // Output: Results stored in dedicated directory
+                outdir = "${projectDir}/tests_results_default"
+                
+                // Default parameters (splitted_original_sample=false, split_by_chrom=false)
+                // No explicit parameter overrides = standard processing mode
             }
         }
         then {
-            assert workflow.success
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
 
-            def currentDir = file("tests_results/callingvardictmed")
+            // VCF output validation and precision testing
+            def currentDir = file("tests_results_default/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
-
-            // Find all VCF files in the actual results directory
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
 
-            // Loop over each actual VCF and compare to expected
+            // Precision validation against reference results
             currentVcfs.each { currentVcf ->
                 def expectedVcf = new File(expectedDir, currentVcf.name)
-                assert expectedVcf.exists() : "Expected file missing: ${expectedVcf}"
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
-            def cmd = "python3 bin/compare_vcfs.py ${currentVcf} ${expectedVcf}"
-            def proc = cmd.execute()
-            proc.waitFor()
-            def similarity = proc.in.text.trim() as Double
+                // Execute precision comparison script
+                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def precision = proc.in.text.trim() as Double
 
-            println "\nVCF similarity for ${currentVcf.name}: ${similarity}%"
-            assert similarity >= 95 : "NOT PASSED: VCF similarity below threshold for ${currentVcf.name}: ${similarity}%"
+                println "\n[TEST 1 - BASIC] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 2: PERFORMANCE OPTIMIZATION - Chromosome-based Parallelization
+    ========================================================================================
+    Purpose: Validates pipeline performance optimization through chromosome splitting
+    
+    Input: Same single FASTQ pair as Test 1
+    Parameters: 
+        - split_by_chrom = true (enables chromosome-based splitting)
+        - splitted_original_sample = false (default)
+    
+    Expected Behavior:
+        - Splits processing by chromosome for parallelization
+        - Should produce same results as Test 1 but potentially faster
+        - Multiple chromosome-specific intermediate files
+        - Final output should be identical to non-split version
+    
+    Success Criteria: 
+        - VCF precision ≥99% vs reference
+        - Results identical to Test 1 (validates splitting correctness)
+    ========================================================================================
+    */
+    test("Performance optimization - chromosome-based parallelization") {
+        tag "split_by_chrom"
+
+        when {
+            params {
+                // Input: Same baseline data as Test 1 for comparison
+                input = "${projectDir}/tests/test_data/input/input_test.csv"
+                
+                // Output: Dedicated directory for chromosome splitting results
+                outdir = "${projectDir}/tests_results_splitChrom/"
+                
+                // Enable chromosome-based parallelization for performance optimization
+                split_by_chrom = true
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation and precision testing  
+            def currentDir = file("tests_results_splitChrom/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def precision = proc.in.text.trim() as Double
+
+                println "\n[TEST 2 - CHROMOSOME SPLITTING] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 3: TECHNICAL REPLICATES - Multi-file Sample Processing
+    ========================================================================================
+    Purpose: Validates handling of technical replicates (multiple sequencing lanes)
+    
+    Input: Multiple FASTQ pairs from the same biological sample
+           - Same sample name across multiple rows
+           - Different sequencing lanes/runs
+    
+    Parameters: 
+        - splitted_original_sample = true (enables lane merging)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Merges multiple lanes/files from same sample
+        - Processes as single unified sample
+        - Produces one VCF per biological sample (not per lane)
+        - Improved sensitivity from combined coverage
+    
+    Use Case: When sample was sequenced across multiple lanes
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("Technical replicates - multi-file sample processing") {
+        tag "multi-file"
+
+        when {
+            params {
+                // Input: Multiple FASTQ pairs from same sample (technical replicates/lanes)
+                input = "${projectDir}/tests/test_data/input/input_test_multi-file.csv"
+                
+                // Output: Results for merged technical replicates
+                outdir = "${projectDir}/tests_results_multi-file/"
+                
+                // Enable sample-level merging for technical replicates
+                splitted_original_sample = true
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting merged sample-level results
+            def currentDir = file("tests_results_multi-file/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def precision = proc.in.text.trim() as Double
+
+                println "\n[TEST 3 - TECHNICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 4: BIOLOGICAL REPLICATES - Multi-sample Patient Processing
+    ========================================================================================
+    Purpose: Validates patient-level aggregation across multiple biological samples
+    
+    Input: Multiple samples from the same patient/individual
+           - Different sample names with shared parent_dna
+           - Each sample processed independently first
+    
+    Parameters: 
+        - splitted_original_sample = false (default - no sample merging)
+        - parent_dna column specified in input (enables patient-level merging)
+    
+    Expected Behavior:
+        - Processes each sample independently
+        - Creates patient-level merged results via parent_dna grouping
+        - Produces both sample-level AND patient-level VCFs
+        - Enhances variant detection through multi-sample evidence
+    
+    Use Case: Multiple tissue samples or timepoints from same patient
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("Biological replicates - multi-sample patient processing") {
+        tag "multi-sample"
+
+        when {
+            params {
+                // Input: Multiple samples per patient with parent_dna grouping
+                input = "${projectDir}/tests/test_data/input/input_test_multi-sample.csv"
+                
+                // Output: Results for both sample-level and patient-level analysis
+                outdir = "${projectDir}/tests_results_multi-sample"
+                
+                // Default parameters - parent_dna grouping handled by input CSV
+                // splitted_original_sample = false (samples processed individually first)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting both sample-level and patient-level results
+            def currentDir = file("tests_results_multi-sample/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def precision = proc.in.text.trim() as Double
+
+                println "\n[TEST 4 - BIOLOGICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+
+    /*
+    ========================================================================================
+        TEST 5: COMPREHENSIVE SCENARIO - Complete Multi-level Processing
+    ========================================================================================
+    Purpose: Validates the most complex scenario combining all processing modes
+    
+    Input: Multiple FASTQ files per sample + Multiple samples per patient
+           - Technical replicates (lanes) per sample
+           - Biological replicates (samples) per patient  
+           - Chromosome-based parallelization
+    
+    Parameters: 
+        - splitted_original_sample = true (merge technical replicates)
+        - split_by_chrom = true (chromosome parallelization)
+        - parent_dna specified (patient-level grouping)
+    
+    Expected Behavior:
+        1. Merge lanes within each sample (technical replicates)
+        2. Split processing by chromosome (performance optimization)
+        3. Merge samples within each patient (biological replicates)
+        4. Produces patient-level results with maximum sensitivity
+    
+    Use Case: Large-scale studies with:
+        - Multiple sequencing lanes per sample
+        - Multiple samples per patient
+        - Need for computational efficiency
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    Note: This is the most computationally intensive test
+    ========================================================================================
+    */
+    test("Comprehensive scenario - complete multi-level processing") {
+        tag "multiAll"
+
+        when {
+            params {
+                // Input: Most complex scenario - technical + biological replicates
+                input = "${projectDir}/tests/test_data/input/input_test_multiAll.csv"
+                
+                // Output: Results for comprehensive multi-level processing
+                outdir = "${projectDir}/tests_results_multiAll/"
+                
+                // Enable all optimization and merging features
+                split_by_chrom = true              // Chromosome-based parallelization
+                splitted_original_sample = true    // Technical replicate merging
+                // parent_dna grouping enabled via input CSV
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting optimized multi-level results
+            def currentDir = file("tests_results_multiAll/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def precision = proc.in.text.trim() as Double
+
+                println "\n[TEST 5 - COMPREHENSIVE SCENARIO] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
             }
         }
     }

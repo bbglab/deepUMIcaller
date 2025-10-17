@@ -1,0 +1,12 @@
+Oct-17 07:49:59.774 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
+Oct-17 07:49:59.785 [main] INFO  com.askimed.nf.test.App - Arguments: [test]
+Oct-17 07:50:00.375 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 25.04.6
+Oct-17 07:50:00.377 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /home/mgrau/tmp/deepUMIcaller/nf-test.config...
+Oct-17 07:50:00.821 [main] WARN  com.askimed.nf.test.nextflow.NextflowScript - Module /home/mgrau/tmp/deepUMIcaller/workflows/deepumicaller.nf: Dependency '/home/mgrau/tmp/deepUMIcaller/workflows/../modules/nf-core/fgbio/collectduplexseqmetrics/main.nf' not found.
+Oct-17 07:50:00.892 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 36 files from directory /home/mgrau/tmp/deepUMIcaller in 0.25 sec
+Oct-17 07:50:00.893 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+Oct-17 07:50:00.894 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/home/mgrau/tmp/deepUMIcaller/tests/main.nf.test]
+Oct-17 07:50:01.120 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 5 tests to execute.
+Oct-17 07:50:01.121 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+Oct-17 07:50:01.121 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test Workflow main.nf' from file '/home/mgrau/tmp/deepUMIcaller/tests/main.nf.test'.
+Oct-17 07:50:01.122 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '5fb97719: Basic functionality - standard processing'. type: com.askimed.nf.test.lang.pipeline.PipelineTest

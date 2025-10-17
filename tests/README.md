@@ -95,7 +95,7 @@ nf-test test --update-snapshot
 ## Test Data
 
 ### Input Files Location: `tests/test_data/input/`
-- `input_test_new1.csv` - Basic single-sample input
+- `input_test.csv` - Basic single-sample input
 - `input_test_multi-file.csv` - Multi-lane technical replicates
 - `input_test_multi-sample.csv` - Multi-sample patient data
 - `input_test_multiAll.csv` - Complex combined scenario

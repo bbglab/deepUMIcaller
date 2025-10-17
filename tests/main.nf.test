@@ -55,7 +55,7 @@ nextflow_pipeline {
     Success Criteria: VCF precision ≥99% vs reference
     ========================================================================================
     */
-    test("Basic functionality - standard processing") {
+    test("TEST 1. Basic functionality - standard processing") {
         tag "normal"
 
         when {
@@ -75,7 +75,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing
-            def currentDir = file("tests_results_default/callingvardictduplex")
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -86,10 +86,15 @@ nextflow_pipeline {
                 assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
                 // Execute precision comparison script
-                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def scriptPath = new File("${projectDir}/bin/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
                 def proc = cmd.execute()
                 proc.waitFor()
-                def precision = proc.in.text.trim() as Double
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
                 println "\n[TEST 1 - BASIC] VCF precision for ${currentVcf.name}: ${precision}%"
                 assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
@@ -119,7 +124,7 @@ nextflow_pipeline {
         - Results identical to Test 1 (validates splitting correctness)
     ========================================================================================
     */
-    test("Performance optimization - chromosome-based parallelization") {
+    test("TEST 2. Performance optimization - chromosome-based parallelization") {
         tag "split_by_chrom"
 
         when {
@@ -139,7 +144,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing  
-            def currentDir = file("tests_results_splitChrom/callingvardictduplex")
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -150,10 +155,15 @@ nextflow_pipeline {
                 assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
                 // Execute precision comparison script
-                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def scriptPath = new File("${projectDir}/bin/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
                 def proc = cmd.execute()
                 proc.waitFor()
-                def precision = proc.in.text.trim() as Double
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
                 println "\n[TEST 2 - CHROMOSOME SPLITTING] VCF precision for ${currentVcf.name}: ${precision}%"
                 assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
@@ -186,7 +196,7 @@ nextflow_pipeline {
     Success Criteria: VCF precision ≥99% vs reference
     ========================================================================================
     */
-    test("Technical replicates - multi-file sample processing") {
+    test("TEST 3. Technical replicates - multi-file sample processing") {
         tag "multi-file"
 
         when {
@@ -206,7 +216,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting merged sample-level results
-            def currentDir = file("tests_results_multi-file/callingvardictduplex")
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -217,10 +227,15 @@ nextflow_pipeline {
                 assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
                 // Execute precision comparison script
-                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def scriptPath = new File("${projectDir}/bin/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
                 def proc = cmd.execute()
                 proc.waitFor()
-                def precision = proc.in.text.trim() as Double
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
                 println "\n[TEST 3 - TECHNICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
                 assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
@@ -253,7 +268,7 @@ nextflow_pipeline {
     Success Criteria: VCF precision ≥99% vs reference
     ========================================================================================
     */
-    test("Biological replicates - multi-sample patient processing") {
+    test("TEST 4. Biological replicates - multi-sample patient processing") {
         tag "multi-sample"
 
         when {
@@ -273,7 +288,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting both sample-level and patient-level results
-            def currentDir = file("tests_results_multi-sample/callingvardictduplex")
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -284,10 +299,15 @@ nextflow_pipeline {
                 assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
                 // Execute precision comparison script
-                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def scriptPath = new File("${projectDir}/bin/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
                 def proc = cmd.execute()
                 proc.waitFor()
-                def precision = proc.in.text.trim() as Double
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
                 println "\n[TEST 4 - BIOLOGICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
                 assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
@@ -327,7 +347,7 @@ nextflow_pipeline {
     Note: This is the most computationally intensive test
     ========================================================================================
     */
-    test("Comprehensive scenario - complete multi-level processing") {
+    test("TEST 5. Comprehensive scenario - complete multi-level processing") {
         tag "multiAll"
 
         when {
@@ -349,7 +369,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting optimized multi-level results
-            def currentDir = file("tests_results_multiAll/callingvardictduplex")
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -360,10 +380,15 @@ nextflow_pipeline {
                 assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
                 // Execute precision comparison script
-                def cmd = "python3 bin/compare_vcfs_detailed.py ${currentVcf} ${expectedVcf}"
+                def scriptPath = new File("${projectDir}/bin/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
                 def proc = cmd.execute()
                 proc.waitFor()
-                def precision = proc.in.text.trim() as Double
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
                 println "\n[TEST 5 - COMPREHENSIVE SCENARIO] VCF precision for ${currentVcf.name}: ${precision}%"
                 assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"

@@ -86,9 +86,10 @@ class RowChecker:
 
     def _validate_sample(self, row):
         """Assert that the sample name exists and convert spaces to underscores."""
-        assert len(row[self._sample_col]) > 0, "Sample input is required."
+        sample_value = row.get(self._sample_col, None)
+        assert sample_value is not None and len(sample_value) > 0, "Sample input is required."
         # Sanitize samples slightly.
-        row[self._sample_col] = row[self._sample_col].replace(" ", "_")
+        row[self._sample_col] = sample_value.replace(" ", "_")
 
     def _validate_pair(self, row):
         """Assert that read pairs have the same file extension. Report pair status."""
@@ -170,7 +171,14 @@ def sniff_format(handle):
             logger.critical(f"The given sample sheet does not appear to contain a header.")
             sys.exit(1)
     
-    dialect = sniffer.sniff(peek)
+    try:
+        # Try to detect the dialect, but specify common delimiters to check
+        dialect = sniffer.sniff(peek, delimiters=",;\t")
+    except csv.Error:
+        # If sniffing fails, default to comma-delimited
+        logger.warning("Could not automatically detect CSV format, defaulting to comma-delimited.")
+        dialect = csv.excel  # This is comma-delimited by default
+    
     return dialect
 
 
@@ -205,6 +213,10 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
         checker = RowChecker(step = step, init_cols= required_columns)
         for i, row in enumerate(reader):
             try:
+                # Ensure all fieldnames are present in the row dict, even if empty
+                for fieldname in reader.fieldnames:
+                    if fieldname not in row:
+                        row[fieldname] = None
                 checker.validate_and_transform(row)
             except AssertionError as error:
                 logger.critical(f"{str(error)} On line {i + 2}.")

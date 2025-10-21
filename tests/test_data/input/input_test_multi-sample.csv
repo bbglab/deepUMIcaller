@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2,read_structure,parent_dna
+B5,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224115_SRR6109268_1.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224115_SRR6109268_2.fastq.gz,10M1S+T 10M1S+T
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224121_SRR6109262_1.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224121_SRR6109262_2.fastq.gz,10M1S+T 10M1S+T,Bsample
+B13,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224134_SRR6109249_1.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs//fastq/SRX3224134_SRR6109249_2.fastq.gz,10M1S+T 10M1S+T,Bsample

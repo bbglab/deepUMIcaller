@@ -234,65 +234,65 @@ workflow DEEPUMICALLER {
             QUALIMAPQCRAW(SORTBAM.out.bam, qc_targets)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
         }
-    }
+
     
-    if (params.splitted_original_sample){
-        // Group BAMs by original sample name
-        SORTBAM.out.bam
-        .map { meta, bam -> 
-            def sample = meta.sample
-            tuple(sample, meta, bam)
-        }
-        .groupTuple(by: 0)
-        .map { sample, metas, bams -> 
-            def new_meta = metas[0].clone()
-            new_meta.id = sample
-            tuple(new_meta, bams)
-        }
-        .view { meta, bams -> "Debug grouped_bams: meta.id=${meta.id}, meta.sample=${meta.sample}, bams=${bams*.name}" }
-        .set { grouped_bams }
-
-        // Merge BAMs for each sample
-        MERGEBAM(grouped_bams)
-
-        bam_to_group = MERGEBAM.out.bam_bai
-    }
-
-    if (params.split_by_chrom) {
-        // Split merged BAMs by chromosome
-        SPLITBAMCHROM(bam_to_group)
-
-        def process_bams = { meta, bams ->
-            bams.sort { it.name }.collect { bam ->
-                def new_meta = meta.clone()
-                new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
-                [new_meta, bam]
+        if (params.splitted_original_sample){
+            // Group BAMs by original sample name
+            SORTBAM.out.bam
+            .map { meta, bam -> 
+                def sample = meta.sample
+                tuple(sample, meta, bam)
             }
+            .groupTuple(by: 0)
+            .map { sample, metas, bams -> 
+                def new_meta = metas[0].clone()
+                new_meta.id = sample
+                tuple(new_meta, bams)
+            }
+            .view { meta, bams -> "Debug grouped_bams: meta.id=${meta.id}, meta.sample=${meta.sample}, bams=${bams*.name}" }
+            .set { grouped_bams }
+
+            // Merge BAMs for each sample
+            MERGEBAM(grouped_bams)
+
+            bam_to_group = MERGEBAM.out.bam_bai
         }
 
-        bam_to_group = SPLITBAMCHROM.out.chrom_bams
-            .map { meta, bams -> process_bams(meta, bams) }
-            .flatMap { it }
-            .toSortedList { a, b -> a[0].id <=> b[0].id }
-            .flatMap { it }
-            .concat(
-                SPLITBAMCHROM.out.unknown_bam
-                    .map { meta, bam -> 
-                        def new_meta = meta.clone()
-                        new_meta.id = "${meta.id}_unknown"
-                        [new_meta, bam]
-                    }
-            )
-            .map { meta, bam -> [meta, bam] } // Ensure correct structure
-    }else {
-        // If not splitting by chrom, ensure bam_to_group is tuple of (meta, bam)
-        bam_to_group = bam_to_group.map { meta, bam, bai -> tuple(meta, bam) }
+        if (params.split_by_chrom) {
+            // Split merged BAMs by chromosome
+            SPLITBAMCHROM(bam_to_group)
+
+            def process_bams = { meta, bams ->
+                bams.sort { it.name }.collect { bam ->
+                    def new_meta = meta.clone()
+                    new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
+                    [new_meta, bam]
+                }
+            }
+
+            bam_to_group = SPLITBAMCHROM.out.chrom_bams
+                .map { meta, bams -> process_bams(meta, bams) }
+                .flatMap { it }
+                .toSortedList { a, b -> a[0].id <=> b[0].id }
+                .flatMap { it }
+                .concat(
+                    SPLITBAMCHROM.out.unknown_bam
+                        .map { meta, bam -> 
+                            def new_meta = meta.clone()
+                            new_meta.id = "${meta.id}_unknown"
+                            [new_meta, bam]
+                        }
+                )
+                .map { meta, bam -> [meta, bam] } // Ensure correct structure
+        }else {
+            // If not splitting by chrom, ensure bam_to_group is tuple of (meta, bam)
+            bam_to_group = bam_to_group.map { meta, bam, bai -> tuple(meta, bam) }
+        }
+
+        //Final SORT for GROUPREADSBYUMI (TEMPLATE-COORDINATE SORTED)
+        SORTBAMCLEAN(bam_to_group)
+        non_duplex_bams = SORTBAMCLEAN.out.bam
     }
-
-    //Final SORT for GROUPREADSBYUMI (TEMPLATE-COORDINATE SORTED)
-    SORTBAMCLEAN(bam_to_group)
-    non_duplex_bams = SORTBAMCLEAN.out.bam
-
     //
     // Run fgbio Duplex consensus pipeline
     //
@@ -379,49 +379,52 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step == 'filterconsensus') {
-        duplex_filtered_init_bam = INPUT_CHECK.out.reads
-    }
-
-    // Group by meta.parent_dna
-    ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
-            .groupTuple(by: 0)
-            .filter { meta, bams -> bams.size() >= 2 }
-    
-    // Run the concatenation process
-    MERGEBAMS(ch_grouped_bams)
-
-    // Run sorting by query
-    SORTBAMMERGED(MERGEBAMS.out.bam)
-
-    duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
-
-    // store csv with all AM BAMs
-    duplex_filtered_bam
-        .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
-        .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
-        .set { bam_csv_file }
-
-
-    FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-    SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
-    
-    // join the bam and the bamindex channels to have
-    // the ones from the same samples together
-    SORTBAMAMCLEAN.out.bam
-    .join( SORTBAMAMCLEAN.out.csi )
-    .set { bam_n_index_duplex_clean }
-
-    if (params.perform_qcs){
-        // requires input coordinate sorted
-        QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
-        ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
-    }
-
-    //
-    // DUPLEX CALLS
-    //
     if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
+
+        if (params.step == 'filterconsensus') {
+            duplex_filtered_init_bam = INPUT_CHECK.out.reads
+        }
+   
+
+        // Group by meta.parent_dna
+        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
+                .groupTuple(by: 0)
+                .filter { meta, bams -> bams.size() >= 2 }
+        
+        // Run the concatenation process
+        MERGEBAMS(ch_grouped_bams)
+
+        // Run sorting by query
+        SORTBAMMERGED(MERGEBAMS.out.bam)
+
+        duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
+
+        // store csv with all AM BAMs
+        duplex_filtered_bam
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+            .set { bam_csv_file }
+
+
+        FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
+        SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+        
+        // join the bam and the bamindex channels to have
+        // the ones from the same samples together
+        SORTBAMAMCLEAN.out.bam
+        .join( SORTBAMAMCLEAN.out.csi )
+        .set { bam_n_index_duplex_clean }
+
+        if (params.perform_qcs){
+            // requires input coordinate sorted
+            QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
+        }
+
+        //
+        // DUPLEX CALLS
+        //
+    
         FILTERCONSENSUSREADSDUPLEX(duplex_filtered_bam, ch_ref_fasta)
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
@@ -449,9 +452,10 @@ workflow DEEPUMICALLER {
 
     if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
     
-        // ASSIGN cons_med_bam = to our input bam
+        // Initialize variables for calling step entry point
         if (params.step == 'calling') {
             cons_duplex_bam = INPUT_CHECK.out.reads
+            bam_n_index_duplex_clean = INPUT_CHECK.out.reads
         }
 
         cons_duplex_bam.map{[it[0], it[1]]}

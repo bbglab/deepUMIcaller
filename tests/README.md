@@ -33,6 +33,9 @@ nf-test test
 nf-test test --tag "normal"
 nf-test test --tag "multi-file"
 nf-test test --tag "split_by_chrom"
+nf-test test --tag "groupreadsbyumi"
+nf-test test --tag "filterconsensus"
+nf-test test --tag "calling"
 
 # Run with verbose output
 nf-test test --verbose
@@ -79,6 +82,32 @@ nf-test test --update-snapshot
 - **Parameters**: `splitted_original_sample = true`, `split_by_chrom = true`
 - **Expected**: Multi-level processing with maximum computational efficiency
 
+### 3. Intermediate Step Testing
+
+#### Test 6: Intermediate Step - GroupReadsByUmi Entry Point
+
+- **Tag**: `groupreadsbyumi`
+- **Purpose**: Validates pipeline functionality starting from UMI grouping step
+- **Input**: BAM files ready for UMI grouping (coordinate-sorted, aligned BAMs)
+- **Parameters**: `step = "groupreadsbyumi"`
+- **Expected**: Same quality output as full pipeline, testing UMI grouping and downstream processes
+
+#### Test 7: Intermediate Step - FilterConsensus Entry Point
+
+- **Tag**: `filterconsensus`
+- **Purpose**: Validates pipeline functionality starting from consensus filtering step
+- **Input**: Filtered BAM files ready for consensus read filtering
+- **Parameters**: `step = "filterconsensus"`
+- **Expected**: High-quality filtered VCF output, testing consensus filtering and calling stages
+
+#### Test 8: Intermediate Step - Calling Entry Point
+
+- **Tag**: `calling`
+- **Purpose**: Validates pipeline functionality starting from variant calling step only
+- **Input**: Final processed BAM files ready for variant calling
+- **Parameters**: `step = "calling"`
+- **Expected**: Final high-confidence variant calls, testing only the calling module
+
 ## Validation Criteria
 
 ### Success Metrics
@@ -95,23 +124,30 @@ nf-test test --update-snapshot
 ## Test Data
 
 ### Input Files Location: `tests/test_data/input/`
+
 - `input_test.csv` - Basic single-sample input
 - `input_test_multi-file.csv` - Multi-lane technical replicates
 - `input_test_multi-sample.csv` - Multi-sample patient data
 - `input_test_multiAll.csv` - Complex combined scenario
+- `input_groupreadsbyumi.csv` - BAM files for UMI grouping step entry
+- `input_filterconsensus.csv` - BAM files for consensus filtering step entry
+- `input_calling.csv` - BAM files for variant calling step entry
 
 ### Reference Files Location: `tests/test_data/expected_output/`
 Contains validated VCF outputs for precision comparison.
 
 ## Parameter Combinations Tested
 
-| Test | splitted_original_sample | split_by_chrom | parent_dna | Use Case |
-|------|-------------------------|----------------|------------|----------|
-| 1    | false (default)         | false (default)| default    | Standard processing |
-| 2    | false (default)         | true           | default    | Performance optimization |
-| 3    | true                    | false (default)| default    | Technical replicates |
-| 4    | false (default)         | false (default)| explicit   | Biological replicates |
-| 5    | true                    | true           | explicit   | Comprehensive scenario |
+| Test | splitted_original_sample | split_by_chrom | parent_dna | step | Use Case |
+|------|-------------------------|----------------|------------|------|----------|
+| 1    | false (default)         | false (default)| default    | mapping | Standard processing |
+| 2    | false (default)         | true           | default    | mapping | Performance optimization |
+| 3    | true                    | false (default)| default    | mapping | Technical replicates |
+| 4    | false (default)         | false (default)| explicit   | mapping | Biological replicates |
+| 5    | true                    | true           | explicit   | mapping | Comprehensive scenario |
+| 6    | false (default)         | false (default)| default    | groupreadsbyumi | UMI grouping entry point |
+| 7    | false (default)         | false (default)| default    | filterconsensus | Consensus filtering entry |
+| 8    | false (default)         | false (default)| default    | calling | Variant calling entry |
 
 ## Adding New Tests
 

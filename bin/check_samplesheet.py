@@ -16,7 +16,7 @@ logger = logging.getLogger()
 
 
 requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
-                    "groupbyumi": ["bam"],
+                    "groupreadsbyumi": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
 }
@@ -156,9 +156,20 @@ def sniff_format(handle):
     peek = read_head(handle)
     handle.seek(0)
     sniffer = csv.Sniffer()
-    if not sniffer.has_header(peek):
-        logger.critical(f"The given sample sheet does not appear to contain a header.")
-        sys.exit(1)
+    
+    # Check if header detection fails but we can manually verify a reasonable header
+    has_header = sniffer.has_header(peek)
+    if not has_header:
+        # Manual header validation for common cases
+        first_line = peek.split('\n')[0] if peek else ""
+        # Check if first line looks like a header (contains expected column names)
+        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'duplexbam', 'csi']
+        if any(header in first_line.lower() for header in expected_headers):
+            logger.warning("CSV sniffer failed to detect header, but header appears valid based on column names.")
+        else:
+            logger.critical(f"The given sample sheet does not appear to contain a header.")
+            sys.exit(1)
+    
     dialect = sniffer.sniff(peek)
     return dialect
 
@@ -238,7 +249,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "filterconsensus", "calling"),
+        choices=("mapping", "groupreadsbyumi", "filterconsensus", "calling"),
         default="mapping",
     )
     return parser.parse_args(argv)

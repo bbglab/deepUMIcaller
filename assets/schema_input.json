@@ -45,8 +45,8 @@
             "parent_dna": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "The parent DNA must be provided when two or more samples need to be concatenated. It cannot contain spaces"
-            },
+                "errorMessage": "The parent DNA must be provided when two or more samples need to be concatenated and they originate from different physical samples but share the same patient. This field cannot contain spaces. (Note: If all FASTQ files belong to the same physical sample, parent_dna is not required.)"
+            }
         },
         "required": ["sample"],
         "dependentRequired": {

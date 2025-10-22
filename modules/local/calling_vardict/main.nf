@@ -55,20 +55,36 @@ process CALLING_VARDICT {
 
     echo "Concatenated. teststrandbias running..."
 
-    for chunk in chunk_*.raw.tsv; do
-        echo "Processing chunk: \$chunk"
+    pids=()  # Track background jobs
 
-        if ${params.use_teststrandbias}; then
-            cat "\$chunk" | teststrandbias.R | var2vcf_valid.pl \
-                -N ${prefix} $filter_args \
-                > "\${chunk}.genome.vcf"
-        else
-            awk 'BEGIN { FS=OFS="\\t" } { if (NF < 34) { print "ERROR: Unexpected column count " NF > "/dev/stderr"; exit 1; } for (i = 1; i <= 20; i++) printf "%s\\t", \$i; printf "1.0\\t1.0\\t"; for (i = 21; i <= NF; i++) { printf "%s", \$i; if (i < NF) printf "\\t";} printf "\\n"; }' "\$chunk" | var2vcf_valid.pl -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 > "\${chunk}.genome.vcf"
+    for chunk in chunk_*.raw.tsv; do
+        (
+            echo "Processing chunk: \$chunk"
+
+            if ${params.use_teststrandbias}; then
+                cat "\$chunk" | teststrandbias.R | var2vcf_valid.pl \
+                    -N ${prefix} $filter_args \
+                    > "\${chunk}.genome.vcf"
+            else
+                awk 'BEGIN { FS=OFS="\\t" } { if (NF < 34) { print "ERROR: Unexpected column count " NF > "/dev/stderr"; exit 1; } for (i = 1; i <= 20; i++) printf "%s\\t", \$i; printf "1.0\\t1.0\\t"; for (i = 21; i <= NF; i++) { printf "%s", \$i; if (i < NF) printf "\\t";} printf "\\n"; }' "\$chunk" | var2vcf_valid.pl -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 > "\${chunk}.genome.vcf"
+            fi
+        ) &
+        pids+=(\$!)
+    done
+
+    # Wait for all background jobs and check their exit codes
+    status=0
+    for pid in "\${pids[@]}"; do
+        if ! wait "\$pid"; then
+            echo "Error: process with PID \$pid failed." >&2
+            status=1
         fi
     done
-    
-    # Wait for all parallel processes to finish
-    wait
+
+    if [ \$status -ne 0 ]; then
+        echo "One or more teststrandbias jobs failed. Aborting." >&2
+        exit 1
+    fi
 
     echo "Done. Concatenating..."
 
@@ -101,6 +117,3 @@ process CALLING_VARDICT {
     END_VERSIONS
     """
 }
-
-
-

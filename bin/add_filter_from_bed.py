@@ -1,26 +1,24 @@
 #!/usr/bin/env python
 
-# to be added in the pipeline before executing this script to generate the vcf_lowcmappability_file
-# low complex and repetitive regions file: /workspace/projects/bladder_ts/data/mutations/hg38_lowcomplexity_repetitive_regions.mutcoords.bed
+# to be added in the pipeline before executing this script to generate the vcf_filter_name_file
+# unmappable region file: unmappable.bed
 # vcf_derived_bed is the file generated from the coordinates of the mutations, extending them +5 bp in the edges and with the variant id in the format chr;pos;ref;alt
-# bedtools intersect -a vcf_derived_bed -b low_complex_rep_file -u  > lowcomplexrep_file.bed
+# bedtools intersect -a vcf_derived_bed -b unmappable_file -u  > unmappable_muts_file.bed
 
-# usage: python3 add_filter_lowcomplexref.py vcf_file bed_lowcomplexrep_file output_filename filter_name
-# use filter_name = "low_complex_repetitive"
+# usage: python3 add_filter_from_bed.py vcf_file unmappable_muts_file.bed output_filename filter_name
+# use filter_name = "low_mappability"
 
 import pandas as pd
 import sys
 import numpy as np
 
-def update_filter_field(row, filter_name):
+def update_filter_field(row, filter_name) -> pd.Series:
     """
     Updates the FILTER columns of a VCF-like
     dataframe if filter_name has a value. 
     Respects alphabetical ordering of the values
     in the updated FILTER column
     """
-
-    
     if row[filter_name] == filter_name:
 
         if row["FILTER"] != "PASS":
@@ -35,7 +33,7 @@ def update_filter_field(row, filter_name):
     
     return row
 
-def add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name):
+def add_filter(vcf, bed_file, filter_name) -> pd.DataFrame:
     """
     Adds to a VCF-like dataframe an additional filter
     in mutations located at low complex or repetitive regions
@@ -45,10 +43,10 @@ def add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name):
     ----------
     vcf: pandas DataFrame
         VCF-like dataframe containing the mutations
-    bed_lowcomplexrep_file: str
+    bed_file: str
         Path to the BED4 file containing the bedtools intersection
-        between the VCF mutations and the low complexity regions.
-        Mandatory columns: CHROM, START, END, VARIANT_ID  
+        between the VCF mutations and filter regions.
+        Mandatory columns: CHROM, START, END, VARIANT_ID 
 
     Returns
     -------
@@ -56,18 +54,17 @@ def add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name):
         VCF-like dataframe updated
     """
 
-    bed_lowcomplexrep_df = pd.read_csv(bed_lowcomplexrep_file, sep = '\t', header = None,
+    bed_mappability_df = pd.read_csv(bed_file, sep = '\t', header = None,
                                         na_filter=False)
-                                        # dtype={0: str, 1: int, 2: str, 3: int, 4: str, 5: str, 6: str},
-    bed_lowcomplexrep_df.columns = ["CHROM", "START", "END", "VARIANT_ID"]
+    bed_mappability_df.columns = ["CHROM", "START", "END", "VARIANT_ID"]
 
     # add filter_name label for later merging with the vcf
-    bed_lowcomplexrep_df[filter_name] =filter_name  
+    bed_mappability_df[filter_name] = filter_name  
 
     # add VARIANT_ID field to the VCF for merging
     vcf["VARIANT_ID"] = vcf.apply(lambda row: str(row["CHROM"])+";"+str(row["POS"])+";"+row["REF"]+";"+row["ALT"],
                                 axis = 1)      
-    vcf = vcf.merge(bed_lowcomplexrep_df[["VARIANT_ID", filter_name]], how = "left", on = "VARIANT_ID")
+    vcf = vcf.merge(bed_mappability_df[["VARIANT_ID", filter_name]], how = "left", on = "VARIANT_ID")
 
     # add new value to FILTER column when needed
     updated_vcf = vcf.apply(lambda row: update_filter_field(row, filter_name), axis = 1)
@@ -76,24 +73,24 @@ def add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name):
 
     return updated_vcf
 
-def main(vcf_file, bed_lowcomplexrep_file, output_filename, filter_name):
+
+def main(vcf_file, bed_file, output_filename, filter_name):
     """
-    Reads a VCF file and adds low_complex_repetitive value to the
+    Reads a VCF file and adds filter value to the
     FILTER field where applicable.
     
     Parameters
     ----------
     vcf_file: str:
         Path to the VCF file to be updated.
-    bed_lowcomplexrep_file: str
+    bed_file: str
         Path to the BED4 file containing the bedtools intersection
-        between the VCF mutations and the low complexity regions.
+        between the VCF mutations and the filter regions.
         Mandatory columns: CHROM, START, END, VARIANT_ID 
     output_filename: str
         Name path for the resulting updated VCF.
     filter_name: str
         Name to be added in the FILTER column. 
-        Default: low_complex_repetitive
 
     """
 
@@ -101,38 +98,51 @@ def main(vcf_file, bed_lowcomplexrep_file, output_filename, filter_name):
     # Read the VCF file body and add 
     ###
     vcf = pd.read_csv(vcf_file, sep = '\t', header = None, comment= '#',
-                        dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
-                        na_filter=False)
+                            dtype={0: str, 1: int, 2: str, 3: str, 4: str, 5: int, 6: str, 7: str, 8: str, 9: str},
+                            na_filter=False)
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     ###
-    # Add filter: mutations in low complexity regions
+    # Add filter: mutations in low mappable regions
     ###
-    updated_vcf = add_filter_lowcomplexityrep(vcf, bed_lowcomplexrep_file, filter_name)
-
+    updated_vcf = add_filter(vcf, bed_file, filter_name)
 
     ###
     # Read the VCF header
     ###
     first_header_lines = []
     header_lines = []
+    single_header = None
     with open(vcf_file, 'r') as vcf_open_file:
         for line in vcf_open_file:
-            if line.startswith('##'):
-                if line.strip().strip("#").split("=")[0].islower():
-                    first_header_lines.append(line.strip())
+            line = line.strip()
+            if line.startswith("##"):
+                key = line.lstrip("#").split("=", 1)[0]
+                if key.islower():
+                    first_header_lines.append(line)
                 else:
-                    header_lines.append(line.strip())
-            elif line.startswith('#'):
-                single_header = line.strip()
+                    header_lines.append(line)
+            elif line.startswith("#"):
+                single_header = line
             else:
                 break
+    if header_lines is None:
+        raise ValueError("VCF header not found in the input file.")
+    if single_header is None:
+        raise ValueError("VCF column names not found in the input file.")
     
     ###
     # Add your custom header lines
     ###    
     # FILTER field
-    header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a low complexity or repetitive genomic region. deepUMIcaller.">')
+    if filter_name == "low_mappability":
+        header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a genomic region with low mappability. deepUMIcaller.">')
+    elif filter_name == "low_complex_repetitive":
+        header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a low complexity or repetitive genomic region. deepUMIcaller.">')
+    elif filter_name == "nanoseq_snp":
+        header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant is detected as a common SNP. Nanoseq.">')
+    elif filter_name == "nanoseq_noise":
+        header_lines.append(f'##FILTER=<ID={filter_name},Description="Variant located in a highly variable/noisy genomic region. Nanoseq.">')
     
     ###
     # Combine the modified header rows
@@ -153,7 +163,7 @@ def main(vcf_file, bed_lowcomplexrep_file, output_filename, filter_name):
 
 if __name__ == '__main__':
     vcf_file = sys.argv[1]
-    bed_lowcomplexrep_file = sys.argv[2]
+    bed_file = sys.argv[2]
     output_filename = sys.argv[3]
     filter_name = sys.argv[4]
-    main(vcf_file, bed_lowcomplexrep_file, output_filename, filter_name)
+    main(vcf_file, bed_file, output_filename, filter_name)

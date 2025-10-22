@@ -1,4 +1,4 @@
 sample,fastq_1,fastq_2,read_structure,parent_dna
-CH_pat1,/data/bbg/datasets/transfer/ferriol_deepumicaller/B5_1_downsampled.fastq.gz,/data/bbg/datasets/transfer/ferriol_deepumicaller/B5_2_downsampled.fastq.gz,8M1S+T 8M1S+T,
-CH_pat2A,/data/bbg/datasets/transfer/ferriol_deepumicaller/G5_1_downsampled.fastq.gz,/data/bbg/datasets/transfer/ferriol_deepumicaller/G5_2_downsampled.fastq.gz,8M1S+T 8M1S+T,CH_pat2
-CH_pat2B,/data/bbg/datasets/transfer/ferriol_deepumicaller/G5B_1_downsampled.fastq.gz,/data/bbg/datasets/transfer/ferriol_deepumicaller/G5B_2_downsampled.fastq.gz,8M1S+T 8M1S+T,CH_pat2
+CH_pat1,/path/to/file/B5_1_downsampled.fastq.gz,/path/to/file/B5_2_downsampled.fastq.gz,8M1S+T 8M1S+T,
+CH_pat2A,/path/to/file/G5_1_downsampled.fastq.gz,/path/to/file/G5_2_downsampled.fastq.gz,8M1S+T 8M1S+T,CH_pat2
+CH_pat2B,/path/to/file/G5B_1_downsampled.fastq.gz,/path/to/file/G5B_2_downsampled.fastq.gz,8M1S+T 8M1S+T,CH_pat2

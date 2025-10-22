@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+import click
 
 
 def wrap_family_size_curves(data_sscs):
@@ -119,7 +120,7 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
 
 
-    keys = ['sample', 'quality', 'raw_reads',
+    keys = ['sample', 'quality', 'quality_threshold', 'raw_reads',
                 'duplicates', 'sscs', 'dscs',
                 'expected_dscs', 'recovery_of_dscs', 'unique_reads', 'uq_reads_duplex', 'unique_molecules',
                 'raw_x_dscs', 'raw_x_sscs', 'sscs_x_dscs',
@@ -127,7 +128,7 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
                 'noduplex_raw_reads', 'noduplex_sscs', 'noduplex_raw_x_sscs',
                 'peak_size']
 
-    values = [sample, confidence_name, total_reads,
+    values = [sample, confidence_name, confidence, total_reads,
                 round(percent_duplicates, 3), total_scss,
                 total_duplex,
                 expected_dscs, round(recovery_of_dscs, 3), unique_reads, round(total_duplex/unique_reads*100, 3), round(unique_reads/2),
@@ -142,30 +143,27 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
 
 
-def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix):
-
+def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix, confidence = '4 2 2'):
+    
     # compute family size distributions from duplex stats data
     data_duplex_families = pd.read_table(f"{duplex_metrics_file}")
 
 
-    sample_data_high, data_family_size_curve_high = compute_family_sizes_curve(sample, data_duplex_families,
-                                                                                prefix_figure = output_prefix,
-                                                                                confidence = '6 3 3', confidence_name = 'high')
-    sample_data_med, data_family_size_curve_med = compute_family_sizes_curve(sample, data_duplex_families,
+    sample_data_duplex, data_family_size_curve_duplex = compute_family_sizes_curve(sample, data_duplex_families,
                                                                                     prefix_figure = output_prefix,
-                                                                                confidence = '4 2 2', confidence_name = 'med')
+                                                                                    confidence = confidence, confidence_name = 'duplex')
     sample_data_low, data_family_size_curve_low = compute_family_sizes_curve(sample, data_duplex_families, 
                                                                                     prefix_figure = output_prefix,
-                                                                                    confidence = '2 1 1', confidence_name = 'low')
+                                                                                    confidence = '2 1 1', confidence_name = 'allm')
 
-    sample_data = pd.concat((sample_data_high, sample_data_med, sample_data_low), axis = 0)
+    sample_data = pd.concat((sample_data_duplex, sample_data_low), axis = 0)
     sample_data.to_csv(f"{output_prefix}.sample_data.tsv",
                                     sep = "\t",
                                     header = True,
                                     index = False)
 
 
-    family_size_curve = pd.concat((data_family_size_curve_high, data_family_size_curve_med, data_family_size_curve_low), axis = 0)
+    family_size_curve = pd.concat((data_family_size_curve_duplex, data_family_size_curve_low), axis = 0)
     family_size_curve.to_csv(f"{output_prefix}.family_curve.tsv",
                                     sep = "\t",
                                     header = True,
@@ -174,11 +172,21 @@ def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix):
     return 0
 
 
-sam = sys.argv[1]
-duplex_metrics_filee = sys.argv[2]
-output_file = sys.argv[3]
+@click.command()
+@click.option('--sample-name', '-n', required=True, type=str, help='Name of the sample.')
+@click.option('--input-file', '-i', required=True, type=click.Path(exists=True), help='Path to the input file.')
+@click.option('--output-file', '-o', required=True, type=click.Path(), help='Path to the output file.')
+@click.option('--confidence-level', '-c', default='4 2 2', show_default=True, type=str, help='Confidence level for the analysis.')
+def main(sample_name, input_file, output_file, confidence_level):
+    """
+    Main function to process the input file and generate plots.
+    """
 
-global limx
-limx = (0,50)
+    global limx
+    limx = (0,50)
 
-stats_fam_size2plot(sam, duplex_metrics_filee, output_file)
+    stats_fam_size2plot(sample_name, input_file, output_file, confidence=confidence_level)
+
+
+if __name__ == '__main__':
+    main()

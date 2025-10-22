@@ -139,14 +139,13 @@ workflow DEEPUMICALLER {
     }
 
     ch_multiqc_files = Channel.empty()
+   
 
-    // Create value channels for targets and global exons files (if provided)
-    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : Channel.empty()
-    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : file(params.targetsfile, checkIfExists: true)
+    if (params.targetsfile) {
+        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
+        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
+    }
 
-
-    targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
-    BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
 
     
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -197,8 +196,10 @@ workflow DEEPUMICALLER {
         }
 
         FASTQTOBAM(split_fastqs_ch)
-        FASTQTOBAM.out.bam.view { meta, bam -> "Debug FASTQTOBAM: BAM - Meta: $meta, BAM: $bam" }
 
+        if (params.debug) {
+            FASTQTOBAM.out.bam.view { meta, bam -> "Debug FASTQTOBAM: BAM - Meta: $meta, BAM: $bam" }
+        }
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
         if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
@@ -250,7 +251,6 @@ workflow DEEPUMICALLER {
                 new_meta.id = sample
                 tuple(new_meta, bams)
             }
-            .view { meta, bams -> "Debug grouped_bams: meta.id=${meta.id}, meta.sample=${meta.sample}, bams=${bams*.name}" }
             .set { grouped_bams }
 
             // Merge BAMs for each sample
@@ -324,7 +324,7 @@ workflow DEEPUMICALLER {
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it[1]} )
         
 
-        // // Plot the family size metrics
+        // Plot the family size metrics
         FAMILYMETRICSONTARGET(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
 
         FAMILYMETRICSONTARGET.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
@@ -372,10 +372,10 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
         DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
 
     }
@@ -397,27 +397,15 @@ workflow DEEPUMICALLER {
 
         // Run sorting by query
         SORTBAMMERGED(MERGEBAMS.out.bam)
-        // Run sorting by query
-        SORTBAMMERGED(MERGEBAMS.out.bam)
 
-        duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
         duplex_filtered_bam = duplex_filtered_init_bam.mix(SORTBAMMERGED.out.bam)
 
         // store csv with all AM BAMs
         duplex_filtered_bam
             .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
             .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
-            .set { bam_csv_file }
 
 
-        FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-        SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
-        
-        // join the bam and the bamindex channels to have
-        // the ones from the same samples together
-        SORTBAMAMCLEAN.out.bam
-        .join( SORTBAMAMCLEAN.out.csi )
-        .set { bam_n_index_duplex_clean }
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
         SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
         
@@ -454,20 +442,19 @@ workflow DEEPUMICALLER {
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, params.targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
 
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
             COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
     
         // Initialize variables for calling step entry point
         if (params.step == 'calling') {
             cons_duplex_bam = INPUT_CHECK.out.reads
-            bam_n_index_duplex_clean = INPUT_CHECK.out.reads
             bam_n_index_duplex_clean = INPUT_CHECK.out.reads
         }
 
@@ -508,12 +495,6 @@ workflow DEEPUMICALLER {
 
         RECOUNTMUTS.out.pyrvcf.map{it[1]}.set { mutation_files_pyr_duplex }
         SIGPROFPLOTPYR(mutation_files_pyr_duplex.collect())
-
-        // Generate deepCSA input example
-        RECOUNTMUTS.out.filtered_vcf
-        .join(cons_duplex_bam_only)
-        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/sortbamduplexcons/${bam.name}\n" }
-        .collectFile(name: 'deepCSA_input_template.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
         // Generate deepCSA input example
         RECOUNTMUTS.out.filtered_vcf

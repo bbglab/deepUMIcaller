@@ -141,10 +141,13 @@ workflow DEEPUMICALLER {
     ch_multiqc_files = Channel.empty()
    
 
-    if (params.targetsfile) {
-        targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], file(params.targetsfile) ])
-        BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
-    }
+    // Create value channels for targets and global exons files (if provided)
+    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : Channel.empty()
+    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : file(params.targetsfile, checkIfExists: true)
+
+
+    targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
+    BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
 
 
     
@@ -269,7 +272,7 @@ workflow DEEPUMICALLER {
             def process_bams = { meta, bams ->
                 bams.sort { it.name }.collect { bam ->
                     def new_meta = meta.clone()
-                    def chrom_match = bam.name =~ /(?:\.|_)(chr[^\.|_]+)(?:\.bam)$/  
+                    def chrom_match = bam.name =~ /(?:\.|_)(chr[^._]+)(?:\.bam)$/ 
                     def chrom = chrom_match ? chrom_match[0][1] : bam.name.replaceAll(/\.bam$/, '').replaceAll(/^.*[._]/, '')  
                     new_meta.id = "${meta.id}_${chrom}"  
                     [new_meta, bam]
@@ -435,10 +438,10 @@ workflow DEEPUMICALLER {
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], params.global_exons_file, it[1]]}.set { discarded_bam }
+        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
         DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
 
     }

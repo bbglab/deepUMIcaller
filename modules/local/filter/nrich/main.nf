@@ -2,9 +2,7 @@
 
 process FILTER_N_RICH {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'memory_medium'
+    label 'process_memory_intensive'
     
     conda "conda-forge::pandas=1.5.2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 

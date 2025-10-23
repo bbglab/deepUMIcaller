@@ -1,7 +1,7 @@
 process FASTQC {
     tag "$meta.id"
-    label 'process_medium'
-
+    label 'process_medium_memory'
+    
     conda "bioconda::fastqc=0.12.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastqc:0.12.1--hdfd78af_0' :

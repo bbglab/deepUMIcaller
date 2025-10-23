@@ -135,7 +135,7 @@ nextflow_pipeline {
         when {
             params {
                 // Input: Same baseline data as Test 1 for comparison
-                input = "${projectDir}/tests/test_data/input/input_test.csv"
+                input = "${projectDir}/tests/test_data/input/input_test_new1.csv"
                 
                 // Output: Dedicated directory for chromosome splitting results
                 outdir = "${projectDir}/tests_results_splitChrom/"

@@ -8,5 +8,5 @@ testing/
 testing*
 *.pyc
 diff*
-tests/.nf-test.log
 .nf-test.log
+tests/.nf-test.log

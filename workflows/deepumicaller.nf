@@ -187,7 +187,10 @@ workflow DEEPUMICALLER {
             .transpose()
             .map { meta, fastqs -> 
                 def new_meta = meta.clone()
-                new_meta.id = "${meta.id}_${fastqs[0].name.tokenize('_')[0].tokenize('.')[0]}"
+                // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
+                def match = fastqs[0].name =~ /^([^. _-]+)/
+                def part_id = match ? match[0][1] : "unknown"
+                new_meta.id = "${meta.id}_${part_id}"
                 [new_meta, fastqs]
             }
             .set { split_fastqs_ch }
@@ -266,7 +269,9 @@ workflow DEEPUMICALLER {
             def process_bams = { meta, bams ->
                 bams.sort { it.name }.collect { bam ->
                     def new_meta = meta.clone()
-                    new_meta.id = "${meta.id}_${bam.name.tokenize('.')[1]}"
+                    def chrom_match = bam.name =~ /(?:\.|_)(chr[^\.|_]+)(?:\.bam)$/  
+                    def chrom = chrom_match ? chrom_match[0][1] : bam.name.replaceAll(/\.bam$/, '').replaceAll(/^.*[._]/, '')  
+                    new_meta.id = "${meta.id}_${chrom}"  
                     [new_meta, bam]
                 }
             }
@@ -286,8 +291,9 @@ workflow DEEPUMICALLER {
                 )
                 .map { meta, bam -> [meta, bam] } // Ensure correct structure
         }else {
-            // If not splitting by chrom, ensure bam_to_group is tuple of (meta, bam)
-            bam_to_group = bam_to_group.map { meta, bam, bai -> tuple(meta, bam) }
+            // The BAI index is dropped here because downstream processes only require the BAM file and its metadata.  
+            def drop_bai_index = { meta, bam, bai -> tuple(meta, bam) }  
+            bam_to_group = bam_to_group.map(drop_bai_index)  
         }
 
         //Final SORT for GROUPREADSBYUMI (TEMPLATE-COORDINATE SORTED)
@@ -313,8 +319,37 @@ workflow DEEPUMICALLER {
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam, [])
         
+        // Extract duplex_family_sizes.txt files and optionally aggregate by sample when split_by_chrom is enabled
+        family_sizes_metrics = COLLECTDUPLEXSEQMETRICS.out.metrics
+            .map { meta, files ->
+                // files is a list - find the duplex_family_sizes.txt file
+                def family_size_file = files instanceof Collection ? 
+                    files.find { it.name.contains('duplex_family_sizes.txt') } : 
+                    (files.name.contains('duplex_family_sizes.txt') ? files : null)
+                family_size_file ? tuple(meta, family_size_file) : null
+            }
+            .filter { it != null }
+        
+        // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
+        if (params.split_by_chrom) {
+            family_sizes_metrics = family_sizes_metrics
+                .map { meta, file -> 
+                    // Extract original sample name (remove chromosome suffix like "_chr1", "_chr2", "_unknown")
+                    def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
+                    tuple(original_sample, meta, file)
+                }
+                .groupTuple(by: 0)  // Group by original sample name
+                .map { sample, metas, files -> 
+                    // Create new meta with original sample name
+                    def new_meta = metas[0].clone()
+                    new_meta.id = sample
+                    new_meta.sample = sample
+                    tuple(new_meta, files)
+                }
+        }
+        
         // Plot the family size metrics
-        FAMILYMETRICS(COLLECTDUPLEXSEQMETRICS.out.metrics)
+        FAMILYMETRICS(family_sizes_metrics)
 
         FAMILYMETRICS.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
         FAMILYMETRICS.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
@@ -323,9 +358,37 @@ workflow DEEPUMICALLER {
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it[1]} )
         
+        // Extract duplex_family_sizes.txt files and optionally aggregate by sample when split_by_chrom is enabled
+        family_sizes_metrics_ontarget = COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics
+            .map { meta, files ->
+                // files is a list - find the duplex_family_sizes.txt file
+                def family_size_file = files instanceof Collection ? 
+                    files.find { it.name.contains('duplex_family_sizes.txt') } : 
+                    (files.name.contains('duplex_family_sizes.txt') ? files : null)
+                family_size_file ? tuple(meta, family_size_file) : null
+            }
+            .filter { it != null }
+        
+        // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
+        if (params.split_by_chrom) {
+            family_sizes_metrics_ontarget = family_sizes_metrics_ontarget
+                .map { meta, file -> 
+                    // Extract original sample name (remove chromosome suffix)
+                    def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
+                    tuple(original_sample, meta, file)
+                }
+                .groupTuple(by: 0)  // Group by original sample name
+                .map { sample, metas, files -> 
+                    // Create new meta with original sample name
+                    def new_meta = metas[0].clone()
+                    new_meta.id = sample
+                    new_meta.sample = sample
+                    tuple(new_meta, files)
+                }
+        }
 
         // Plot the family size metrics
-        FAMILYMETRICSONTARGET(COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics)
+        FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
 
         FAMILYMETRICSONTARGET.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
         FAMILYMETRICSONTARGET.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)

@@ -311,7 +311,7 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
 
         if (params.step == 'allmoleculesfile') {
             bam_n_index_all_molecules = INPUT_CHECK.out.reads
@@ -331,7 +331,7 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus']) {
 
         if (params.step == 'filterconsensus') {
             duplex_filtered_init_bam = INPUT_CHECK.out.reads
@@ -399,7 +399,7 @@ workflow DEEPUMICALLER {
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus', 'calling']) {
     
         // ASSIGN cons_med_bam = to our input bam
         if (params.step == 'calling') {

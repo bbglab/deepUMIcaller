@@ -35,6 +35,7 @@ include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICSONTARGET  
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
 
+include { UNMAP_BAM                         as UNMAPBAM                         } from '../modules/local/unmap/main'
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXSDUPLEX                  } from '../modules/local/filter_reads/asminusxs/main'
 
@@ -285,9 +286,19 @@ workflow DEEPUMICALLER {
         // MODULE: Run fgbio CallDuplexConsensusReads
         CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
         
+    }
+    
+    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus']) {
+
+        if (params.step == 'unmapped_consensus') {
+            UNMAPBAM(INPUT_CHECK.out.reads)
+            called_consensus = UNMAPBAM.out.bam
+        } else {
+            called_consensus = CALLDUPLEXCONSENSUSREADS.out.bam
+        }
 
         // MODULE: Align with bwa mem
-        ALIGNDUPLEXCONSENSUSBAM(CALLDUPLEXCONSENSUSREADS.out.bam, ch_ref_index_dir, false)
+        ALIGNDUPLEXCONSENSUSBAM(called_consensus, ch_ref_index_dir, false)
 
 
         SORTBAMALLMOLECULES(ALIGNDUPLEXCONSENSUSBAM.out.bam)

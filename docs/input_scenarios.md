@@ -11,7 +11,9 @@ All input configurations use a CSV file with specific columns depending on the p
 ### For Standard P### Advanced Configuration
 
 ### Custom Processing Strategies
+
 For specialized requirements, consider:
+
 - Custom sample grouping strategies
 - Alternative merging algorithms  
 - Specialized quality filtering
@@ -20,7 +22,9 @@ For specialized requirements, consider:
 - **Modular analysis using specific deepUMIcaller components**
 
 ### Integration with Other Tools
+
 The deepUMIcaller pipeline can be integrated with:
+
 - Upstream read processing pipelines (providing BAM inputs)
 - External UMI grouping and consensus tools (providing consensus BAMs)
 - Downstream variant annotation tools
@@ -37,6 +41,7 @@ The deepUMIcaller pipeline can be integrated with:
 | `parent_dna` | Optional | Patient/individual identifier for multi-sample merging |
 
 ### For Intermediate Step Processing
+
 | Entry Point | Required Columns | File Types |
 |-------------|-----------------|------------|
 | `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files |
@@ -50,6 +55,7 @@ The deepUMIcaller pipeline can be integrated with:
 **Use Case**: Standard processing with one FASTQ pair per sample.
 
 **Input Structure:**
+
 ```csv
 sample,fastq_1,fastq_2
 Sample_A,/path/to/Sample_A_R1.fastq.gz,/path/to/Sample_A_R2.fastq.gz
@@ -58,6 +64,7 @@ Sample_C,/path/to/Sample_C_R1.fastq.gz,/path/to/Sample_C_R2.fastq.gz
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input.csv \
@@ -65,6 +72,7 @@ nextflow run main.nf \
 ```
 
 **Expected Output:**
+
 - One VCF file per sample: `Sample_A.vcf`, `Sample_B.vcf`, `Sample_C.vcf`
 - Independent processing of each sample
 - No cross-sample merging
@@ -76,6 +84,7 @@ nextflow run main.nf \
 **Use Case**: When the same biological sample was sequenced across multiple lanes or runs.
 
 **Input Structure:**
+
 ```csv
 sample,fastq_1,fastq_2
 Sample_A,/path/to/Sample_A_L1_R1.fastq.gz,/path/to/Sample_A_L1_R2.fastq.gz
@@ -86,6 +95,7 @@ Sample_B,/path/to/Sample_B_L2_R1.fastq.gz,/path/to/Sample_B_L2_R2.fastq.gz
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input.csv \
@@ -94,11 +104,13 @@ nextflow run main.nf \
 ```
 
 **Expected Output:**
+
 - Merged VCF per biological sample: `Sample_A.vcf`, `Sample_B.vcf`
 - Improved sensitivity from combined coverage
 - Lane-level BAM files merged before variant calling
 
 **Benefits:**
+
 - Increased sequencing depth per sample
 - Better variant detection sensitivity
 - Reduced false negative rates
@@ -110,6 +122,7 @@ nextflow run main.nf \
 **Use Case**: Multiple samples from the same patient/individual (e.g., different tissues, timepoints).
 
 **Input Structure:**
+
 ```csv
 sample,fastq_1,fastq_2,parent_dna
 Tumor_P1,/path/to/Tumor_P1_R1.fastq.gz,/path/to/Tumor_P1_R2.fastq.gz,Patient_001
@@ -120,6 +133,7 @@ Normal_P2,/path/to/Normal_P2_R1.fastq.gz,/path/to/Normal_P2_R2.fastq.gz,Patient_
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input.csv \
@@ -127,11 +141,13 @@ nextflow run main.nf \
 ```
 
 **Expected Output:**
+
 - Sample-level VCFs: `Tumor_P1.vcf`, `Normal_P1.vcf`, etc.
 - Patient-level merged VCFs: `Patient_001.vcf`, `Patient_002.vcf`
 - Enhanced variant calling through multi-sample evidence
 
 **Benefits:**
+
 - Patient-level variant consolidation
 - Cross-sample variant validation
 - Comprehensive genomic profiling per patient
@@ -143,6 +159,7 @@ nextflow run main.nf \
 **Use Case**: Complex experimental designs with both technical and biological replicates.
 
 **Input Structure:**
+
 ```csv
 sample,fastq_1,fastq_2,parent_dna
 Tumor_P1,/path/to/Tumor_P1_L1_R1.fastq.gz,/path/to/Tumor_P1_L1_R2.fastq.gz,Patient_001
@@ -154,6 +171,7 @@ Tumor_P2,/path/to/Tumor_P2_L2_R1.fastq.gz,/path/to/Tumor_P2_L2_R2.fastq.gz,Patie
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input.csv \
@@ -162,11 +180,13 @@ nextflow run main.nf \
 ```
 
 **Expected Output:**
+
 - Merged sample-level VCFs: `Tumor_P1.vcf`, `Normal_P1.vcf`, etc.
 - Patient-level consolidated VCFs: `Patient_001.vcf`, `Patient_002.vcf`
 - Maximum sensitivity from both technical and biological aggregation
 
 **Processing Flow:**
+
 1. **Lane Merging**: Technical replicates merged per sample
 2. **Sample Processing**: Individual variant calling per merged sample
 3. **Patient Consolidation**: Biological samples merged per patient
@@ -178,6 +198,7 @@ nextflow run main.nf \
 **Use Case**: Large datasets requiring computational efficiency.
 
 **Any Input Structure** + Performance Parameter:
+
 ```bash
 nextflow run main.nf \
   --input input.csv \
@@ -186,6 +207,7 @@ nextflow run main.nf \
 ```
 
 **Benefits:**
+
 - Parallel processing by chromosome
 - Reduced memory requirements per job
 - Faster overall execution time
@@ -198,6 +220,7 @@ nextflow run main.nf \
 ## Intermediate Step Entry Points
 
 The deepUMIcaller pipeline supports starting from intermediate processing steps, allowing for:
+
 - **Integration with external pipelines** that produce compatible data formats
 - **Leveraging existing processed data** from other UMI or consensus calling tools
 - **Component-specific analysis** using deepUMIcaller's specialized modules
@@ -209,6 +232,7 @@ The deepUMIcaller pipeline supports starting from intermediate processing steps,
 **Use Case**: Starting from aligned BAM files produced by external alignment pipelines or when you want to apply deepUMIcaller's UMI grouping and consensus calling to existing alignments.
 
 **Input Structure:**
+
 ```csv
 sample,bam
 Sample_A,/path/to/Sample_A.sorted.bam
@@ -217,6 +241,7 @@ Sample_C,/path/to/Sample_C.sorted.bam
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input_groupreadsbyumi.csv \
@@ -225,16 +250,19 @@ nextflow run main.nf \
 ```
 
 **Requirements:**
+
 - BAM files must be coordinate-sorted
 - BAM files must contain UMI information in read names/tags
 - Files must be accessible from compute nodes
 
 **Expected Output:**
+
 - UMI grouping and consensus calling results using deepUMIcaller's algorithms
 - Final VCF files with variant calls
 - All downstream processing from UMI grouping onward
 
 **Common Scenarios:**
+
 - Using BAM files from external alignment pipelines (BWA, Bowtie2, etc.)
 - Comparing UMI grouping methods by applying deepUMIcaller to existing data
 - Processing legacy datasets with deepUMIcaller's consensus algorithms
@@ -246,6 +274,7 @@ nextflow run main.nf \
 **Use Case**: Starting from consensus BAM files produced by external UMI processing tools, or when you want to apply deepUMIcaller's consensus filtering and variant calling to existing consensus reads.
 
 **Input Structure:**
+
 ```csv
 sample,bam
 Sample_A,/path/to/Sample_A.consensus.bam
@@ -254,6 +283,7 @@ Sample_C,/path/to/Sample_C.consensus.bam
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input_filterconsensus.csv \
@@ -262,16 +292,19 @@ nextflow run main.nf \
 ```
 
 **Requirements:**
+
 - BAM files must contain consensus reads from UMI processing
 - Files should be from completed UMI grouping and consensus calling
 - Proper consensus read formatting required
 
 **Expected Output:**
+
 - Consensus read filtering and quality control using deepUMIcaller's methods
 - Final variant calling results
 - High-quality filtered VCF outputs
 
 **Common Scenarios:**
+
 - Processing consensus BAMs from external UMI tools (UMI-tools, CGAT-core, etc.)
 - Applying deepUMIcaller's filtering algorithms to existing consensus data
 - Benchmarking variant calling performance on standardized consensus inputs
@@ -283,6 +316,7 @@ nextflow run main.nf \
 **Use Case**: Starting from final processed duplex BAM files produced by external consensus pipelines, or when you specifically want to use deepUMIcaller's variant calling algorithms on high-quality duplex consensus data.
 
 **Input Structure:**
+
 ```csv
 sample,duplexbam,csi
 Sample_A,/path/to/Sample_A.duplex.bam,/path/to/Sample_A.duplex.bam.csi
@@ -291,6 +325,7 @@ Sample_C,/path/to/Sample_C.duplex.bam,/path/to/Sample_C.duplex.bam.csi
 ```
 
 **Pipeline Parameters:**
+
 ```bash
 nextflow run main.nf \
   --input input_calling.csv \
@@ -299,16 +334,19 @@ nextflow run main.nf \
 ```
 
 **Requirements:**
+
 - BAM files must contain fully processed duplex consensus reads
 - CSI index files must be provided for each BAM
 - Files must be ready for variant calling
 
 **Expected Output:**
+
 - Variant calling results using deepUMIcaller's algorithms
 - VCF files with detected variants
 - Quality metrics and statistics
 
 **Common Scenarios:**
+
 - Using duplex BAMs from external consensus calling pipelines
 - Applying deepUMIcaller's variant calling to standardized duplex data
 - Comparing variant calling methods using the same input consensus data
@@ -344,21 +382,25 @@ nextflow run main.nf \
 ## Best Practices
 
 ### 1. File Path Management
+
 - Use **absolute paths** for FASTQ files
 - Ensure all files are accessible from compute nodes
 - Consider using symbolic links for large datasets
 
 ### 2. Sample Naming
+
 - Use **consistent naming conventions**
 - Avoid special characters (spaces, brackets, etc.)
 - Keep names descriptive but concise
 
 ### 3. Parent DNA Identifiers
+
 - Use **consistent patient/individual IDs**
 - Ensure proper grouping of related samples
 - Consider using study-specific prefixes
 
 ### 4. Performance Considerations
+
 - Enable `split_by_chrom` for large datasets (>50 samples)
 - Use technical replicate merging when appropriate
 - Monitor resource usage and adjust accordingly
@@ -366,13 +408,16 @@ nextflow run main.nf \
 ## Validation and Quality Control
 
 ### Input Validation
+
 The pipeline automatically validates:
+
 - CSV file format and required columns
 - FASTQ file existence and accessibility
 - Sample name uniqueness within processing groups
 - Parent DNA identifier consistency
 
 ### Quality Metrics
+
 - **Coverage depth** per sample and merged group
 - **Variant calling statistics** per processing level
 - **Precision metrics** comparing processing strategies
@@ -380,6 +425,7 @@ The pipeline automatically validates:
 ## Example Workflows
 
 ### Workflow 1: Clinical Sample Processing
+
 ```csv
 sample,fastq_1,fastq_2,parent_dna
 Tumor_001,tumor_001_R1.fastq.gz,tumor_001_R2.fastq.gz,Patient_A
@@ -387,6 +433,7 @@ Normal_001,normal_001_R1.fastq.gz,normal_001_R2.fastq.gz,Patient_A
 ```
 
 ### Workflow 2: Multi-lane Research Study
+
 ```csv
 sample,fastq_1,fastq_2
 Sample_01,sample_01_L1_R1.fastq.gz,sample_01_L1_R2.fastq.gz
@@ -396,37 +443,45 @@ Sample_02,sample_02_L2_R1.fastq.gz,sample_02_L2_R2.fastq.gz
 ```
 
 ### Workflow 3: Large-scale Population Study
+
 ```csv
 sample,fastq_1,fastq_2,read_structure
 Cohort_001,cohort_001_R1.fastq.gz,cohort_001_R2.fastq.gz,10M1S+T 10M1S+T
 Cohort_002,cohort_002_R1.fastq.gz,cohort_002_R2.fastq.gz,10M1S+T 10M1S+T
 # ... (hundreds of samples)
 ```
+
 *Run with `--split_by_chrom true` for optimal performance*
 
 ### Workflow 4: Pipeline Restart from UMI Grouping
+
 ```csv
 sample,bam
 Sample_A,/results/sortbam/Sample_A.sorted.bam
 Sample_B,/results/sortbam/Sample_B.sorted.bam
 Sample_C,/results/sortbam/Sample_C.sorted.bam
 ```
+
 *Use `--step groupreadsbyumi` to restart from UMI grouping*
 
 ### Workflow 5: Consensus Filtering Only
+
 ```csv
 sample,bam
 Sample_A,/results/consensus/Sample_A.consensus.bam
 Sample_B,/results/consensus/Sample_B.consensus.bam
 ```
+
 *Use `--step filterconsensus` for consensus filtering and calling*
 
 ### Workflow 6: Variant Calling Only
+
 ```csv
 sample,duplexbam,csi
 Sample_A,/results/final/Sample_A.final.bam,/results/final/Sample_A.final.bam.csi
 Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
 ```
+
 *Use `--step calling` for variant calling only*
 
 ## Troubleshooting
@@ -443,6 +498,7 @@ Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
 8. **Incorrect file format**: Ensure BAM files match the expected processing stage
 
 ### Error Messages:
+
 - `VALIDATION ERROR: No VCF files generated` → Check input file paths and format
 - `REFERENCE ERROR: Expected reference file missing` → Verify test data completeness
 - `PRECISION FAILURE: VCF precision below threshold` → Check algorithm parameters
@@ -453,7 +509,9 @@ Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
 ## Advanced Configuration
 
 ### Custom Processing Strategies
+
 For specialized requirements, consider:
+
 - Custom sample grouping strategies
 - Alternative merging algorithms  
 - Specialized quality filtering
@@ -462,7 +520,9 @@ For specialized requirements, consider:
 - **Component-specific testing and validation**
 
 ### Integration with Other Tools
+
 The deepUMIcaller pipeline can be integrated with:
+
 - Upstream read processing pipelines
 - Downstream variant annotation tools
 - Population genetics analysis workflows

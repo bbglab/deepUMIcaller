@@ -431,6 +431,13 @@ workflow DEEPUMICALLER {
                 .join( SORTBAMALLMOLECULES.out.csi )
                 .set { preASMINUSXSDUPLEXbams }
         }
+    }
+
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile']) {
+
+        if (params.step == 'allmoleculesfile') {
+            preASMINUSXSDUPLEXbams = INPUT_CHECK.out.reads
+        }
 
         ASMINUSXSDUPLEX(preASMINUSXSDUPLEXbams)
         SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
@@ -446,7 +453,7 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus']) {
 
         if (params.step == 'filterconsensus') {
             duplex_filtered_init_bam = INPUT_CHECK.out.reads
@@ -456,7 +463,7 @@ workflow DEEPUMICALLER {
         // Group by meta.parent_dna
         ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
                 .groupTuple(by: 0)
-                .filter { meta, bams -> bams.size() >= 2 }
+                .filter { _meta, bams -> bams.size() >= 2 }
         
         // Run the concatenation process
         MERGEBAMS(ch_grouped_bams)
@@ -508,15 +515,15 @@ workflow DEEPUMICALLER {
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, params.targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
 
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], params.global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
             COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'groupreadsbyumi', 'allmoleculesfile', 'filterconsensus', 'calling']) {
     
         // Initialize variables for calling step entry point
         if (params.step == 'calling') {

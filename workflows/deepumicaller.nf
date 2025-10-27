@@ -203,9 +203,6 @@ workflow DEEPUMICALLER {
 
         FASTQTOBAM(split_fastqs_ch)
 
-        if (params.debug) {
-            FASTQTOBAM.out.bam.view { meta, bam -> "Debug FASTQTOBAM: BAM - Meta: $meta, BAM: $bam" }
-        }
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
         if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
@@ -239,7 +236,7 @@ workflow DEEPUMICALLER {
 
         if (params.perform_qcs) {
             def qc_targets = params.targetsfile ?: []
-            QUALIMAPQCRAW(SORTBAM.out.bam, qc_targets)
+            QUALIMAPQCRAW(SORTBAM.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
         }
 
@@ -272,7 +269,10 @@ workflow DEEPUMICALLER {
             def process_bams = { meta, bams ->
                 bams.sort { it.name }.collect { bam ->
                     def new_meta = meta.clone()
-                    def chrom_match = bam.name =~ /(?:\.|_)(chr[^._]+)(?:\.bam)$/ 
+                    // Extract chromosome from the last segment before .bam extension
+                    // Expected format: <sample>.<chrom>.bam or <sample>_<chrom>.bam
+                    // This prevents matching "chr" within the sample name itself
+                    def chrom_match = bam.name =~ /\.(chr[^.]+)\.bam$/ 
                     def chrom = chrom_match ? chrom_match[0][1] : bam.name.replaceAll(/\.bam$/, '').replaceAll(/^.*[._]/, '')  
                     new_meta.id = "${meta.id}_${chrom}"  
                     [new_meta, bam]
@@ -322,16 +322,8 @@ workflow DEEPUMICALLER {
         // MODULE: Run fgbio CollecDuplexSeqMetrics
         COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam, [])
         
-        // Extract duplex_family_sizes.txt files and optionally aggregate by sample when split_by_chrom is enabled
-        family_sizes_metrics = COLLECTDUPLEXSEQMETRICS.out.metrics
-            .map { meta, files ->
-                // files is a list - find the duplex_family_sizes.txt file
-                def family_size_file = files instanceof Collection ? 
-                    files.find { it.name.contains('duplex_family_sizes.txt') } : 
-                    (files.name.contains('duplex_family_sizes.txt') ? files : null)
-                family_size_file ? tuple(meta, family_size_file) : null
-            }
-            .filter { it != null }
+        // Extract family_sizes file directly from dedicated output
+        family_sizes_metrics = COLLECTDUPLEXSEQMETRICS.out.family_sizes
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {
@@ -361,16 +353,8 @@ workflow DEEPUMICALLER {
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
         COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it[1]} )
         
-        // Extract duplex_family_sizes.txt files and optionally aggregate by sample when split_by_chrom is enabled
-        family_sizes_metrics_ontarget = COLLECTDUPLEXSEQMETRICSONTARGET.out.metrics
-            .map { meta, files ->
-                // files is a list - find the duplex_family_sizes.txt file
-                def family_size_file = files instanceof Collection ? 
-                    files.find { it.name.contains('duplex_family_sizes.txt') } : 
-                    (files.name.contains('duplex_family_sizes.txt') ? files : null)
-                family_size_file ? tuple(meta, family_size_file) : null
-            }
-            .filter { it != null }
+        // Extract family_sizes file directly from dedicated output
+        family_sizes_metrics_ontarget = COLLECTDUPLEXSEQMETRICSONTARGET.out.family_sizes
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {

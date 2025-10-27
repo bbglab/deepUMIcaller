@@ -12,6 +12,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     path (intervals_file)
 
     output:
+    tuple val(meta), path("*duplex_family_sizes.txt")                , emit: family_sizes
     tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
     tuple val(meta), path("*.pdf")                   , optional: true, emit: report
     path "versions.yml"                                              , topic: versions

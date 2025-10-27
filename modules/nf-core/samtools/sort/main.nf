@@ -1,6 +1,6 @@
 process SAMTOOLS_SORT {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_medium_high_memory'
 
     conda "bioconda::samtools=1.20"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -20,6 +20,9 @@ process SAMTOOLS_SORT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    if ("$bam".contains(".sorted.")) {
+        prefix = prefix.replace(".sorted", ".resorted")
+    }
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
     mkdir tmp

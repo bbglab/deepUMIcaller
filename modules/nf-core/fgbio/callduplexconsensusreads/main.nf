@@ -1,8 +1,7 @@
 process FGBIO_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
-    label 'cpu_lowmed'
-    label 'time_low'
-    label 'memory_medium'
+    cache 'lenient'
+    label 'process_medium_low'
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -47,6 +46,8 @@ process FGBIO_CALLDUPLEXCONSENSUSREADS {
         --input $bam \\
         --output ${prefix}.bam \\
         --threads ${task.cpus} \\
+        --read-name-prefix ${meta.id} \\
+        --read-group-id ${meta.id} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

@@ -67,7 +67,7 @@
                 },
                 "step": {
                     "type": "string",
-                    "description": "Choose from which process start. Options: 'mapping' (default), 'groupreadsbyumi', 'calling'.",
+                    "description": "Choose from which process start. Options: 'mapping' (default), 'filterconsensus', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'calling'.",
                     "default": "mapping",
                     "fa_icon": "fas fa-book",
                     "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."

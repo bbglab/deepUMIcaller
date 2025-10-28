@@ -15,8 +15,8 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_deepumicaller'
-include { DEEPUMICALLER } from './workflows/deepumicaller'
+include { PIPELINE_INITIALISATION   } from './subworkflows/local/utils_nfcore_deepumicaller'
+include { DEEPUMICALLER             } from './workflows/deepumicaller'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

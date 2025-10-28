@@ -17,6 +17,7 @@ logger = logging.getLogger()
 
 requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
                     "groupreadsbyumi": ["bam"],
+                    "unmapped_consensus": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
                     "allmoleculesfile": ["duplexbam", "csi"]
@@ -262,7 +263,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "groupreadsbyumi", "allmoleculesfile", "filterconsensus", "calling"),
+        choices=("mapping", "groupreadsbyumi", "unmapped_consensus", "allmoleculesfile", "filterconsensus", "calling"),
         default="mapping",
     )
     return parser.parse_args(argv)

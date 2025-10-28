@@ -22,6 +22,7 @@ process FGBIO_CLIPBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    def manual_clipping = task.ext.extra_clipping ?: ""
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio ClipBam] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
@@ -36,6 +37,7 @@ process FGBIO_CLIPBAM {
             ClipBam \\
             --input /dev/stdin/ \\
             --ref ${fasta} \\
+            ${manual_clipping} \\
             $args \\
             --output ${prefix}.clipped.bam
     cat <<-END_VERSIONS > versions.yml

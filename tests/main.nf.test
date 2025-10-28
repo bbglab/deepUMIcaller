@@ -643,4 +643,169 @@ nextflow_pipeline {
             }
         }
     }
+
+    /*
+    ========================================================================================
+        TEST 9: INTERMEDIATE STEP - Unmapped Consensus Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality starting from the unmapped consensus step
+    
+    Input: Unmapped consensus BAM files ready for alignment
+           - Consensus reads generated from UMI grouping but not yet aligned
+           - Pre-processed through groupreadsbyumi and initial consensus generation
+           - Reads are in unmapped BAM format with consensus information
+    
+    Parameters: 
+        - step = "unmapped_consensus" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Starts processing from unmapped consensus BAM alignment
+        - Aligns consensus reads to reference genome
+        - Applies quality filters and performs variant calling
+        - Produces high-quality VCF output from consensus alignments
+    
+    Use Case: 
+        - Restarting pipeline from consensus alignment step
+        - Testing alignment and downstream processing of consensus reads
+        - Re-aligning consensus reads with different alignment parameters
+        - Quality control of consensus read generation and alignment
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 9. Intermediate step - Unmapped Consensus entry point") {
+        tag "unmapped_consensus"
+
+        when {
+            params {
+                // Input: Unmapped consensus BAM files ready for alignment
+                input = "${projectDir}/tests/test_data/input/input_unmapped_consensus.csv"
+                
+                // Output: Results starting from unmapped consensus alignment
+                outdir = "${projectDir}/tests_results_unmapped_consensus"
+                
+                // Pipeline entry point: skip grouping, start from consensus alignment
+                step = "unmapped_consensus"
+                
+                // Default parameters for unmapped consensus validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from unmapped consensus onward
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 9 - UNMAPPED CONSENSUS STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 10: INTERMEDIATE STEP - All Molecules File Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality for generating all molecules file metrics
+    
+    Input: Final duplex BAM files with CSI index ready for molecule-level analysis
+           - Fully processed duplex consensus BAM files
+           - Complete UMI grouping, consensus generation, and quality filtering applied
+           - CSI index files for efficient random access
+    
+    Parameters: 
+        - step = "allmoleculesfile" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Generates comprehensive molecule-level metrics file
+        - Extracts per-molecule information including UMI families
+        - Performs variant calling on the duplex BAM files
+        - Produces high-quality VCF output
+    
+    Use Case: 
+        - Generating molecule-level metrics from existing duplex BAMs
+        - Quality control and performance assessment of UMI-based consensus calling
+        - Analyzing UMI family sizes and duplex recovery rates
+        - Variant calling from pre-processed duplex consensus BAMs
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 10. Intermediate step - All Molecules File entry point") {
+        tag "allmoleculesfile"
+
+        when {
+            params {
+                // Input: Final duplex BAM files with CSI index
+                input = "${projectDir}/tests/test_data/input/input_allmoleculesfile.csv"
+                
+                // Output: Results with all molecules file metrics and variant calls
+                outdir = "${projectDir}/tests_results_allmoleculesfile"
+                
+                // Pipeline entry point: generate molecule-level metrics and call variants
+                step = "allmoleculesfile"
+                
+                // Default parameters for all molecules file validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from variant calling
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 10 - ALL MOLECULES FILE STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
 }
+

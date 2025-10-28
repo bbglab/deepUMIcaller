@@ -1,0 +1,4 @@
+sample,duplexbam,csi
+B5,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B5.sorted.bam,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B5.sorted.bam.csi
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B7.sorted.bam,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B7.sorted.bam.csi
+B13,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B13.sorted.bam,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/bams/SORTBAMALLMOLECULES/B13.sorted.bam.csi

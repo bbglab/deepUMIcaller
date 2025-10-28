@@ -20,7 +20,6 @@ process UNMAP_BAM {
     prefix = "${meta.id}${prefix}"
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
-    samtools quickcheck ${bam} || exit 1
     samtools sort -@ ${task.cpus-1} -n -o ${prefix}.queryname.bam ${bam}
     samtools view -@ ${task.cpus-1} -H ${prefix}.queryname.bam | grep -v '^@PG' > header.tmp
     samtools reheader header.tmp ${prefix}.queryname.bam > ${prefix}.queryname.noPG.bam

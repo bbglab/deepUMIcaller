@@ -132,11 +132,11 @@ def add_filter_nrich_to_vcf(vcf, threshold, filter_name):
 
 
 @click.command()
-@click.argument('vcf_file', type=click.Path(exists=True))
-@click.argument('ns_position_file', type=click.Path(exists=True))
-@click.argument('output_filename', type=click.Path())
-@click.argument('filter_name', type=str)
-@click.argument('min_valid_depth', type=int)
+@click.option('--vcf_file', type=click.Path(exists=True), required=True, help='Path to the VCF file to be updated')
+@click.option('--ns_position_file', type=click.Path(exists=True), required=True, help='Path to the file containing the number of Ns per position')
+@click.option('--output_filename', type=click.Path(), required=True, help='Name path for the resulting updated VCF')
+@click.option('--filter_name', type=str, required=True, help='Name of the filter to add (typically "n_rich")')
+@click.option('--min_valid_depth', type=int, required=True, help='Minimum valid depth threshold')
 def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth):
     """
     Reads a VCF file and adds n_rich value to the

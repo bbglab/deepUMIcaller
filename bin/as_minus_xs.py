@@ -29,11 +29,11 @@ def filter_bam(input_bam, output_bam, output_bam_discarded, retained_query_names
                 out_bam_discarded.write(read)
 
 @click.command()
-@click.argument('input_bam', type=click.Path(exists=True))
-@click.argument('output_bam', type=click.Path())
-@click.argument('output_bam_discarded', type=click.Path())
-@click.argument('threshold', type=int)
-@click.argument('tthreads', type=int)
+@click.option('--input_bam', type=click.Path(exists=True), required=True, help='Input BAM file (indexed).')
+@click.option('--output_bam', type=click.Path(), required=True, help='Output BAM for retained reads.')
+@click.option('--output_bam_discarded', type=click.Path(), required=True, help='Output BAM for discarded reads.')
+@click.option('--threshold', type=int, required=True, help='AS-XS minimum difference threshold.')
+@click.option('--tthreads', type=int, required=True, help='Number of threads to use when reading/writing BAMs.')
 def main(input_bam, output_bam, output_bam_discarded, threshold, tthreads):
     """Filter BAM file based on AS minus XS threshold (efficient two-pass version)."""
     click.echo("First pass: collecting retained query names...")

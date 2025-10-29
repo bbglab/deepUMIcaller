@@ -23,7 +23,12 @@ process ASMINUSXS {
     prefix_discard = "${meta.id}${prefix_discard}"
     
     """
-    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold} ${task.cpus}
+    as_minus_xs.py \
+        --input_bam ${bam} \
+        --output_bam ${prefix}.bam \
+        --output_bam_discarded ${prefix_discard}.bam \
+        --threshold ${threshold} \
+        --tthreads ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

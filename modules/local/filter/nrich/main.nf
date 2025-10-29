@@ -30,18 +30,18 @@ process FILTER_N_RICH {
     // and with the proportion of Ns of all those positions we estimate a
     // distribution from which we compute the mean + 2 std as the threshold for the max. proportion of Ns
 
-    // TODO think if we want to reimplement this with click
     """
     add_filter_nrich.py \\
-            ${vcf_file} \\
-            ${ns_position_file} \\
-            ${prefix}.filtered.vcf \\
-            ${filter_name} \\
-            ${minimum_depth}
+            --vcf_file ${vcf_file} \\
+            --ns_position_file ${ns_position_file} \\
+            --output_filename ${prefix}.filtered.vcf \\
+            --filter_name ${filter_name} \\
+            --min_valid_depth ${minimum_depth}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
+        click: \$(python3 -c "import click; print(click.__version__)")
     END_VERSIONS
     """
 

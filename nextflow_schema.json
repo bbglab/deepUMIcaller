@@ -88,7 +88,8 @@
                 "splitted_original_sample": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Input CSV contains several FASTQs from the same original library (sample)."
+                    "description": "Input CSV contains several FASTQs from the same original library (sample).",
+                    "help_text": "Merges multiple sequencing lanes/files from the same biological sample. Only applicable when --step is 'mapping'. Ignored for other entry points."
                 },
                 "splitfastq_parts": {
                     "type": "integer",
@@ -99,7 +100,8 @@
                 "split_by_chrom": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable splitting of BAM files by chromosome."
+                    "description": "Enable splitting of BAM files by chromosome.",
+                    "help_text": "Enables chromosome-based parallelization for improved performance. Only applicable when --step is 'mapping'. Ignored for other entry points."
                 }
 
             }

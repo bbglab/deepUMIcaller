@@ -51,7 +51,7 @@ include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       
 
 include { CREATEBED_FROM_TSV                as CREATEBED                        } from '../modules/local/createbed/main'
 
-include { CALLING_VARDICT                   as CALLINGVARDICTDUPLEX             } from '../modules/local/calling_vardict/main'
+include { BAM_CALL_VARDICT_PARALLEL                                             } from '../subworkflows/local/bam_call_vardict_parallel/main'
 
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOT                      } from '../modules/local/sigprofiler/matrixgenerator/main'
 include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTPUR                   } from '../modules/local/sigprofiler/matrixgenerator/main'
@@ -538,20 +538,27 @@ workflow DEEPUMICALLER {
         .join( CREATEBED.out.bed )
         .set { cons_duplex_bam_bed }
 
-        // Mutation calling for all reads
-        CALLINGVARDICTDUPLEX(cons_duplex_bam_bed,
-                                ch_ref_fasta, ch_ref_index_dir)
+        // Mutation calling for all reads using parallel VarDict subworkflow
+        // Set vardict_chunks=1 for single-node processing if needed
+        def num_chunks = params.vardict_chunks ?: params.max_cpus
+        
+        BAM_CALL_VARDICT_PARALLEL(
+            cons_duplex_bam_bed,
+            ch_ref_fasta,
+            ch_ref_index_dir,
+            num_chunks
+        )
 
         // Postprocessing the BAM file to get exact coverage per position and allele
         //    also get the Ns per position
         RECOUNTMUTS(cons_duplex_bam,
                         bam_n_index_duplex_clean,
-                        CALLINGVARDICTDUPLEX.out.vcf,
+                        BAM_CALL_VARDICT_PARALLEL.out.vcf,
                         CREATEBED.out.bed,
                         ch_ref_fasta)
 
         if (params.annotate_mutations){
-            VCFANNOTATE(CALLINGVARDICTDUPLEX.out.vcf,
+            VCFANNOTATE(BAM_CALL_VARDICT_PARALLEL.out.vcf,
                             ch_ref_fasta)
         }
 

@@ -544,8 +544,7 @@ workflow DEEPUMICALLER {
         BAM_CALL_VARDICT_PARALLEL(
             cons_duplex_bam_bed,
             ch_ref_fasta,
-            ch_ref_index_dir,
-            params.vardict_chunks ?: params.max_cpus
+            ch_ref_index_dir
         )
 
         // Postprocessing the BAM file to get exact coverage per position and allele

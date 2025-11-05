@@ -20,13 +20,29 @@ All input configurations use a CSV file with specific columns depending on the p
 
 ### For Intermediate Step Processing
 
-| Entry Point | Required Columns | File Types |
-|-------------|-----------------|------------|
-| `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files |
-| `unmapped_consensus` | `sample`, `bam` | BAM files for unmapped consensus processing |
-| `filterconsensus` | `sample`, `bam` | Processed BAM files from UMI grouping |
+| Entry Point | Required Columns | File Types |  
+|-------------|-----------------|------------|  
+| `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files processed by fgbio GroupByUMI |  
+| `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
+| `allmoleculesfile` | `sample`, `duplexbam`, `csi` | BAM with aligned consensus reads missing AS-XS filtering |  
+| `filterconsensus` | `sample`, `bam` | BAM with aligned consensus reads only missing a duplex quality filter and the calling |  
 | `calling` | `sample`, `duplexbam`, `csi` | Final consensus BAM files + index |
-| `allmoleculesfile` | `sample`, `duplexbam`, `csi` | Final duplex BAM files for all molecules analysis |
+
+#### Internal outputs that can be used as inputs
+
+You can restart the pipeline from intermediate steps using files produced internally by deepUMIcaller. The table below maps each entry point to the internal process that generates a compatible file, and whether that file is copied to the results folder. This is especially useful when you want to adjust parameters and rerun downstream stages without repeating the most compute‑intensive initial alignments and preprocessing.
+
+| Entry Point | Use deepUMIcaller internal output of | Published to results? |
+|-------------|--------------------------------------|------------------------|
+| `groupreadsbyumi` | `SORTBAMCLEAN` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
+| `unmapped_consensus` | `CALLDUPLEXCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
+| `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/sortbamamfiltered/` |
+| `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/sortbamduplexcons/` |
+| `allmoleculesfile` | `SORTBAMALLMOLECULES` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
+
+Notes:
+- For `calling` and `allmoleculesfile`, provide both the BAM and its CSI index.
+- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
 
 ## Input Scenarios
 
@@ -104,12 +120,12 @@ nextflow run main.nf \
 **Input Structure:**
 
 ```csv
-sample,fastq_1,fastq_2,parent_dna
-Sample_A_P1,/path/to/Sample_A_P1_R1.fastq.gz,/path/to/Sample_A_P1_R2.fastq.gz,Patient_001
-Sample_B_P1,/path/to/Sample_B_P1_R1.fastq.gz,/path/to/Sample_B_P1_R2.fastq.gz,Patient_001
-Sample_C_P1,/path/to/Sample_C_P1_R1.fastq.gz,/path/to/Sample_C_P1_R2.fastq.gz,Patient_001
-Sample_A_P2,/path/to/Sample_A_P2_R1.fastq.gz,/path/to/Sample_A_P2_R2.fastq.gz,Patient_002
-Sample_B_P2,/path/to/Sample_B_P2_R1.fastq.gz,/path/to/Sample_B_P2_R2.fastq.gz,Patient_002
+sample,fastq_1,fastq_2,read_structure,parent_dna
+Sample_A_P1,/path/to/Sample_A_P1_R1.fastq.gz,/path/to/Sample_A_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_B_P1,/path/to/Sample_B_P1_R1.fastq.gz,/path/to/Sample_B_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_C_P1,/path/to/Sample_C_P1_R1.fastq.gz,/path/to/Sample_C_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_A_P2,/path/to/Sample_A_P2_R1.fastq.gz,/path/to/Sample_A_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
+Sample_B_P2,/path/to/Sample_B_P2_R1.fastq.gz,/path/to/Sample_B_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
 ```
 
 **Pipeline Parameters:**
@@ -251,7 +267,7 @@ nextflow run main.nf \
 
 ### 7. UnmappedConsensus Step Entry
 
-**Use Case**: Starting from BAM files for unmapped consensus processing, typically when you need to process unmapped reads with UMI information for consensus generation.
+**Use Case**: Starting from BAM files with consensus reads that you want to realign to you genome of interest. The input BAM file can either be unmapped or mapped to another genome assembly.
 
 **Input Structure:**
 
@@ -291,6 +307,50 @@ nextflow run main.nf \
 
 ---
 
+### 8. AllMoleculesFile Step Entry
+
+**Use Case**: Starting from final processed duplex BAM files to generate comprehensive all-molecules output files, useful for detailed molecular analysis and quality metrics across all UMI families.
+
+**Input Structure:**
+
+```csv
+sample,duplexbam,csi
+Sample_A,/path/to/Sample_A.duplex.bam,/path/to/Sample_A.duplex.bam.csi
+Sample_B,/path/to/Sample_B.duplex.bam,/path/to/Sample_B.duplex.bam.csi
+Sample_C,/path/to/Sample_C.duplex.bam,/path/to/Sample_C.duplex.bam.csi
+```
+
+**Pipeline Parameters:**
+
+```bash
+nextflow run main.nf \
+  --input input_allmoleculesfile.csv \
+  --outdir results/ \
+  --step allmoleculesfile
+```
+
+**Requirements:**
+
+- BAM files must contain fully processed duplex consensus reads
+- CSI index files must be provided for each BAM
+- Files must be ready for all-molecules analysis
+
+**Expected Output:**
+
+- Comprehensive all-molecules output files
+- Detailed metrics per UMI family
+- Quality control statistics across all molecular families
+- Analysis-ready data for downstream investigations
+
+**Common Scenarios:**
+
+- Generating comprehensive molecular statistics from existing duplex data
+- Quality control and validation of UMI family processing
+- Detailed analysis of molecular coverage and family sizes
+- Research applications requiring per-molecule information
+
+---
+
 ### 9. FilterConsensus Step Entry
 
 **Use Case**: Starting from consensus BAM files produced by external UMI processing tools, or when you want to apply deepUMIcaller's consensus filtering and variant calling to existing consensus reads.
@@ -324,6 +384,8 @@ nextflow run main.nf \
 - Consensus read filtering and quality control using deepUMIcaller's methods
 - Final variant calling results
 - High-quality filtered VCF outputs
+
+Tip: deepUMIcaller writes a helper samplesheet at `{outdir}/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` with absolute BAM paths. You can use this directly with `--step filterconsensus` to restart from these AM-filtered BAMs.
 
 **Common Scenarios:**
 
@@ -376,49 +438,6 @@ nextflow run main.nf \
 
 ---
 
-### 11. AllMoleculesFile Step Entry
-
-**Use Case**: Starting from final processed duplex BAM files to generate comprehensive all-molecules output files, useful for detailed molecular analysis and quality metrics across all UMI families.
-
-**Input Structure:**
-
-```csv
-sample,duplexbam,csi
-Sample_A,/path/to/Sample_A.duplex.bam,/path/to/Sample_A.duplex.bam.csi
-Sample_B,/path/to/Sample_B.duplex.bam,/path/to/Sample_B.duplex.bam.csi
-Sample_C,/path/to/Sample_C.duplex.bam,/path/to/Sample_C.duplex.bam.csi
-```
-
-**Pipeline Parameters:**
-
-```bash
-nextflow run main.nf \
-  --input input_allmoleculesfile.csv \
-  --outdir results/ \
-  --step allmoleculesfile
-```
-
-**Requirements:**
-
-- BAM files must contain fully processed duplex consensus reads
-- CSI index files must be provided for each BAM
-- Files must be ready for all-molecules analysis
-
-**Expected Output:**
-
-- Comprehensive all-molecules output files
-- Detailed metrics per UMI family
-- Quality control statistics across all molecular families
-- Analysis-ready data for downstream investigations
-
-**Common Scenarios:**
-
-- Generating comprehensive molecular statistics from existing duplex data
-- Quality control and validation of UMI family processing
-- Detailed analysis of molecular coverage and family sizes
-- Research applications requiring per-molecule information
-
----
 
 ## Parameter Interactions
 
@@ -443,7 +462,7 @@ nextflow run main.nf \
 | mapping | ✅ | ✅ | ✅ | Comprehensive + optimized |
 | groupreadsbyumi | ❌ | ❌ | ❌ | UMI grouping restart |
 | unmapped_consensus | ❌ | ❌ | ❌ | Unmapped consensus processing |
-| filterconsensus | ❌ | ❌ | ❌ | Consensus filtering restart |
+| filterconsensus | ❌ | ❌ | ✅ | Consensus filtering restart |
 | calling | ❌ | ❌ | ❌ | Variant calling only |
 | allmoleculesfile | ❌ | ❌ | ❌ | All-molecules analysis |
 

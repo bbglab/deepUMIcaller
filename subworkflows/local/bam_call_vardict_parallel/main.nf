@@ -17,17 +17,16 @@ workflow BAM_CALL_VARDICT_PARALLEL {
     bam_bai_bed   // channel: [ val(meta), path(bam), path(bai), path(bed) ]
     fasta         // path: reference fasta
     fasta_dir     // path: directory containing reference fasta
-    num_chunks    // val: number of chunks to split BED file into
 
     main:
     ch_versions = channel.empty()
 
     //
     // Step 1: Split BED file into chunks
+    // num_chunks is read from params.vardict_chunks in the process
     //
     SPLIT_BED(
-        bam_bai_bed.map { meta, _bam, _bai, bed -> [meta, bed] },
-        num_chunks
+        bam_bai_bed.map { meta, _bam, _bai, bed -> [meta, bed] }
     )
 
     //

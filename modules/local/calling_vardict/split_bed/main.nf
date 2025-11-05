@@ -4,7 +4,6 @@ process SPLIT_BED {
 
     input:
     tuple val(meta), path(targets_file)
-    val num_chunks
 
     output:
     tuple val(meta), path("*_chunk_*"), emit: chunks
@@ -15,6 +14,7 @@ process SPLIT_BED {
 
     script:
     def prefix = "${meta.id}"
+    def num_chunks = params.vardict_chunks
     """
     # Split the targets file into ${num_chunks} chunks
     total_lines=\$(wc -l < ${targets_file})

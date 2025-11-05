@@ -13,8 +13,7 @@ workflow {
     BAM_CALL_VARDICT_PARALLEL(
         bam_bai_bed_ch,    // channel: [ val(meta), path(bam), path(bai), path(bed) ]
         fasta,             // path: reference.fa
-        fasta_dir,         // path: directory containing reference.fa
-        num_chunks         // val: number of parallel jobs to create
+        fasta_dir          // path: directory containing reference.fa
     )
 }
 ```
@@ -28,7 +27,8 @@ workflow {
   - `bed`: BED file with target regions
 - `fasta`: Reference genome FASTA file
 - `fasta_dir`: Directory containing the reference genome
-- `num_chunks`: Number of chunks to split regions into (controls parallelization level)
+
+**Note**: The number of chunks is controlled by the `params.vardict_chunks` parameter in `nextflow.config` (defaults to 2, or falls back to `params.max_cpus` if not set)
 
 ## Output
 

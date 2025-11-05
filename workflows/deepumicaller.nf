@@ -540,13 +540,12 @@ workflow DEEPUMICALLER {
 
         // Mutation calling for all reads using parallel VarDict subworkflow
         // Set vardict_chunks=1 for single-node processing if needed
-        def num_chunks = params.vardict_chunks ?: params.max_cpus
         
         BAM_CALL_VARDICT_PARALLEL(
             cons_duplex_bam_bed,
             ch_ref_fasta,
             ch_ref_index_dir,
-            num_chunks
+            params.vardict_chunks ?: params.max_cpus
         )
 
         // Postprocessing the BAM file to get exact coverage per position and allele

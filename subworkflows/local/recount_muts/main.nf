@@ -1,4 +1,3 @@
-
 // Import required modules
 
 include { BEDTOOLS_MERGE         as READJUSTREGIONS_AMP   } from '../../../modules/local/bedtools/merge/main'

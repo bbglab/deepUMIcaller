@@ -8,30 +8,8 @@ The deepUMIcaller pipeline supports multiple input configurations to handle diff
 
 All input configurations use a CSV file with specific columns depending on the pipeline entry point:
 
-### For Standard P### Advanced Configuration
+### For Standard Mapping (Starting from FASTQ files)
 
-### Custom Processing Strategies
-
-For specialized requirements, consider:
-
-- Custom sample grouping strategies
-- Alternative merging algorithms  
-- Specialized quality filtering
-- Performance optimization tuning
-- **Integration with external UMI processing pipelines**
-- **Modular analysis using specific deepUMIcaller components**
-
-### Integration with Other Tools
-
-The deepUMIcaller pipeline can be integrated with:
-
-- Upstream read processing pipelines (providing BAM inputs)
-- External UMI grouping and consensus tools (providing consensus BAMs)
-- Downstream variant annotation tools
-- Population genetics analysis workflows
-- Clinical reporting systems
-- **Third-party duplex sequencing pipelines (providing duplex BAMs)**
-- **Quality control pipelines using deepUMIcaller's specialized modules**mapping")
 | Column | Required | Description |
 |--------|----------|-------------|
 | `sample` | Yes | Sample identifier (used for naming outputs) |
@@ -42,11 +20,29 @@ The deepUMIcaller pipeline can be integrated with:
 
 ### For Intermediate Step Processing
 
-| Entry Point | Required Columns | File Types |
-|-------------|-----------------|------------|
-| `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files |
-| `filterconsensus` | `sample`, `bam` | Processed BAM files from UMI grouping |
+| Entry Point | Required Columns | File Types |  
+|-------------|-----------------|------------|  
+| `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files processed by fgbio GroupByUMI |  
+| `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
+| `allmoleculesfile` | `sample`, `duplexbam`, `csi` | BAM with aligned consensus reads missing AS-XS filtering |  
+| `filterconsensus` | `sample`, `bam` | BAM with aligned consensus reads only missing a duplex quality filter and the calling |  
 | `calling` | `sample`, `duplexbam`, `csi` | Final consensus BAM files + index |
+
+#### Internal outputs that can be used as inputs
+
+You can restart the pipeline from intermediate steps using files produced internally by deepUMIcaller. The table below maps each entry point to the internal process that generates a compatible file, and whether that file is copied to the results folder. This is especially useful when you want to adjust parameters and rerun downstream stages without repeating the most compute‑intensive initial alignments and preprocessing.
+
+| Entry Point | Use deepUMIcaller internal output of | Published to results? |
+|-------------|--------------------------------------|------------------------|
+| `groupreadsbyumi` | `SORTBAMCLEAN` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
+| `unmapped_consensus` | `CALLDUPLEXCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
+| `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/sortbamamfiltered/` |
+| `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/sortbamduplexcons/` |
+| `allmoleculesfile` | `SORTBAMALLMOLECULES` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
+
+Notes:
+- For `calling` and `allmoleculesfile`, provide both the BAM and its CSI index.
+- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
 
 ## Input Scenarios
 
@@ -57,10 +53,10 @@ The deepUMIcaller pipeline can be integrated with:
 **Input Structure:**
 
 ```csv
-sample,fastq_1,fastq_2
-Sample_A,/path/to/Sample_A_R1.fastq.gz,/path/to/Sample_A_R2.fastq.gz
-Sample_B,/path/to/Sample_B_R1.fastq.gz,/path/to/Sample_B_R2.fastq.gz
-Sample_C,/path/to/Sample_C_R1.fastq.gz,/path/to/Sample_C_R2.fastq.gz
+sample,fastq_1,fastq_2,read_structure
+Sample_A,/path/to/Sample_A_R1.fastq.gz,/path/to/Sample_A_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_B,/path/to/Sample_B_R1.fastq.gz,/path/to/Sample_B_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_C,/path/to/Sample_C_R1.fastq.gz,/path/to/Sample_C_R2.fastq.gz,10M1S+T 10M1S+T
 ```
 
 **Pipeline Parameters:**
@@ -86,12 +82,12 @@ nextflow run main.nf \
 **Input Structure:**
 
 ```csv
-sample,fastq_1,fastq_2
-Sample_A,/path/to/Sample_A_L1_R1.fastq.gz,/path/to/Sample_A_L1_R2.fastq.gz
-Sample_A,/path/to/Sample_A_L2_R1.fastq.gz,/path/to/Sample_A_L2_R2.fastq.gz
-Sample_A,/path/to/Sample_A_L3_R1.fastq.gz,/path/to/Sample_A_L3_R2.fastq.gz
-Sample_B,/path/to/Sample_B_L1_R1.fastq.gz,/path/to/Sample_B_L1_R2.fastq.gz
-Sample_B,/path/to/Sample_B_L2_R1.fastq.gz,/path/to/Sample_B_L2_R2.fastq.gz
+sample,fastq_1,fastq_2,read_structure
+Sample_A,/path/to/Sample_A_L1_R1.fastq.gz,/path/to/Sample_A_L1_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_A,/path/to/Sample_A_L2_R1.fastq.gz,/path/to/Sample_A_L2_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_A,/path/to/Sample_A_L3_R1.fastq.gz,/path/to/Sample_A_L3_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_B,/path/to/Sample_B_L1_R1.fastq.gz,/path/to/Sample_B_L1_R2.fastq.gz,10M1S+T 10M1S+T
+Sample_B,/path/to/Sample_B_L2_R1.fastq.gz,/path/to/Sample_B_L2_R2.fastq.gz,10M1S+T 10M1S+T
 ```
 
 **Pipeline Parameters:**
@@ -124,12 +120,12 @@ nextflow run main.nf \
 **Input Structure:**
 
 ```csv
-sample,fastq_1,fastq_2,parent_dna
-Tumor_P1,/path/to/Tumor_P1_R1.fastq.gz,/path/to/Tumor_P1_R2.fastq.gz,Patient_001
-Normal_P1,/path/to/Normal_P1_R1.fastq.gz,/path/to/Normal_P1_R2.fastq.gz,Patient_001
-Metastasis_P1,/path/to/Metastasis_P1_R1.fastq.gz,/path/to/Metastasis_P1_R2.fastq.gz,Patient_001
-Tumor_P2,/path/to/Tumor_P2_R1.fastq.gz,/path/to/Tumor_P2_R2.fastq.gz,Patient_002
-Normal_P2,/path/to/Normal_P2_R1.fastq.gz,/path/to/Normal_P2_R2.fastq.gz,Patient_002
+sample,fastq_1,fastq_2,read_structure,parent_dna
+Sample_A_P1,/path/to/Sample_A_P1_R1.fastq.gz,/path/to/Sample_A_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_B_P1,/path/to/Sample_B_P1_R1.fastq.gz,/path/to/Sample_B_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_C_P1,/path/to/Sample_C_P1_R1.fastq.gz,/path/to/Sample_C_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
+Sample_A_P2,/path/to/Sample_A_P2_R1.fastq.gz,/path/to/Sample_A_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
+Sample_B_P2,/path/to/Sample_B_P2_R1.fastq.gz,/path/to/Sample_B_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
 ```
 
 **Pipeline Parameters:**
@@ -142,7 +138,7 @@ nextflow run main.nf \
 
 **Expected Output:**
 
-- Sample-level VCFs: `Tumor_P1.vcf`, `Normal_P1.vcf`, etc.
+- Sample-level VCFs: `Sample_A_P1.vcf`, `Sample_B_P1.vcf`, etc.
 - Patient-level merged VCFs: `Patient_001.vcf`, `Patient_002.vcf`
 - Enhanced variant calling through multi-sample evidence
 
@@ -162,12 +158,12 @@ nextflow run main.nf \
 
 ```csv
 sample,fastq_1,fastq_2,parent_dna
-Tumor_P1,/path/to/Tumor_P1_L1_R1.fastq.gz,/path/to/Tumor_P1_L1_R2.fastq.gz,Patient_001
-Tumor_P1,/path/to/Tumor_P1_L2_R1.fastq.gz,/path/to/Tumor_P1_L2_R2.fastq.gz,Patient_001
-Normal_P1,/path/to/Normal_P1_L1_R1.fastq.gz,/path/to/Normal_P1_L1_R2.fastq.gz,Patient_001
-Normal_P1,/path/to/Normal_P1_L2_R1.fastq.gz,/path/to/Normal_P1_L2_R2.fastq.gz,Patient_001
-Tumor_P2,/path/to/Tumor_P2_L1_R1.fastq.gz,/path/to/Tumor_P2_L1_R2.fastq.gz,Patient_002
-Tumor_P2,/path/to/Tumor_P2_L2_R1.fastq.gz,/path/to/Tumor_P2_L2_R2.fastq.gz,Patient_002
+Sample_A_P1,/path/to/Sample_A_P1_L1_R1.fastq.gz,/path/to/Sample_A_P1_L1_R2.fastq.gz,Patient_001
+Sample_A_P1,/path/to/Sample_A_P1_L2_R1.fastq.gz,/path/to/Sample_A_P1_L2_R2.fastq.gz,Patient_001
+Sample_B_P1,/path/to/Sample_B_P1_L1_R1.fastq.gz,/path/to/Sample_B_P1_L1_R2.fastq.gz,Patient_001
+Sample_B_P1,/path/to/Sample_B_P1_L2_R1.fastq.gz,/path/to/Sample_B_P1_L2_R2.fastq.gz,Patient_001
+Sample_A_P2,/path/to/Sample_A_P2_L1_R1.fastq.gz,/path/to/Sample_A_P2_L1_R2.fastq.gz,Patient_002
+Sample_A_P2,/path/to/Sample_A_P2_L2_R1.fastq.gz,/path/to/Sample_A_P2_L2_R2.fastq.gz,Patient_002
 ```
 
 **Pipeline Parameters:**
@@ -181,7 +177,7 @@ nextflow run main.nf \
 
 **Expected Output:**
 
-- Merged sample-level VCFs: `Tumor_P1.vcf`, `Normal_P1.vcf`, etc.
+- Merged sample-level VCFs: `Sample_A_P1.vcf`, `Sample_B_P1.vcf`, etc.
 - Patient-level consolidated VCFs: `Patient_001.vcf`, `Patient_002.vcf`
 - Maximum sensitivity from both technical and biological aggregation
 
@@ -269,7 +265,93 @@ nextflow run main.nf \
 
 ---
 
-### 7. FilterConsensus Step Entry
+### 7. UnmappedConsensus Step Entry
+
+**Use Case**: Starting from BAM files with consensus reads that you want to realign to you genome of interest. The input BAM file can either be unmapped or mapped to another genome assembly.
+
+**Input Structure:**
+
+```csv
+sample,bam
+Sample_A,/path/to/Sample_A.unmapped.bam
+Sample_B,/path/to/Sample_B.unmapped.bam
+Sample_C,/path/to/Sample_C.unmapped.bam
+```
+
+**Pipeline Parameters:**
+
+```bash
+nextflow run main.nf \
+  --input input_unmapped_consensus.csv \
+  --outdir results/ \
+  --step unmapped_consensus
+```
+
+**Requirements:**
+
+- BAM files must contain unmapped reads with UMI information
+- Files must be properly formatted for consensus calling
+- UMI tags must be present in read names or BAM tags
+
+**Expected Output:**
+
+- Unmapped consensus reads processed using deepUMIcaller's algorithms
+- Downstream processing from consensus generation onward
+- Final variant calling results
+
+**Common Scenarios:**
+
+- Processing unmapped reads from external pipelines
+- Handling reads that failed initial alignment but contain valid UMI information
+- Quality control on unmapped read consensus generation
+
+---
+
+### 8. AllMoleculesFile Step Entry
+
+**Use Case**: Starting from final processed duplex BAM files to generate comprehensive all-molecules output files, useful for detailed molecular analysis and quality metrics across all UMI families.
+
+**Input Structure:**
+
+```csv
+sample,duplexbam,csi
+Sample_A,/path/to/Sample_A.duplex.bam,/path/to/Sample_A.duplex.bam.csi
+Sample_B,/path/to/Sample_B.duplex.bam,/path/to/Sample_B.duplex.bam.csi
+Sample_C,/path/to/Sample_C.duplex.bam,/path/to/Sample_C.duplex.bam.csi
+```
+
+**Pipeline Parameters:**
+
+```bash
+nextflow run main.nf \
+  --input input_allmoleculesfile.csv \
+  --outdir results/ \
+  --step allmoleculesfile
+```
+
+**Requirements:**
+
+- BAM files must contain fully processed duplex consensus reads
+- CSI index files must be provided for each BAM
+- Files must be ready for all-molecules analysis
+
+**Expected Output:**
+
+- Comprehensive all-molecules output files
+- Detailed metrics per UMI family
+- Quality control statistics across all molecular families
+- Analysis-ready data for downstream investigations
+
+**Common Scenarios:**
+
+- Generating comprehensive molecular statistics from existing duplex data
+- Quality control and validation of UMI family processing
+- Detailed analysis of molecular coverage and family sizes
+- Research applications requiring per-molecule information
+
+---
+
+### 9. FilterConsensus Step Entry
 
 **Use Case**: Starting from consensus BAM files produced by external UMI processing tools, or when you want to apply deepUMIcaller's consensus filtering and variant calling to existing consensus reads.
 
@@ -303,6 +385,8 @@ nextflow run main.nf \
 - Final variant calling results
 - High-quality filtered VCF outputs
 
+Tip: deepUMIcaller writes a helper samplesheet at `{outdir}/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` with absolute BAM paths. You can use this directly with `--step filterconsensus` to restart from these AM-filtered BAMs.
+
 **Common Scenarios:**
 
 - Processing consensus BAMs from external UMI tools (UMI-tools, CGAT-core, etc.)
@@ -311,7 +395,7 @@ nextflow run main.nf \
 
 ---
 
-### 8. Calling Step Entry
+### 10. Calling Step Entry
 
 **Use Case**: Starting from final processed duplex BAM files produced by external consensus pipelines, or when you specifically want to use deepUMIcaller's variant calling algorithms on high-quality duplex consensus data.
 
@@ -354,13 +438,14 @@ nextflow run main.nf \
 
 ---
 
+
 ## Parameter Interactions
 
 ### Key Parameters
 
 | Parameter | Default | Effect |
 |-----------|---------|--------|
-| `step` | `"mapping"` | Pipeline entry point (mapping, groupreadsbyumi, filterconsensus, calling) |
+| `step` | `"mapping"` | Pipeline entry point (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile) |
 | `splitted_original_sample` | `false` | Enables technical replicate merging |
 | `split_by_chrom` | `false` | Enables chromosome-based parallelization |
 | `parent_dna` column | - | Enables biological replicate grouping |
@@ -376,8 +461,10 @@ nextflow run main.nf \
 | mapping | ✅ | ✅ | ❌ | Multi-level processing |
 | mapping | ✅ | ✅ | ✅ | Comprehensive + optimized |
 | groupreadsbyumi | ❌ | ❌ | ❌ | UMI grouping restart |
-| filterconsensus | ❌ | ❌ | ❌ | Consensus filtering restart |
+| unmapped_consensus | ❌ | ❌ | ❌ | Unmapped consensus processing |
+| filterconsensus | ❌ | ❌ | ✅ | Consensus filtering restart |
 | calling | ❌ | ❌ | ❌ | Variant calling only |
+| allmoleculesfile | ❌ | ❌ | ❌ | All-molecules analysis |
 
 ## Best Practices
 
@@ -422,68 +509,6 @@ The pipeline automatically validates:
 - **Variant calling statistics** per processing level
 - **Precision metrics** comparing processing strategies
 
-## Example Workflows
-
-### Workflow 1: Clinical Sample Processing
-
-```csv
-sample,fastq_1,fastq_2,parent_dna
-Tumor_001,tumor_001_R1.fastq.gz,tumor_001_R2.fastq.gz,Patient_A
-Normal_001,normal_001_R1.fastq.gz,normal_001_R2.fastq.gz,Patient_A
-```
-
-### Workflow 2: Multi-lane Research Study
-
-```csv
-sample,fastq_1,fastq_2
-Sample_01,sample_01_L1_R1.fastq.gz,sample_01_L1_R2.fastq.gz
-Sample_01,sample_01_L2_R1.fastq.gz,sample_01_L2_R2.fastq.gz
-Sample_02,sample_02_L1_R1.fastq.gz,sample_02_L1_R2.fastq.gz
-Sample_02,sample_02_L2_R1.fastq.gz,sample_02_L2_R2.fastq.gz
-```
-
-### Workflow 3: Large-scale Population Study
-
-```csv
-sample,fastq_1,fastq_2,read_structure
-Cohort_001,cohort_001_R1.fastq.gz,cohort_001_R2.fastq.gz,10M1S+T 10M1S+T
-Cohort_002,cohort_002_R1.fastq.gz,cohort_002_R2.fastq.gz,10M1S+T 10M1S+T
-# ... (hundreds of samples)
-```
-
-*Run with `--split_by_chrom true` for optimal performance*
-
-### Workflow 4: Pipeline Restart from UMI Grouping
-
-```csv
-sample,bam
-Sample_A,/results/sortbam/Sample_A.sorted.bam
-Sample_B,/results/sortbam/Sample_B.sorted.bam
-Sample_C,/results/sortbam/Sample_C.sorted.bam
-```
-
-*Use `--step groupreadsbyumi` to restart from UMI grouping*
-
-### Workflow 5: Consensus Filtering Only
-
-```csv
-sample,bam
-Sample_A,/results/consensus/Sample_A.consensus.bam
-Sample_B,/results/consensus/Sample_B.consensus.bam
-```
-
-*Use `--step filterconsensus` for consensus filtering and calling*
-
-### Workflow 6: Variant Calling Only
-
-```csv
-sample,duplexbam,csi
-Sample_A,/results/final/Sample_A.final.bam,/results/final/Sample_A.final.bam.csi
-Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
-```
-
-*Use `--step calling` for variant calling only*
-
 ## Troubleshooting
 
 ### Common Issues:
@@ -492,7 +517,7 @@ Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
 2. **Missing parent_dna**: Required for biological replicate merging
 3. **File path errors**: Verify FASTQ/BAM file accessibility
 4. **Memory issues**: Consider chromosome splitting for large datasets
-5. **Invalid step parameter**: Use valid step names (mapping, groupreadsbyumi, filterconsensus, calling)
+5. **Invalid step parameter**: Use valid step names (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile)
 6. **Incompatible input format**: Check column requirements for each step
 7. **Missing BAM indices**: Calling step requires both BAM and CSI files
 8. **Incorrect file format**: Ensure BAM files match the expected processing stage
@@ -505,30 +530,6 @@ Sample_B,/results/final/Sample_B.final.bam,/results/final/Sample_B.final.bam.csi
 - `SAMPLESHEET ERROR: Invalid step choice` → Use valid step parameter values
 - `INPUT ERROR: Missing required columns` → Check CSV header matches step requirements
 - `FILE ERROR: BAM index not found` → Ensure CSI files exist for calling step
-
-## Advanced Configuration
-
-### Custom Processing Strategies
-
-For specialized requirements, consider:
-
-- Custom sample grouping strategies
-- Alternative merging algorithms  
-- Specialized quality filtering
-- Performance optimization tuning
-- **Intermediate step restart workflows**
-- **Component-specific testing and validation**
-
-### Integration with Other Tools
-
-The deepUMIcaller pipeline can be integrated with:
-
-- Upstream read processing pipelines
-- Downstream variant annotation tools
-- Population genetics analysis workflows
-- Clinical reporting systems
-- **Quality control pipelines using intermediate steps**
-- **Workflow management systems with restart capabilities**
 
 ---
 

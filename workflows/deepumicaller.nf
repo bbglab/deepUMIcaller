@@ -459,6 +459,9 @@ workflow DEEPUMICALLER {
         ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
                 .groupTuple(by: 0)
                 .filter { _meta, bams -> bams.size() >= 2 }
+                .map { meta, bams -> [meta, bams.flatten()] }
+
+
         
         // Run the concatenation process
         MERGEBAMS(ch_grouped_bams)

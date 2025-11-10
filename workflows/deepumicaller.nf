@@ -92,6 +92,7 @@ include { PICARD_MERGESAMFILES              as MERGEBAMS                    } fr
 
 // Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
+include { MULTIQC                           as MULTIQCDUPLEX               } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 // Sorting
@@ -140,6 +141,8 @@ workflow DEEPUMICALLER {
     }
 
     ch_multiqc_files = Channel.empty()
+    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
    
 
     // Create value channels for targets and global exons files (if provided)
@@ -518,6 +521,14 @@ workflow DEEPUMICALLER {
 
             SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
             COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
+
+            // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)
+            MULTIQCDUPLEX (
+                ch_multiqc_files
+                    .mix(Channel.from(ch_multiqc_config))
+                    .mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+                    .collect()
+            )
         }
     }
 
@@ -592,10 +603,6 @@ workflow DEEPUMICALLER {
     workflow_summary    = paramsSummaryMultiqc(summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-
-    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-    
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))

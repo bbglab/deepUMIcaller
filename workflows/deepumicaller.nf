@@ -256,7 +256,7 @@ workflow DEEPUMICALLER {
             .map { sample, metas, bams -> 
                 def new_meta = metas[0].clone()
                 new_meta.id = sample
-                tuple(new_meta, bams)
+                tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
             }
             .set { grouped_bams }
 
@@ -417,7 +417,7 @@ workflow DEEPUMICALLER {
                 def new_meta = metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
-                tuple(new_meta, bams)
+                tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
             }
             .set { bam_n_index_all_molecules }
 

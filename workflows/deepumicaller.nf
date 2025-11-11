@@ -141,7 +141,7 @@ workflow DEEPUMICALLER {
     }
 
     ch_multiqc_files = Channel.empty()
-    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_config = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
    
 
@@ -525,7 +525,7 @@ workflow DEEPUMICALLER {
             // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)
             MULTIQCDUPLEX (
                 ch_multiqc_files
-                    .mix(Channel.from(ch_multiqc_config))
+                    .mix(ch_multiqc_config)
                     .mix(ch_multiqc_custom_config.collect().ifEmpty([]))
                     .collect()
             )
@@ -603,7 +603,7 @@ workflow DEEPUMICALLER {
     workflow_summary    = paramsSummaryMultiqc(summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_config)
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())

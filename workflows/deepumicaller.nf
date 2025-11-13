@@ -252,10 +252,12 @@ workflow DEEPUMICALLER {
                 def sample = meta.sample
                 tuple(sample, meta, bam)
             }
-            .groupTuple(by: 0)
+            .groupTuple(by: 0, sort: true)
             .map { sample, metas, bams -> 
-                def new_meta = metas[0].clone()
+                def sorted_metas = metas.sort { it.id }
+                def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
+                new_meta.sample = sample
                 tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
             }
             .set { grouped_bams }
@@ -337,13 +339,14 @@ workflow DEEPUMICALLER {
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
                     tuple(original_sample, meta, file)
                 }
-                .groupTuple(by: 0)  // Group by original sample name
+                .groupTuple(by: 0, sort: true)  // Group by original sample name
                 .map { sample, metas, files -> 
                     // Create new meta with original sample name
-                    def new_meta = metas[0].clone()
+                    def sorted_metas = metas.sort { it.id }
+                    def new_meta = sorted_metas[0].clone()
                     new_meta.id = sample
                     new_meta.sample = sample
-                    tuple(new_meta, files)
+                    tuple(new_meta, files.sort { it.name })
                 }
         }
         
@@ -368,13 +371,14 @@ workflow DEEPUMICALLER {
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
                     tuple(original_sample, meta, file)
                 }
-                .groupTuple(by: 0)  // Group by original sample name
+                .groupTuple(by: 0, sort: true)  // Group by original sample name
                 .map { sample, metas, files -> 
                     // Create new meta with original sample name
-                    def new_meta = metas[0].clone()
+                    def sorted_metas = metas.sort { it.id }
+                    def new_meta = sorted_metas[0].clone()
                     new_meta.id = sample
                     new_meta.sample = sample
-                    tuple(new_meta, files)
+                    tuple(new_meta, files.sort { it.name })
                 }
         }
 
@@ -412,9 +416,10 @@ workflow DEEPUMICALLER {
                 def sample = meta.sample
                 tuple(sample, meta, bam)
             }
-            .groupTuple(by: 0)
+            .groupTuple(by: 0, sort: true)
             .map { sample, metas, bams -> 
-                def new_meta = metas[0].clone()
+                def sorted_metas = metas.sort { it.id }
+                def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
                 tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
@@ -460,9 +465,9 @@ workflow DEEPUMICALLER {
 
         // Group by meta.parent_dna
         ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
-                .groupTuple(by: 0)
+                .groupTuple(by: 0, sort: true)
                 .filter { _meta, bams -> bams.size() >= 2 }
-                .map { meta, bams -> [meta, bams.flatten()] }
+                .map { meta, bams -> [meta, bams.flatten().sort { it.name }] }
 
 
         

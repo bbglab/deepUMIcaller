@@ -252,13 +252,14 @@ workflow DEEPUMICALLER {
                 def sample = meta.sample
                 tuple(sample, meta, bam)
             }
-            .groupTuple(by: 0, sort: true)
+            .groupTuple(by: 0)
             .map { sample, metas, bams -> 
-                def sorted_metas = metas.sort { it.id }
+                // Pick first meta deterministically by sorting
+                def sorted_metas = metas.sort { it.id.toString() }
                 def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
-                tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
+                tuple(new_meta, bams.sort { it.name })
             }
             .set { grouped_bams }
 
@@ -288,7 +289,7 @@ workflow DEEPUMICALLER {
             bam_to_group = SPLITBAMCHROM.out.chrom_bams
                 .map { meta, bams -> process_bams(meta, bams) }
                 .flatMap { it }
-                .toSortedList { a, b -> a[0].id <=> b[0].id }
+                .toSortedList { a, b -> a[0].id.toString() <=> b[0].id.toString() }
                 .flatMap { it }
                 .concat(
                     SPLITBAMCHROM.out.unknown_bam
@@ -337,15 +338,12 @@ workflow DEEPUMICALLER {
                 .map { meta, file -> 
                     // Extract original sample name (remove chromosome suffix like "_chr1", "_chr2", "_unknown")
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, meta, file)
+                    tuple(original_sample, file)
                 }
-                .groupTuple(by: 0, sort: true)  // Group by original sample name
-                .map { sample, metas, files -> 
+                .groupTuple(by: 0)  // Group by original sample name
+                .map { sample, files -> 
                     // Create new meta with original sample name
-                    def sorted_metas = metas.sort { it.id }
-                    def new_meta = sorted_metas[0].clone()
-                    new_meta.id = sample
-                    new_meta.sample = sample
+                    def new_meta = [id: sample, sample: sample]
                     tuple(new_meta, files.sort { it.name })
                 }
         }
@@ -369,15 +367,12 @@ workflow DEEPUMICALLER {
                 .map { meta, file -> 
                     // Extract original sample name (remove chromosome suffix)
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, meta, file)
+                    tuple(original_sample, file)
                 }
-                .groupTuple(by: 0, sort: true)  // Group by original sample name
-                .map { sample, metas, files -> 
+                .groupTuple(by: 0)  // Group by original sample name
+                .map { sample, files -> 
                     // Create new meta with original sample name
-                    def sorted_metas = metas.sort { it.id }
-                    def new_meta = sorted_metas[0].clone()
-                    new_meta.id = sample
-                    new_meta.sample = sample
+                    def new_meta = [id: sample, sample: sample]
                     tuple(new_meta, files.sort { it.name })
                 }
         }
@@ -416,9 +411,9 @@ workflow DEEPUMICALLER {
                 def sample = meta.sample
                 tuple(sample, meta, bam)
             }
-            .groupTuple(by: 0, sort: true)
+            .groupTuple(by: 0)
             .map { sample, metas, bams -> 
-                def sorted_metas = metas.sort { it.id }
+                def sorted_metas = metas.sort { it.id.toString() }
                 def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
@@ -464,13 +459,19 @@ workflow DEEPUMICALLER {
    
 
         // Group by meta.parent_dna
-        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
-                .groupTuple(by: 0, sort: true)
-                .filter { _meta, bams -> bams.size() >= 2 }
-                .map { meta, bams -> [meta, bams.flatten().sort { it.name }] }
+        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> tuple(meta.parent_dna, meta, bam) }
+                .groupTuple(by: 0)
+                .filter { parent_dna, metas, bams -> bams.size() >= 2 }
+                .map { parent_dna, metas, bams -> 
+                    // Pick first meta deterministically by sorting
+                    def sorted_metas = metas.sort { it.id.toString() }
+                    def new_meta = sorted_metas[0].clone()
+                    new_meta.id = parent_dna
+                    new_meta.parent_dna = parent_dna
+                    [new_meta, bams.flatten().sort { it.name }]
+                }
 
 
-        
         // Run the concatenation process
         MERGEBAMS(ch_grouped_bams)
 

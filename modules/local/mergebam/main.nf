@@ -20,9 +20,13 @@ process MERGEBAM {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def input_bams = bams.sort().join(' ')
+
     """
-    samtools merge $args -@ $task.cpus ${prefix}.merged.bam $input_bams
+    # Create sorted list of input BAMs
+    ls *.bam | sort > bam_list.txt
+    
+    # Merge using the file list
+    samtools merge $args -@ $task.cpus -b bam_list.txt ${prefix}.merged.bam
     samtools index -@ $task.cpus ${prefix}.merged.bam
 
     cat <<-END_VERSIONS > versions.yml

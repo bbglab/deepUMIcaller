@@ -92,6 +92,7 @@ include { PICARD_MERGESAMFILES              as MERGEBAMS                    } fr
 
 // Versions and reports
 include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
+include { MULTIQC                           as MULTIQCDUPLEX               } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 // Sorting
@@ -140,6 +141,8 @@ workflow DEEPUMICALLER {
     }
 
     ch_multiqc_files = Channel.empty()
+    ch_multiqc_config = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
    
 
     // Create value channels for targets and global exons files (if provided)
@@ -251,9 +254,12 @@ workflow DEEPUMICALLER {
             }
             .groupTuple(by: 0)
             .map { sample, metas, bams -> 
-                def new_meta = metas[0].clone()
+                // Pick first meta deterministically by sorting
+                def sorted_metas = metas.sort { it.id.toString() }
+                def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
-                tuple(new_meta, bams)
+                new_meta.sample = sample
+                tuple(new_meta, bams.sort { it.name })
             }
             .set { grouped_bams }
 
@@ -283,7 +289,7 @@ workflow DEEPUMICALLER {
             bam_to_group = SPLITBAMCHROM.out.chrom_bams
                 .map { meta, bams -> process_bams(meta, bams) }
                 .flatMap { it }
-                .toSortedList { a, b -> a[0].id <=> b[0].id }
+                .toSortedList { a, b -> a[0].id.toString() <=> b[0].id.toString() }
                 .flatMap { it }
                 .concat(
                     SPLITBAMCHROM.out.unknown_bam
@@ -332,15 +338,13 @@ workflow DEEPUMICALLER {
                 .map { meta, file -> 
                     // Extract original sample name (remove chromosome suffix like "_chr1", "_chr2", "_unknown")
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, meta, file)
+                    tuple(original_sample, file)
                 }
                 .groupTuple(by: 0)  // Group by original sample name
-                .map { sample, metas, files -> 
+                .map { sample, files -> 
                     // Create new meta with original sample name
-                    def new_meta = metas[0].clone()
-                    new_meta.id = sample
-                    new_meta.sample = sample
-                    tuple(new_meta, files)
+                    def new_meta = [id: sample, sample: sample]
+                    tuple(new_meta, files.sort { it.name })
                 }
         }
         
@@ -363,15 +367,13 @@ workflow DEEPUMICALLER {
                 .map { meta, file -> 
                     // Extract original sample name (remove chromosome suffix)
                     def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, meta, file)
+                    tuple(original_sample, file)
                 }
                 .groupTuple(by: 0)  // Group by original sample name
-                .map { sample, metas, files -> 
+                .map { sample, files -> 
                     // Create new meta with original sample name
-                    def new_meta = metas[0].clone()
-                    new_meta.id = sample
-                    new_meta.sample = sample
-                    tuple(new_meta, files)
+                    def new_meta = [id: sample, sample: sample]
+                    tuple(new_meta, files.sort { it.name })
                 }
         }
 
@@ -411,10 +413,11 @@ workflow DEEPUMICALLER {
             }
             .groupTuple(by: 0)
             .map { sample, metas, bams -> 
-                def new_meta = metas[0].clone()
+                def sorted_metas = metas.sort { it.id.toString() }
+                def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
-                tuple(new_meta, bams)
+                tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
             }
             .set { bam_n_index_all_molecules }
 
@@ -456,13 +459,19 @@ workflow DEEPUMICALLER {
    
 
         // Group by meta.parent_dna
-        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> [['id' : meta.parent_dna], bam] }
+        ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> tuple(meta.parent_dna, meta, bam) }
                 .groupTuple(by: 0)
-                .filter { _meta, bams -> bams.size() >= 2 }
-                .map { meta, bams -> [meta, bams.flatten()] }
+                .filter { parent_dna, metas, bams -> bams.size() >= 2 }
+                .map { parent_dna, metas, bams -> 
+                    // Pick first meta deterministically by sorting
+                    def sorted_metas = metas.sort { it.id.toString() }
+                    def new_meta = sorted_metas[0].clone()
+                    new_meta.id = parent_dna
+                    new_meta.parent_dna = parent_dna
+                    [new_meta, bams.flatten().sort { it.name }]
+                }
 
 
-        
         // Run the concatenation process
         MERGEBAMS(ch_grouped_bams)
 
@@ -518,6 +527,14 @@ workflow DEEPUMICALLER {
 
             SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
             COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
+
+            // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)
+            MULTIQCDUPLEX (
+                ch_multiqc_files
+                    .mix(ch_multiqc_config)
+                    .mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+                    .collect()
+            )
         }
     }
 
@@ -592,11 +609,7 @@ workflow DEEPUMICALLER {
     workflow_summary    = paramsSummaryMultiqc(summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-
-    ch_multiqc_config = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-    
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_config)
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())

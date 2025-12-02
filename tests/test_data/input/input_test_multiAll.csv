@@ -1,0 +1,5 @@
+sample,fastq_1,fastq_2,read_structure,parent_dna
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_1.part_001.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_2.part_001.fastq.gz,10M1S+T 10M1S+T,Bsample
+B7,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_1.part_002.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224121_SRR6109262_2.part_002.fastq.gz,10M1S+T 10M1S+T,Bsample
+B13,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224134_SRR6109249_1.part_001.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224134_SRR6109249_2.part_001.fastq.gz,10M1S+T 10M1S+T,Bsample
+B13,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224134_SRR6109249_1.part_002.fastq.gz,/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs/fastq/split_fastqs/SRX3224134_SRR6109249_2.part_002.fastq.gz,10M1S+T 10M1S+T,Bsample

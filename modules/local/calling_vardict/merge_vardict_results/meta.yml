@@ -1,0 +1,45 @@
+name: "merge_vardict_results"
+description: Merge VCF chunks from parallel VarDict variant calling
+keywords:
+  - vcf
+  - merge
+  - concatenate
+tools:
+  - grep:
+      description: GNU grep, egrep and fgrep
+      homepage: https://www.gnu.org/software/grep/
+      documentation: https://www.gnu.org/software/grep/manual/grep.html
+  - gzip:
+      description: GNU Gzip
+      homepage: https://www.gnu.org/software/gzip/
+      documentation: https://www.gnu.org/software/gzip/manual/gzip.html
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test' ]
+  - vcf_chunks:
+      type: file
+      description: List of VCF chunk files to merge
+      pattern: "*.genome.vcf"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test' ]
+  - vcf:
+      type: file
+      description: Merged and filtered VCF file
+      pattern: "*.vcf"
+  - genome_vcf:
+      type: file
+      description: Compressed merged VCF file before filtering
+      pattern: "*.vcf.gz"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"

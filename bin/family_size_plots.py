@@ -81,7 +81,6 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
     total_reads_nonduplex = data_scss_grouped["count_reads"][~data_scss["in_duplex"]].sum()
 
     percent_duplicates = (1 - total_scss/total_reads) * 100
-
     expected_dscs = round(total_scss / 2)
     recovery_of_dscs = total_duplex / expected_dscs * 100
     unique_reads = total_duplex + total_scss_nonduplex
@@ -143,10 +142,18 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
 
 
-def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix, confidence = '4 2 2'):
+def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence = '4 2 2'):
     
     # compute family size distributions from duplex stats data
-    data_duplex_families = pd.read_table(f"{duplex_metrics_file}")
+    if isinstance(duplex_metrics_files, list):
+        # Read and aggregate multiple files
+        dfs = [pd.read_table(f) for f in duplex_metrics_files]
+        data_duplex_families = pd.concat(dfs, ignore_index=True)[['ab_size', 'ba_size', 'count']]
+        data_duplex_families = data_duplex_families.groupby(['ab_size', 'ba_size'], as_index=False)['count'].sum()
+    else:
+        # Single file - read and keep only necessary columns
+        df = pd.read_table(duplex_metrics_files)
+        data_duplex_families = df[['ab_size', 'ba_size', 'count']].copy()
 
 
     sample_data_duplex, data_family_size_curve_duplex = compute_family_sizes_curve(sample, data_duplex_families,
@@ -174,18 +181,22 @@ def stats_fam_size2plot(sample, duplex_metrics_file, output_prefix, confidence =
 
 @click.command()
 @click.option('--sample-name', '-n', required=True, type=str, help='Name of the sample.')
-@click.option('--input-file', '-i', required=True, type=click.Path(exists=True), help='Path to the input file.')
+@click.option('--input-file', '-i', required=True, multiple=True, type=click.Path(exists=True), help='Path to the input file(s). Can be specified multiple times for aggregation.')
 @click.option('--output-file', '-o', required=True, type=click.Path(), help='Path to the output file.')
 @click.option('--confidence-level', '-c', default='4 2 2', show_default=True, type=str, help='Confidence level for the analysis.')
 def main(sample_name, input_file, output_file, confidence_level):
     """
-    Main function to process the input file and generate plots.
+    Main function to process the input file(s) and generate plots.
+    Accepts one or more input files for aggregation.
     """
 
     global limx
     limx = (0,50)
 
-    stats_fam_size2plot(sample_name, input_file, output_file, confidence=confidence_level)
+    # Convert tuple to list, or handle single file
+    input_files = list(input_file) if len(input_file) > 1 else input_file[0]
+    
+    stats_fam_size2plot(sample_name, input_files, output_file, confidence=confidence_level)
 
 
 if __name__ == '__main__':

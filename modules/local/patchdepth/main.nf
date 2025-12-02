@@ -1,8 +1,6 @@
 process PATCH_DEPTH {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_medium_high_memory'
+    label 'process_single_medium_memory'
 
     container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 

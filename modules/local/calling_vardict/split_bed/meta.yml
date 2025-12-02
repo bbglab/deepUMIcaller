@@ -1,0 +1,40 @@
+name: "split_bed"
+description: Split a BED file into multiple chunks for parallel processing
+keywords:
+  - bed
+  - split
+  - parallel
+tools:
+  - split:
+      description: Split a file into pieces
+      homepage: https://www.gnu.org/software/coreutils/
+      documentation: https://www.gnu.org/software/coreutils/manual/html_node/split-invocation.html
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test' ]
+  - targets_file:
+      type: file
+      description: BED file containing genomic regions
+      pattern: "*.{bed,bed.gz}"
+  - num_chunks:
+      type: integer
+      description: Number of chunks to split the BED file into
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test' ]
+  - chunks:
+      type: file
+      description: Individual BED file chunks
+      pattern: "chunk_*"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"

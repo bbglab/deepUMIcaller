@@ -67,7 +67,7 @@
                 },
                 "step": {
                     "type": "string",
-                    "description": "Choose from which process start. Options: 'mapping' (default), 'groupreadsbyumi', 'calling'.",
+                    "description": "Choose from which process start. Options: 'mapping' (default), 'filterconsensus', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'calling'.",
                     "default": "mapping",
                     "fa_icon": "fas fa-book",
                     "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."
@@ -84,7 +84,26 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Enable for filtering Ns",
                     "help_text": ""
+                },
+                "splitted_original_sample": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Input CSV contains several FASTQs from the same original library (sample).",
+                    "help_text": "Merges multiple sequencing lanes/files from the same biological sample. Only applicable when --step is 'mapping'. Ignored for other entry points."
+                },
+                "splitfastq_parts": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Number of parts to split FASTQ files into.",
+                    "default": 20
+                },
+                "split_by_chrom": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable splitting of BAM files by chromosome.",
+                    "help_text": "Enables chromosome-based parallelization for improved performance. Only applicable when --step is 'mapping'. Ignored for other entry points."
                 }
+
             }
         },
         "mutation_filtering_options": {
@@ -254,6 +273,19 @@
                     "description": "Parameters for the filtering step in VarDict",
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameters for the filtering step in VarDict"
+                },
+                "vardict_chunks": {
+                    "type": "integer",
+                    "description": "Number of parallel VarDict chunk jobs to create (controls parallelization level).",
+                    "default": 2,
+                    "fa_icon": "fas fa-tasks",
+                    "help_text": "Set to 1 to run VarDict on a single node; higher values create more parallel chunk jobs."
+                },
+                "use_teststrandbias": {
+                    "type": "boolean",
+                    "description": "Whether to use teststrandbias.R script in VarDict calling",
+                    "default": true,
+                    "fa_icon": "fas fa-dna"
                 }
             }
         },

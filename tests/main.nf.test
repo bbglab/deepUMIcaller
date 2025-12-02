@@ -1,39 +1,811 @@
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    TEST SUITE: deepUMIcaller Pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Description: Comprehensive test suite for the deepUMIcaller pipeline
+    
+    Purpose: Validates pipeline functionality across different input configurations
+    and parameter combinations to ensure robust variant calling performance.
+    
+    Test Categories:
+    1. BASIC FUNCTIONALITY
+       - Normal run: Standard single-file processing
+       - Split by chromosome: Chromosome-based parallelization
+    
+    2. MULTI-FILE HANDLING  
+       - Multi-file: Technical replicates (lanes) per sample
+       - Multi-sample: Biological replicates per patient
+       - MultiAll: Combined multi-file + multi-sample + chromosome splitting
+    
+    3. PARAMETER COMBINATIONS
+       - splitted_original_sample: Controls sample-level merging
+       - split_by_chrom: Controls chromosome-based processing
+       - parent_dna: Controls patient-level aggregation
+    
+    4. INTERMEDIATE STEP TESTING
+       - GroupReadsByUmi: Pipeline entry from UMI grouping step
+       - FilterConsensus: Pipeline entry from consensus filtering step  
+       - Calling: Pipeline entry from variant calling step
+    
+    Expected Outcomes: All tests should achieve ≥99% VCF precision when compared
+    to validated reference outputs.
+    
+    Test Data: Located in tests/test_data/input/
+    Expected Results: Located in tests/test_data/expected_output/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
 nextflow_pipeline {
 
     name "Test Workflow main.nf"
     script "main.nf"
     config "./nextflow.config"
 
-    test("Should run and output matches expected") {
+    /*
+    ========================================================================================
+        TEST 1: BASIC FUNCTIONALITY - Standard Processing
+    ========================================================================================
+    Purpose: Validates core pipeline functionality with default parameters
+    
+    Input: Single FASTQ pair per sample
+    Parameters: 
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Processes each FASTQ pair independently
+        - Generates one VCF per input sample
+        - No sample merging or chromosome splitting
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 1. Basic functionality - standard processing") {
+        tag "normal"
 
         when {
             params {
+                // Input: Single FASTQ pair per sample (baseline test data)
                 input = "${projectDir}/tests/test_data/input/input_test.csv"
-                outdir = "${projectDir}/tests_results"
+                
+                // Output: Results stored in dedicated directory
+                outdir = "${projectDir}/tests_results_default"
+                
+                // Default parameters (splitted_original_sample=false, split_by_chrom=false)
+                // No explicit parameter overrides = standard processing mode
             }
         }
         then {
-            assert workflow.success
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
 
-            def currentDir = file("tests_results/callingvardictmed")
+            // VCF output validation and precision testing
+            def currentDir = file("${params.outdir}/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
-
-            // Find all VCF files in the actual results directory
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
 
-            // Loop over each actual VCF and compare to expected
+            // Precision validation against reference results
             currentVcfs.each { currentVcf ->
                 def expectedVcf = new File(expectedDir, currentVcf.name)
-                assert expectedVcf.exists() : "Expected file missing: ${expectedVcf}"
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
 
-            def cmd = "python3 bin/compare_vcfs.py ${currentVcf} ${expectedVcf}"
-            def proc = cmd.execute()
-            proc.waitFor()
-            def similarity = proc.in.text.trim() as Double
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
 
-            println "\nVCF similarity for ${currentVcf.name}: ${similarity}%"
-            assert similarity >= 95 : "NOT PASSED: VCF similarity below threshold for ${currentVcf.name}: ${similarity}%"
+                println "\n[TEST 1 - BASIC] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 2: PERFORMANCE OPTIMIZATION - Chromosome-based Parallelization
+    ========================================================================================
+    Purpose: Validates pipeline performance optimization through chromosome splitting
+    
+    Input: Same single FASTQ pair as Test 1
+    Parameters: 
+        - split_by_chrom = true (enables chromosome-based splitting)
+        - splitted_original_sample = false (default)
+    
+    Expected Behavior:
+        - Splits processing by chromosome for parallelization
+        - Should produce same results as Test 1 but potentially faster
+        - Multiple chromosome-specific intermediate files
+        - Final output should be identical to non-split version
+    
+    Success Criteria: 
+        - VCF precision ≥99% vs reference
+        - Results identical to Test 1 (validates splitting correctness)
+    ========================================================================================
+    */
+    test("TEST 2. Performance optimization - chromosome-based parallelization") {
+        tag "split_by_chrom"
+
+        when {
+            params {
+                // Input: Same baseline data as Test 1 for comparison
+                input = "${projectDir}/tests/test_data/input/input_test_new1.csv"
+                
+                // Output: Dedicated directory for chromosome splitting results
+                outdir = "${projectDir}/tests_results_splitChrom/"
+                
+                // Enable chromosome-based parallelization for performance optimization
+                split_by_chrom = true
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation and precision testing  
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 2 - CHROMOSOME SPLITTING] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 3: TECHNICAL REPLICATES - Multi-file Sample Processing
+    ========================================================================================
+    Purpose: Validates handling of technical replicates (multiple sequencing lanes)
+    
+    Input: Multiple FASTQ pairs from the same biological sample
+           - Same sample name across multiple rows
+           - Different sequencing lanes/runs
+    
+    Parameters: 
+        - splitted_original_sample = true (enables lane merging)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Merges multiple lanes/files from same sample
+        - Processes as single unified sample
+        - Produces one VCF per biological sample (not per lane)
+        - Improved sensitivity from combined coverage
+    
+    Use Case: When sample was sequenced across multiple lanes
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 3. Technical replicates - multi-file sample processing") {
+        tag "multi-file"
+
+        when {
+            params {
+                // Input: Multiple FASTQ pairs from same sample (technical replicates/lanes)
+                input = "${projectDir}/tests/test_data/input/input_test_multi-file.csv"
+                
+                // Output: Results for merged technical replicates
+                outdir = "${projectDir}/tests_results_multi-file/"
+                
+                // Enable sample-level merging for technical replicates
+                splitted_original_sample = true
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting merged sample-level results
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 3 - TECHNICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 4: BIOLOGICAL REPLICATES - Multi-sample Patient Processing
+    ========================================================================================
+    Purpose: Validates patient-level aggregation across multiple biological samples
+    
+    Input: Multiple samples from the same patient/individual
+           - Different sample names with shared parent_dna
+           - Each sample processed independently first
+    
+    Parameters: 
+        - splitted_original_sample = false (default - no sample merging)
+        - parent_dna column specified in input (enables patient-level merging)
+    
+    Expected Behavior:
+        - Processes each sample independently
+        - Creates patient-level merged results via parent_dna grouping
+        - Produces both sample-level AND patient-level VCFs
+        - Enhances variant detection through multi-sample evidence
+    
+    Use Case: Multiple tissue samples or timepoints from same patient
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 4. Biological replicates - multi-sample patient processing") {
+        tag "multi-sample"
+
+        when {
+            params {
+                // Input: Multiple samples per patient with parent_dna grouping
+                input = "${projectDir}/tests/test_data/input/input_test_multi-sample.csv"
+                
+                // Output: Results for both sample-level and patient-level analysis
+                outdir = "${projectDir}/tests_results_multi-sample"
+                
+                // Default parameters - parent_dna grouping handled by input CSV
+                // splitted_original_sample = false (samples processed individually first)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting both sample-level and patient-level results
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 4 - BIOLOGICAL REPLICATES] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+
+    /*
+    ========================================================================================
+        TEST 5: COMPREHENSIVE SCENARIO - Complete Multi-level Processing
+    ========================================================================================
+    Purpose: Validates the most complex scenario combining all processing modes
+    
+    Input: Multiple FASTQ files per sample + Multiple samples per patient
+           - Technical replicates (lanes) per sample
+           - Biological replicates (samples) per patient  
+           - Chromosome-based parallelization
+    
+    Parameters: 
+        - splitted_original_sample = true (merge technical replicates)
+        - split_by_chrom = true (chromosome parallelization)
+        - parent_dna specified (patient-level grouping)
+    
+    Expected Behavior:
+        1. Merge lanes within each sample (technical replicates)
+        2. Split processing by chromosome (performance optimization)
+        3. Merge samples within each patient (biological replicates)
+        4. Produces patient-level results with maximum sensitivity
+    
+    Use Case: Large-scale studies with:
+        - Multiple sequencing lanes per sample
+        - Multiple samples per patient
+        - Need for computational efficiency
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    Note: This is the most computationally intensive test
+    ========================================================================================
+    */
+    test("TEST 5. Comprehensive scenario - complete multi-level processing") {
+        tag "multiAll"
+
+        when {
+            params {
+                // Input: Most complex scenario - technical + biological replicates
+                input = "${projectDir}/tests/test_data/input/input_test_multiAll.csv"
+                
+                // Output: Results for comprehensive multi-level processing
+                outdir = "${projectDir}/tests_results_multiAll/"
+                
+                // Enable all optimization and merging features
+                split_by_chrom = true              // Chromosome-based parallelization
+                splitted_original_sample = true    // Technical replicate merging
+                // parent_dna grouping enabled via input CSV
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting optimized multi-level results
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 5 - COMPREHENSIVE SCENARIO] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 6: INTERMEDIATE STEP - GroupReadsByUmi Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality starting from the groupreadsbyumi step
+    
+    Input: BAM files ready for UMI grouping (coordinate-sorted, aligned BAMs)
+           - Pre-processed and aligned BAM files from previous mapping steps
+           - Skips FASTQ processing and initial alignment
+    
+    Parameters: 
+        - step = "groupreadsbyumi" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Starts processing from fgbio GroupReadsByUmi module
+        - Groups reads by UMI for consensus calling
+        - Generates duplex consensus reads and calls variants
+        - Produces same quality VCF output as full pipeline
+    
+    Use Case: 
+        - Restarting pipeline from intermediate step after mapping completion
+        - Testing UMI grouping and consensus calling components in isolation
+        - Quality control validation of post-mapping pipeline stages
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 6. Intermediate step - GroupByUmi entry point") {
+        tag "groupreadsbyumi"
+
+        when {
+            params {
+                // Input: BAM files ready for UMI grouping (coordinate-sorted, aligned)
+                input = "${projectDir}/tests/test_data/input/input_groupreadsbyumi.csv"
+                
+                // Output: Results starting from groupreadsbyumi step
+                outdir = "${projectDir}/tests_results_groupreadsbyumi"
+                
+                // Pipeline entry point: skip mapping, start from UMI grouping
+                step = "groupreadsbyumi"
+                
+                // Default parameters for intermediate step validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from groupreadsbyumi onward
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 6 - GROUPREADSBYUMI STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 7: INTERMEDIATE STEP - FilterConsensus Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality starting from the filterconsensus step
+    
+    Input: Filtered BAM files ready for consensus read filtering
+           - BAM files from completed UMI grouping and initial consensus calling
+           - Pre-processed through groupreadsbyumi and consensus generation
+    
+    Parameters: 
+        - step = "filterconsensus" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Starts processing from consensus read filtering module
+        - Applies quality filters to consensus reads
+        - Performs final consensus calling and variant detection
+        - Produces high-quality filtered VCF output
+    
+    Use Case: 
+        - Restarting pipeline from consensus filtering step
+        - Testing consensus read quality filtering in isolation
+        - Optimizing filtering parameters without full pipeline re-run
+        - Quality control of final consensus calling stages
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 7. Intermediate step - FilterConsensus entry point") {
+        tag "filterconsensus"
+
+        when {
+            params {
+                // Input: Filtered BAM files ready for consensus read filtering
+                input = "${projectDir}/tests/test_data/input/input_filterconsensus.csv"
+                
+                // Output: Results starting from filterconsensus step
+                outdir = "${projectDir}/tests_results_filterconsensus"
+                
+                // Pipeline entry point: skip mapping and grouping, start from consensus filtering
+                step = "filterconsensus"
+                
+                // Default parameters for consensus filtering validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from filterconsensus onward
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 7 - FILTERCONSENSUS STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 8: INTERMEDIATE STEP - Calling Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality starting from the variant calling step
+    
+    Input: Final processed BAM files ready for variant calling
+           - Fully processed consensus BAM files with optimal quality filtering
+           - Complete UMI grouping, consensus generation, and quality filtering applied
+    
+    Parameters: 
+        - step = "calling" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Starts processing from variant calling module only
+        - Performs VarDict variant calling on consensus reads
+        - Applies post-calling filters and annotations
+        - Produces final high-confidence variant calls
+    
+    Use Case: 
+        - Restarting pipeline from variant calling step only
+        - Testing different variant calling parameters
+        - Comparing variant calling algorithms on same consensus data
+        - Quality control of final variant calling performance
+        - Rapid iteration on calling parameters without upstream reprocessing
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 8. Intermediate step - Calling entry point") {
+        tag "calling"
+
+        when {
+            params {
+                // Input: Final processed BAM files ready for variant calling
+                input = "${projectDir}/tests/test_data/input/input_calling.csv"
+                
+                // Output: Results starting from variant calling step only
+                outdir = "${projectDir}/tests_results_calling"
+                
+                // Pipeline entry point: skip all preprocessing, start from variant calling
+                step = "calling"
+                
+                // Default parameters for variant calling validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from variant calling only
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 8 - CALLING STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 9: INTERMEDIATE STEP - Unmapped Consensus Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality starting from the unmapped consensus step
+    
+    Input: Unmapped consensus BAM files ready for alignment
+           - Consensus reads generated from UMI grouping but not yet aligned
+           - Pre-processed through groupreadsbyumi and initial consensus generation
+           - Reads are in unmapped BAM format with consensus information
+    
+    Parameters: 
+        - step = "unmapped_consensus" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Starts processing from unmapped consensus BAM alignment
+        - Aligns consensus reads to reference genome
+        - Applies quality filters and performs variant calling
+        - Produces high-quality VCF output from consensus alignments
+    
+    Use Case: 
+        - Restarting pipeline from consensus alignment step
+        - Testing alignment and downstream processing of consensus reads
+        - Re-aligning consensus reads with different alignment parameters
+        - Quality control of consensus read generation and alignment
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 9. Intermediate step - Unmapped Consensus entry point") {
+        tag "unmapped_consensus"
+
+        when {
+            params {
+                // Input: Unmapped consensus BAM files ready for alignment
+                input = "${projectDir}/tests/test_data/input/input_unmapped_consensus.csv"
+                
+                // Output: Results starting from unmapped consensus alignment
+                outdir = "${projectDir}/tests_results_unmapped_consensus"
+                
+                // Pipeline entry point: skip grouping, start from consensus alignment
+                step = "unmapped_consensus"
+                
+                // Default parameters for unmapped consensus validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from unmapped consensus onward
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 9 - UNMAPPED CONSENSUS STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
+            }
+        }
+    }
+
+    /*
+    ========================================================================================
+        TEST 10: INTERMEDIATE STEP - All Molecules File Step Entry Point
+    ========================================================================================
+    Purpose: Validates pipeline functionality for generating all molecules file metrics
+    
+    Input: Final duplex BAM files with CSI index ready for molecule-level analysis
+           - Fully processed duplex consensus BAM files
+           - Complete UMI grouping, consensus generation, and quality filtering applied
+           - CSI index files for efficient random access
+    
+    Parameters: 
+        - step = "allmoleculesfile" (pipeline entry point)
+        - splitted_original_sample = false (default)
+        - split_by_chrom = false (default)
+    
+    Expected Behavior:
+        - Generates comprehensive molecule-level metrics file
+        - Extracts per-molecule information including UMI families
+        - Performs variant calling on the duplex BAM files
+        - Produces high-quality VCF output
+    
+    Use Case: 
+        - Generating molecule-level metrics from existing duplex BAMs
+        - Quality control and performance assessment of UMI-based consensus calling
+        - Analyzing UMI family sizes and duplex recovery rates
+        - Variant calling from pre-processed duplex consensus BAMs
+    
+    Success Criteria: VCF precision ≥99% vs reference
+    ========================================================================================
+    */
+    test("TEST 10. Intermediate step - All Molecules File entry point") {
+        tag "allmoleculesfile"
+
+        when {
+            params {
+                // Input: Final duplex BAM files with CSI index
+                input = "${projectDir}/tests/test_data/input/input_allmoleculesfile.csv"
+                
+                // Output: Results with all molecules file metrics and variant calls
+                outdir = "${projectDir}/tests_results_allmoleculesfile"
+                
+                // Pipeline entry point: generate molecule-level metrics and call variants
+                step = "allmoleculesfile"
+                
+                // Default parameters for all molecules file validation
+                // splitted_original_sample = false (default)
+                // split_by_chrom = false (default)
+            }
+        }
+        then {
+            // Pipeline execution validation
+            assert workflow.success : "Pipeline should complete without errors"
+
+            // VCF output validation - expecting results from variant calling
+            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def expectedDir = file("tests/test_data/expected_output")
+            def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
+            assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
+
+            // Precision validation against reference results
+            currentVcfs.each { currentVcf ->
+                def expectedVcf = new File(expectedDir, currentVcf.name)
+                assert expectedVcf.exists() : "REFERENCE ERROR: Expected reference file missing: ${expectedVcf.name}"
+
+                // Execute precision comparison script
+                def scriptPath = new File("${projectDir}/bin/test_utilities/compare_vcfs_detailed.py")
+                assert scriptPath.exists() : "SCRIPT ERROR: Comparison script not found at ${scriptPath}"
+                def cmd = "python3 ${scriptPath} ${currentVcf} ${expectedVcf}"
+                def proc = cmd.execute()
+                proc.waitFor()
+                def output = proc.in.text.trim()
+                assert proc.exitValue() == 0 : "COMPARISON SCRIPT ERROR: compare_vcfs_detailed.py failed for ${currentVcf.name} with exit code ${proc.exitValue()}. Error: ${proc.err.text}"
+                assert output.isNumber() : "COMPARISON SCRIPT ERROR: Non-numeric output from compare_vcfs_detailed.py for ${currentVcf.name}: '${output}'"
+                def precision = output as Double
+
+                println "\n[TEST 10 - ALL MOLECULES FILE STEP] VCF precision for ${currentVcf.name}: ${precision}%"
+                assert precision >= 99.0 : "PRECISION FAILURE: VCF ${currentVcf.name} precision ${precision}% below 99% threshold"
             }
         }
     }
 }
+

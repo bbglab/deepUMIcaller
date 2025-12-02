@@ -1,0 +1,54 @@
+name: "calling_vardict_chunk"
+description: Call variants using VarDict on a single genomic region chunk
+keywords:
+  - variant calling
+  - vardict
+  - vcf
+tools:
+  - vardict:
+      description: VarDict is an ultra sensitive variant caller for both single and paired sample variant calling from BAM files.
+      homepage: https://github.com/AstraZeneca-NGS/VarDictJava
+      documentation: https://github.com/AstraZeneca-NGS/VarDictJava
+      doi: "10.1093/nar/gkw227"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information and chunk information
+        e.g. [ id:'test', chunk_name:'chunk_aa' ]
+  - chunk_file:
+      type: file
+      description: BED file chunk containing genomic regions to process
+      pattern: "chunk_*"
+  - bam:
+      type: file
+      description: Sorted BAM file
+      pattern: "*.bam"
+  - bam_index:
+      type: file
+      description: BAM index file
+      pattern: "*.{bai,csi}"
+  - fasta:
+      type: file
+      description: Reference genome FASTA file
+      pattern: "*.{fa,fasta}"
+  - fasta_dir:
+      type: directory
+      description: Directory containing the reference genome FASTA file
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', chunk_name:'chunk_aa' ]
+  - vcf:
+      type: file
+      description: VCF file containing variants for this chunk
+      pattern: "*.genome.vcf"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"

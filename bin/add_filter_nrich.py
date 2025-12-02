@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # usage: python3 add_filter_nrich.py vcf_file ns_position_file output_filename filter_name
 # use filter_name = "n_rich"
@@ -6,7 +6,7 @@
 
 import pandas as pd
 import numpy as np
-import sys
+import click
 
 def update_filter_field(row, filter_name):
     """
@@ -131,6 +131,12 @@ def add_filter_nrich_to_vcf(vcf, threshold, filter_name):
     return vcf.drop([filter_name], axis = 1)
 
 
+@click.command()
+@click.option('--vcf_file', type=click.Path(exists=True), required=True, help='Path to the VCF file to be updated')
+@click.option('--ns_position_file', type=click.Path(exists=True), required=True, help='Path to the file containing the number of Ns per position')
+@click.option('--output_filename', type=click.Path(), required=True, help='Name path for the resulting updated VCF')
+@click.option('--filter_name', type=str, required=True, help='Name of the filter to add (typically "n_rich")')
+@click.option('--min_valid_depth', type=int, required=True, help='Minimum valid depth threshold')
 def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth):
     """
     Reads a VCF file and adds n_rich value to the
@@ -145,6 +151,10 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_dep
         Ns per position.
     output_filename: str
         Name path for the resulting updated VCF.
+    filter_name: str
+        Name of the filter to add (typically "n_rich").
+    min_valid_depth: int
+        Minimum valid depth threshold.
     """
 
     ###
@@ -156,7 +166,7 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_dep
     vcf.columns = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]
 
     threshold = compute_n_threshold(ns_position_file, min_valid_depth)
-    print("Threshold:", threshold)
+    click.echo(f"Threshold: {threshold}")
 
     ###
     # Add filter: mutations in positions with more Ns than expected
@@ -201,12 +211,7 @@ def main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_dep
         updated_vcf.to_csv(new_vcf_file, sep='\t', header=False, index=False)  # Write the data rows
     
     # Print a success message or return a result if needed
-    print(f"{output_filename} VCF file created successfully.")
+    click.echo(f"{output_filename} VCF file created successfully.")
 
 if __name__ == '__main__':
-    vcf_file = sys.argv[1]
-    ns_position_file = sys.argv[2]
-    output_filename = sys.argv[3]
-    filter_name = sys.argv[4]
-    min_valid_depth = int(sys.argv[5])
-    main(vcf_file, ns_position_file, output_filename, filter_name, min_valid_depth)
+    main()

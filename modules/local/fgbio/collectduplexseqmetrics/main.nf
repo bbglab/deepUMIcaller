@@ -1,7 +1,7 @@
 process FGBIO_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
-    label 'process_low_multicpu'
-
+    label 'process_low_memory'
+    
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
@@ -12,6 +12,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     path (intervals_file)
 
     output:
+    tuple val(meta), path("*duplex_family_sizes.txt")                , emit: family_sizes
     tuple val(meta), path("*duplex_seq_metrics*.txt")                , emit: metrics
     tuple val(meta), path("*.pdf")                   , optional: true, emit: report
     path "versions.yml"                                              , topic: versions

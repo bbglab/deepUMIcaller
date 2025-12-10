@@ -7,7 +7,6 @@ This document describes the output produced by the pipeline.
 ## Pipeline overview
 
 - [Directory Structure](#directory-structure)
-- [Input and configuration](#input-and-configuration)
 - [Mutations](#mutations)
 - [BAM files](#bam-files)
 - [Duplex QC metrics](#duplex-qc-metrics)
@@ -48,10 +47,6 @@ This document describes the output produced by the pipeline.
 └──sortbamduplexcons
    └── <sample>.bam
 ```
-
-## Input and configuration
-
-This information is available in the usage.md document.
 
 ## Mutations
 

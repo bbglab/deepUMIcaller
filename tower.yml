@@ -2,11 +2,17 @@ reports:
   "**/*multiqc_report.html":
     display: "MULTIQC report"
   
-  "familymetricsontarget/*med.pdf":
-    display: "Family Metrics"
+  "familymetricsontarget/*.duplex.pdf":
+    display: "Family metrics"
   
+  "familymetricsontarget/metrics_summary.tsv":
+    display: "Compiled family metrics on target"
+
+  "familymetrics/metrics_summary.tsv":
+    display: "Compiled family metrics"
+
   "fastqc/*.html":
     display: "FastQC report"
 
-  "sigprofplotmed/input_mutations/output/plots/*.pdf":
+  "sigprofplot/input_mutations/output/plots/*.pdf":
     display: "Mutational profiles"

@@ -119,6 +119,7 @@ include { RECOUNT_MUTS                      as RECOUNTMUTS                 } fro
 // Annotation
 include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                 } from '../subworkflows/local/vcf_annotate_all/main'
 
+include { process_bams      } from '../modules/local/utils'
 
 
 /*
@@ -268,19 +269,6 @@ workflow DEEPUMICALLER {
         if (params.split_by_chrom) {
             // Split merged BAMs by chromosome
             SPLITBAMCHROM(bam_to_group)
-
-            def process_bams = { meta, bams ->
-                bams.sort { it.name }.collect { bam ->
-                    def new_meta = meta.clone()
-                    // Extract chromosome from the last segment before .bam extension
-                    // Expected format: <sample>.<chrom>.bam or <sample>_<chrom>.bam
-                    // This prevents matching "chr" within the sample name itself
-                    def chrom_match = bam.name =~ /\.(chr[^.]+)\.bam$/ 
-                    def chrom = chrom_match ? chrom_match[0][1] : bam.name.replaceAll(/\.bam$/, '').replaceAll(/^.*[._]/, '')  
-                    new_meta.id = "${meta.id}_${chrom}"  
-                    [new_meta, bam]
-                }
-            }
 
             bam_to_group = SPLITBAMCHROM.out.chrom_bams
                 .map { meta, bams -> process_bams(meta, bams) }

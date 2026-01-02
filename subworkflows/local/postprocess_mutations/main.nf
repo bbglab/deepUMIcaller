@@ -26,7 +26,7 @@ include { SUMMARIZE_MUTS_PER_POS as COHORTMUTSPERPOS  } from '../../../modules/l
 
 
 
-workflow RECOUNT_MUTS {
+workflow POSTPROCESS_MUTATIONS {
 
     take:
 

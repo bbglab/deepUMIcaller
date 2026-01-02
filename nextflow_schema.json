@@ -349,7 +349,7 @@
             }
         },
         "read_processing_options": {
-            "title": "FASTP options",
+            "title": "FASTP or TRIMBAM options",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Define parameters for the processing of the reads.",

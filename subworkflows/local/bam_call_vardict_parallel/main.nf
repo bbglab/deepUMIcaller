@@ -43,7 +43,7 @@ workflow BAM_CALL_VARDICT_PARALLEL {
             bam_bai_bed.map { meta, bam, bai, _bed -> [meta.id, bam, bai] },
             by: 0
         )
-        .map { id, meta, chunk, bam, bai ->
+        .map { _id, meta, chunk, bam, bai ->
             // Now add chunk name to meta for uniqueness
             def chunk_meta = meta.clone()
             chunk_meta.chunk_name = chunk.simpleName

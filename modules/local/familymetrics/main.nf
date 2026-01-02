@@ -21,7 +21,7 @@ process FAMILYSIZEMETRICS {
     
     // Handle single file or multiple files (list/collection)
     def input_files = duplex_metrics instanceof Collection ? 
-        duplex_metrics.collect { "--input-file $it" }.join(' ') : 
+        duplex_metrics.collect {it -> "--input-file $it" }.join(' ') : 
         "--input-file ${duplex_metrics}"
     
     """

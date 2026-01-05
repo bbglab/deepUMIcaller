@@ -19,8 +19,6 @@ include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore
 //
 include { INPUT_CHECK                                                           } from '../subworkflows/local/input_check'
 
-include { BAM_FILTER_READS                                                      } from '../subworkflows/local/bam_filter_reads/main'
-
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
@@ -29,7 +27,7 @@ include { ALIGN_BAM                         as ALIGNRAWBAM                      
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
 
 include { MERGEBAM                                                              } from '../modules/local/mergebam/main'
-include { MERGEBAM                          as MERGEBAMCHROM                   } from '../modules/local/mergebam/main'
+include { MERGEBAM                          as MERGEBAMCHROM                    } from '../modules/local/mergebam/main'
 include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
 include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgbio/collectduplexseqmetrics/main'

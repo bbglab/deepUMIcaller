@@ -24,7 +24,7 @@ This document describes the output produced by the pipeline.
 ├──computedepth
 ├──coverageglobal
 ├──coveragetargeted
-├──createbedmed
+├──createbed
 ├──discardedcoverageglobal
 ├──discardedcoveragetargeted
 ├──familymetrics

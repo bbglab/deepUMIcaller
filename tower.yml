@@ -16,3 +16,9 @@ reports:
 
   "sigprofplot/input_mutations/output/plots/*.pdf":
     display: "Mutational profiles"
+
+  "cohortmutsperpos/*":
+    display: "Mutations per position in read at cohort level"
+
+  "mutsperpos/*BasePerPosWithoutNs.png":
+    display: "Mutations per position in read at sample level"

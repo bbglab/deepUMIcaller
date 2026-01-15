@@ -34,8 +34,8 @@ You can restart the pipeline from intermediate steps using files produced intern
 
 | Entry Point | Use deepUMIcaller internal output of | Published to results? |
 |-------------|--------------------------------------|------------------------|
-| `groupreadsbyumi` | `SORTBAMCLEAN` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
-| `unmapped_consensus` | `CALLDUPLEXCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
+| `groupreadsbyumi` | `SORTBAMRAWTEMPCOORDINATE` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
+| `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
 | `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/sortbamamfiltered/` |
 | `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/sortbamduplexcons/` |
 | `allmoleculesfile` | `SORTBAMALLMOLECULES` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |

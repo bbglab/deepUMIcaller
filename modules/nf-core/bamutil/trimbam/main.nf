@@ -8,6 +8,9 @@ process BAMUTIL_TRIMBAM {
 
     input:
     tuple val(meta), path(bam)
+    
+    // TODO
+    // define these values in the modules.config file
     val(trim_left)
     val(trim_right)
 

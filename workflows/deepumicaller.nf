@@ -19,30 +19,26 @@ include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore
 //
 include { INPUT_CHECK                                                           } from '../subworkflows/local/input_check'
 
-include { BAM_FILTER_READS                                                      } from '../subworkflows/local/bam_filter_reads/main'
-
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
+include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
 
 include { MERGEBAM                                                              } from '../modules/local/mergebam/main'
-include { MERGEBAM                          as MERGEBAMDUPLEX                   } from '../modules/local/mergebam/main'
+include { MERGEBAM                          as MERGEBAMCHROM                    } from '../modules/local/mergebam/main'
 include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
-include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
-include { ALIGN_BAM                         as ALIGNDUPLEXCONSENSUSBAM          } from '../modules/local/align_bam/main'
-
-include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS          } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICSONTARGET  } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgbio/collectduplexseqmetrics/main'
 
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
 
 include { UNMAP_BAM                         as UNMAPBAM                         } from '../modules/local/unmap/main'
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
-include { ASMINUSXS                         as ASMINUSXSDUPLEX                  } from '../modules/local/filter_reads/asminusxs/main'
+include { ASMINUSXS                         as ASMINUSXS                        } from '../modules/local/filter_reads/asminusxs/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                          } from '../modules/local/clipbam/main'
 
@@ -67,7 +63,7 @@ include { SIGPROFILER_MATRIXGENERATOR       as SIGPROFPLOTPYR                   
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTP                             as FASTP                       } from '../modules/nf-core/fastp/main'
+include { FASTP                             as TRIMREADS                   } from '../modules/nf-core/fastp/main'
 
 include { FASTQC                            as PRETRIMFASTQC               } from '../modules/nf-core/fastqc/main'
 include { FASTQC                            as FASTQC                      } from '../modules/nf-core/fastqc/main'
@@ -82,44 +78,45 @@ include { QUALIMAP_BAMQC                    as QUALIMAPQCALLMOLECULES      } fro
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
 
 
-include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                } from '../modules/nf-core/samtools/depth/main'
+include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                 } from '../modules/nf-core/samtools/depth/main'
 
-include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED   } from '../modules/nf-core/bedtools/coverage/main'
-include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL     } from '../modules/nf-core/bedtools/coverage/main'
-include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL              } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGETARGETED    } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as DISCARDEDCOVERAGEGLOBAL      } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as COVERAGETARGETED             } from '../modules/nf-core/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL               } from '../modules/nf-core/bedtools/coverage/main'
 
 include { PICARD_MERGESAMFILES              as MERGEBAMS                    } from '../modules/nf-core/picard/mergesamfiles/main'
 
-// Versions and reports
-include { MULTIQC                                                          } from '../modules/nf-core/multiqc/main'
-include { MULTIQC                           as MULTIQCDUPLEX               } from '../modules/nf-core/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS                                      } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 // Sorting
-include { SAMTOOLS_SORT                     as SORTBAM                     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMCLEAN                } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMCONS                 } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS           } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES         } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMCLEAN              } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED           } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMMERGED               } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMRAW                   } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMRAWTEMPCOORDINATE     } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES          } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED            } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMMERGED                } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMAMHQ                  } from '../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } from '../modules/nf-core/samtools/sort/main'
 
 // include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
-include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMIDUPLEX       } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
 
-include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLDUPLEXCONSENSUSREADS    } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
+include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
 // include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
-// include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTDUPLEXSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
+// include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
 
 
 // Postprocessing of the BAM and the VCF
-include { RECOUNT_MUTS                      as RECOUNTMUTS                 } from '../subworkflows/local/recount_muts/main'
+include { POSTPROCESS_MUTATIONS             as POSTPROCESSMUTATIONS         } from '../subworkflows/local/postprocess_mutations/main'
 
 // Annotation
-include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                 } from '../subworkflows/local/vcf_annotate_all/main'
+include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                  } from '../subworkflows/local/vcf_annotate_all/main'
+include { process_bams                                                      } from '../modules/local/utils'
 
+// Versions and reports
+include { MULTIQC                                                           } from '../modules/nf-core/multiqc/main'
+include { MULTIQC                           as MULTIQCDUPLEX                } from '../modules/nf-core/multiqc/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS                                       } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 
 /*
@@ -140,17 +137,17 @@ workflow DEEPUMICALLER {
         exit 1
     }
 
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_config = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
+    ch_multiqc_files = channel.empty()
+    ch_multiqc_config = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? channel.fromPath(params.multiqc_config) : channel.empty()
    
 
     // Create value channels for targets and global exons files (if provided)
-    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : Channel.empty()
+    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : channel.empty()
     ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : file(params.targetsfile, checkIfExists: true)
 
 
-    targets_bed = Channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
+    targets_bed = channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
     BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
 
 
@@ -169,13 +166,13 @@ workflow DEEPUMICALLER {
             PRETRIMFASTQC(
                 INPUT_CHECK.out.reads
             )
-            // MODULE: Run FASTP
-            FASTP(INPUT_CHECK.out.reads,
+            // MODULE: Run TRIMREADS
+            TRIMREADS(INPUT_CHECK.out.reads,
                             [], // we are not using any adapter fastas at the moment
                             false,
                             false)
             
-            reads_to_qc = FASTP.out.reads
+            reads_to_qc = TRIMREADS.out.reads
         } else {
             reads_to_qc = INPUT_CHECK.out.reads
         }
@@ -185,7 +182,7 @@ workflow DEEPUMICALLER {
             reads_to_qc
         )
         
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
         // Optional: Include fastqs split
         if (params.run_splitfastq) {
@@ -210,9 +207,7 @@ workflow DEEPUMICALLER {
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
         if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            // params.left_clip = 4     ->      Remove 4bp from the 5' end of the reads
-            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)
-            
+            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)            
             bam_to_align = TRIMBAM.out.bam
         } else {
             bam_to_align = FASTQTOBAM.out.bam
@@ -226,28 +221,18 @@ workflow DEEPUMICALLER {
         // and would reduce the size of the files stored in the work directory.
         // it works with the test samples
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
-        //ALIGNRAWBAM.out.bam.view { meta, bam -> "Debug ALIGNRAWBAM: BAM - Meta: $meta, BAM: $bam" }
 
-        // SORTBAM required for perform_qcs, splitted_original_sample and split_by_chrom
-        //if (params.perform_qcs | params.splitted_original_sample | params.split_by_chrom){
-        SORTBAM(ALIGNRAWBAM.out.bam)
-        bam_to_group = SORTBAM.out.bam.join(SORTBAM.out.csi)
-        //}
-
-        // truncate BAM to keep only the reads that are on target
-        // TODO
-        // see how BAMFILTERREADS requires the BAM file sorted....
+        SORTBAMRAW(ALIGNRAWBAM.out.bam)
+        aligned_raw_bam = SORTBAMRAW.out.bam.join(SORTBAMRAW.out.csi)
 
         if (params.perform_qcs) {
-            def qc_targets = params.targetsfile ?: []
-            QUALIMAPQCRAW(SORTBAM.out.bam, ch_targetsfile)
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it[1]}.collect())
+            QUALIMAPQCRAW(SORTBAMRAW.out.bam, ch_targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
-    
         if (params.splitted_original_sample){
             // Group BAMs by original sample name
-            SORTBAM.out.bam
+            SORTBAMRAW.out.bam
             .map { meta, bam -> 
                 def sample = meta.sample
                 tuple(sample, meta, bam)
@@ -255,42 +240,28 @@ workflow DEEPUMICALLER {
             .groupTuple(by: 0)
             .map { sample, metas, bams -> 
                 // Pick first meta deterministically by sorting
-                def sorted_metas = metas.sort { it.id.toString() }
+                def sorted_metas = metas.sort { it -> it.id.toString() }
                 def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
-                tuple(new_meta, bams.sort { it.name })
+                tuple(new_meta, bams.sort { it -> it.name })
             }
             .set { grouped_bams }
 
             // Merge BAMs for each sample
             MERGEBAM(grouped_bams)
-
-            bam_to_group = MERGEBAM.out.bam_bai
+            aligned_raw_bam = MERGEBAM.out.bam_bai
         }
 
         if (params.split_by_chrom) {
             // Split merged BAMs by chromosome
-            SPLITBAMCHROM(bam_to_group)
+            SPLITBAMCHROM(aligned_raw_bam)
 
-            def process_bams = { meta, bams ->
-                bams.sort { it.name }.collect { bam ->
-                    def new_meta = meta.clone()
-                    // Extract chromosome from the last segment before .bam extension
-                    // Expected format: <sample>.<chrom>.bam or <sample>_<chrom>.bam
-                    // This prevents matching "chr" within the sample name itself
-                    def chrom_match = bam.name =~ /\.(chr[^.]+)\.bam$/ 
-                    def chrom = chrom_match ? chrom_match[0][1] : bam.name.replaceAll(/\.bam$/, '').replaceAll(/^.*[._]/, '')  
-                    new_meta.id = "${meta.id}_${chrom}"  
-                    [new_meta, bam]
-                }
-            }
-
-            bam_to_group = SPLITBAMCHROM.out.chrom_bams
+            aligned_raw_bam = SPLITBAMCHROM.out.chrom_bams
                 .map { meta, bams -> process_bams(meta, bams) }
-                .flatMap { it }
+                .flatMap { it -> it }
                 .toSortedList { a, b -> a[0].id.toString() <=> b[0].id.toString() }
-                .flatMap { it }
+                .flatMap { it -> it }
                 .concat(
                     SPLITBAMCHROM.out.unknown_bam
                         .map { meta, bam -> 
@@ -302,13 +273,13 @@ workflow DEEPUMICALLER {
                 .map { meta, bam -> [meta, bam] } // Ensure correct structure
         }else {
             // The BAI index is dropped here because downstream processes only require the BAM file and its metadata.  
-            def drop_bai_index = { meta, bam, bai -> tuple(meta, bam) }  
-            bam_to_group = bam_to_group.map(drop_bai_index)  
+            def drop_bai_index = { meta, bam, _bai -> tuple(meta, bam) }  
+            aligned_raw_bam = aligned_raw_bam.map(drop_bai_index)  
         }
 
-        //Final SORT for GROUPREADSBYUMI (TEMPLATE-COORDINATE SORTED)
-        SORTBAMCLEAN(bam_to_group)
-        non_duplex_bams = SORTBAMCLEAN.out.bam
+        // Final SORT for GROUPREADSBYUMI (TEMPLATE-COORDINATE SORTED)
+        SORTBAMRAWTEMPCOORDINATE(aligned_raw_bam)
+        pre_consensus_bams = SORTBAMRAWTEMPCOORDINATE.out.bam
     }
     //
     // Run fgbio Duplex consensus pipeline
@@ -316,21 +287,21 @@ workflow DEEPUMICALLER {
 
     if (params.step in ['mapping', 'groupreadsbyumi']) {
 
-        // ASSIGN bam_to_group = to our input bam
+        // ASSIGN pre_consensus_bams = to our input bam
         if (params.step == 'groupreadsbyumi') {
-            non_duplex_bams = INPUT_CHECK.out.reads
+            pre_consensus_bams = INPUT_CHECK.out.reads
         }
 
         // MODULE: Run fgbio GroupReadsByUmi
         // requires input template coordinate sorted
-        GROUPREADSBYUMIDUPLEX(non_duplex_bams, "Paired")
-        ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMIDUPLEX.out.histogram.map{it[1]}.collect())
+        GROUPREADSBYUMI(pre_consensus_bams, "Paired")
+        ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it -> it[1]}.collect())
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics
-        COLLECTDUPLEXSEQMETRICS(GROUPREADSBYUMIDUPLEX.out.bam, [])
+        COLLECTSEQMETRICS(GROUPREADSBYUMI.out.bam, [])
         
         // Extract family_sizes file directly from dedicated output
-        family_sizes_metrics = COLLECTDUPLEXSEQMETRICS.out.family_sizes
+        family_sizes_metrics = COLLECTSEQMETRICS.out.family_sizes
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {
@@ -344,22 +315,22 @@ workflow DEEPUMICALLER {
                 .map { sample, files -> 
                     // Create new meta with original sample name
                     def new_meta = [id: sample, sample: sample]
-                    tuple(new_meta, files.sort { it.name })
+                    tuple(new_meta, files.sort { it -> it.name })
                 }
         }
         
         // Plot the family size metrics
         FAMILYMETRICS(family_sizes_metrics)
 
-        FAMILYMETRICS.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
-        FAMILYMETRICS.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
-        COLLECTDUPLEXSEQMETRICSONTARGET(GROUPREADSBYUMIDUPLEX.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it[1]} )
+        COLLECTSEQMETRICSONTARGET(GROUPREADSBYUMI.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         
         // Extract family_sizes file directly from dedicated output
-        family_sizes_metrics_ontarget = COLLECTDUPLEXSEQMETRICSONTARGET.out.family_sizes
+        family_sizes_metrics_ontarget = COLLECTSEQMETRICSONTARGET.out.family_sizes
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {
@@ -373,19 +344,19 @@ workflow DEEPUMICALLER {
                 .map { sample, files -> 
                     // Create new meta with original sample name
                     def new_meta = [id: sample, sample: sample]
-                    tuple(new_meta, files.sort { it.name })
+                    tuple(new_meta, files.sort { it -> it.name })
                 }
         }
 
         // Plot the family size metrics
         FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
 
-        FAMILYMETRICSONTARGET.out.sample_data.map{it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
-        FAMILYMETRICSONTARGET.out.curve_data.map{it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CallDuplexConsensusReads
-        CALLDUPLEXCONSENSUSREADS(GROUPREADSBYUMIDUPLEX.out.bam)
+        CALLCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
         
     }
     
@@ -395,13 +366,13 @@ workflow DEEPUMICALLER {
             UNMAPBAM(INPUT_CHECK.out.reads)
             called_consensus = UNMAPBAM.out.bam
         } else {
-            called_consensus = CALLDUPLEXCONSENSUSREADS.out.bam
+            called_consensus = CALLCONSENSUSREADS.out.bam
         }
 
         // MODULE: Align with bwa mem
-        ALIGNDUPLEXCONSENSUSBAM(called_consensus, ch_ref_index_dir, false)
+        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, false)
 
-        SORTBAMALLMOLECULES(ALIGNDUPLEXCONSENSUSBAM.out.bam)
+        SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
 
         if (params.split_by_chrom) {
 
@@ -413,40 +384,40 @@ workflow DEEPUMICALLER {
             }
             .groupTuple(by: 0)
             .map { sample, metas, bams -> 
-                def sorted_metas = metas.sort { it.id.toString() }
+                def sorted_metas = metas.sort { it -> it.id.toString() }
                 def new_meta = sorted_metas[0].clone()
                 new_meta.id = sample
                 new_meta.sample = sample
-                tuple(new_meta, bams.sort { it.name })  // Sort by filename for consistent hashing
+                tuple(new_meta, bams.sort { it -> it.name })  // Sort by filename for consistent hashing
             }
             .set { bam_n_index_all_molecules }
 
             // Merge BAMs for each sample
-            MERGEBAMDUPLEX(bam_n_index_all_molecules)
-            preASMINUSXSDUPLEXbams = MERGEBAMDUPLEX.out.bam_bai
+            MERGEBAMCHROM(bam_n_index_all_molecules)
+            all_molecules_bam_complete_n_index = MERGEBAMCHROM.out.bam_bai
         } else {
             SORTBAMALLMOLECULES.out.bam
-                .join( SORTBAMALLMOLECULES.out.csi )
-                .set { preASMINUSXSDUPLEXbams }
+            .join( SORTBAMALLMOLECULES.out.csi )
+            .set { all_molecules_bam_complete_n_index }
         }
     }
 
     if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
 
         if (params.step == 'allmoleculesfile') {
-            preASMINUSXSDUPLEXbams = INPUT_CHECK.out.reads
+            all_molecules_bam_complete_n_index = INPUT_CHECK.out.reads
         }
 
-        ASMINUSXSDUPLEX(preASMINUSXSDUPLEXbams)
-        SAMTOOLSFILTERALLMOLECULES(ASMINUSXSDUPLEX.out.bam)
+        ASMINUSXS(all_molecules_bam_complete_n_index)
+        SAMTOOLSFILTERALLMOLECULES(ASMINUSXS.out.bam)
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
-        ASMINUSXSDUPLEX.out.discarded_bam.map{[it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
+        ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
         DISCARDEDCOVERAGEGLOBAL(discarded_bam, [])
 
     }
@@ -461,14 +432,14 @@ workflow DEEPUMICALLER {
         // Group by meta.parent_dna
         ch_grouped_bams = duplex_filtered_init_bam.map { meta, bam -> tuple(meta.parent_dna, meta, bam) }
                 .groupTuple(by: 0)
-                .filter { parent_dna, metas, bams -> bams.size() >= 2 }
+                .filter { _parent_dna, _metas, bams -> bams.size() >= 2 }
                 .map { parent_dna, metas, bams -> 
                     // Pick first meta deterministically by sorting
-                    def sorted_metas = metas.sort { it.id.toString() }
+                    def sorted_metas = metas.sort { it -> it.id.toString() }
                     def new_meta = sorted_metas[0].clone()
                     new_meta.id = parent_dna
                     new_meta.parent_dna = parent_dna
-                    [new_meta, bams.flatten().sort { it.name }]
+                    [new_meta, bams.flatten().sort { it -> it.name }]
                 }
 
 
@@ -487,18 +458,18 @@ workflow DEEPUMICALLER {
 
 
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-        SORTBAMAMCLEAN(FILTERCONSENSUSREADSAM.out.bam)
+        SORTBAMAMHQ(FILTERCONSENSUSREADSAM.out.bam)
         
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
-        SORTBAMAMCLEAN.out.bam
-        .join( SORTBAMAMCLEAN.out.csi )
+        SORTBAMAMHQ.out.bam
+        .join( SORTBAMAMHQ.out.csi )
         .set { bam_n_index_duplex_clean }
 
         if (params.perform_qcs){
             // requires input coordinate sorted
-            QUALIMAPQCALLMOLECULES(SORTBAMAMCLEAN.out.bam, params.targetsfile)
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it[1]}.collect())
+            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, params.targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it -> it[1]}.collect())
         }
 
         //
@@ -523,10 +494,13 @@ workflow DEEPUMICALLER {
         // Quality check
         if (params.perform_qcs){
             QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
-            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it[1]}.collect())
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it -> it[1]}.collect())
 
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_bed }
-            COVERAGEGLOBAL(duplex_filt_bam_n_bed, [])
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_globalbed }
+            COVERAGEGLOBAL(duplex_filt_bam_n_globalbed, [])
+            
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { duplex_filt_bam_n_targetedbed }
+            COVERAGETARGETED(duplex_filt_bam_n_targetedbed, [])
 
             // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)
             MULTIQCDUPLEX (
@@ -546,7 +520,7 @@ workflow DEEPUMICALLER {
             bam_n_index_duplex_clean = INPUT_CHECK.out.reads
         }
 
-        cons_duplex_bam.map{[it[0], it[1]]}
+        cons_duplex_bam.map{it -> [it[0], it[1]]}
         .set{ cons_duplex_bam_only }
 
         // Compute depth of the consensus reads aligned to the genome
@@ -569,7 +543,7 @@ workflow DEEPUMICALLER {
 
         // Postprocessing the BAM file to get exact coverage per position and allele
         //    also get the Ns per position
-        RECOUNTMUTS(cons_duplex_bam,
+        POSTPROCESSMUTATIONS(cons_duplex_bam,
                         bam_n_index_duplex_clean,
                         BAM_CALL_VARDICT_PARALLEL.out.vcf,
                         CREATEBED.out.bed,
@@ -580,17 +554,17 @@ workflow DEEPUMICALLER {
                             ch_ref_fasta)
         }
 
-        RECOUNTMUTS.out.somatic_vcf.map{it[1]}.set { mutation_files_duplex }
+        POSTPROCESSMUTATIONS.out.somatic_vcf.map{it -> it[1]}.set { mutation_files_duplex }
         SIGPROFPLOT(mutation_files_duplex.collect())
 
-        RECOUNTMUTS.out.purvcf.map{it[1]}.set { mutation_files_pur_duplex }
+        POSTPROCESSMUTATIONS.out.purvcf.map{it -> it[1]}.set { mutation_files_pur_duplex }
         SIGPROFPLOTPUR(mutation_files_pur_duplex.collect())
 
-        RECOUNTMUTS.out.pyrvcf.map{it[1]}.set { mutation_files_pyr_duplex }
+        POSTPROCESSMUTATIONS.out.pyrvcf.map{it -> it[1]}.set { mutation_files_pyr_duplex }
         SIGPROFPLOTPYR(mutation_files_pyr_duplex.collect())
 
         // Generate deepCSA input example
-        RECOUNTMUTS.out.filtered_vcf
+        POSTPROCESSMUTATIONS.out.filtered_vcf
         .join(cons_duplex_bam_only)
         .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/sortbamduplexcons/${bam.name}\n" }
         .collectFile(name: 'deepCSA_input_template.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
@@ -599,7 +573,7 @@ workflow DEEPUMICALLER {
 
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
-        Channel.topic('versions').unique().collectFile(name: 'collated_versions.yml')
+        channel.topic('versions').unique().collectFile(name: 'collated_versions.yml')
     )
 
     //
@@ -607,7 +581,7 @@ workflow DEEPUMICALLER {
     //
     def summary_params  = paramsSummaryMap(workflow)
     workflow_summary    = paramsSummaryMultiqc(summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
+    ch_workflow_summary = channel.value(workflow_summary)
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_config)
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))

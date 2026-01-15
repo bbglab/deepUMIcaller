@@ -20,10 +20,7 @@ process FAMILYSIZEMETRICS {
     def confidence = task.ext.confidence ? "--confidence-level '${task.ext.confidence}' " : ""
     
     // Handle single file or multiple files (list/collection)
-    def input_files = duplex_metrics instanceof Collection ? 
-        duplex_metrics.collect { "--input-file $it" }.join(' ') : 
-        "--input-file ${duplex_metrics}"
-    
+    def input_files = [duplex_metrics].flatten().collect { file -> "--input-file ${file}" }.join(' ')    
     """
     family_size_plots.py \\
                 --sample-name ${sample_name} \\

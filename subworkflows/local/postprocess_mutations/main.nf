@@ -26,7 +26,7 @@ include { SUMMARIZE_MUTS_PER_POS as COHORTMUTSPERPOS  } from '../../../modules/l
 
 
 
-workflow RECOUNT_MUTS {
+workflow POSTPROCESS_MUTATIONS {
 
     take:
 
@@ -39,10 +39,10 @@ workflow RECOUNT_MUTS {
 
     main:
 
-    low_complex_filter = params.low_complex_file ? Channel.fromPath(params.low_complex_file, checkIfExists: true).first() : Channel.empty()
-    low_mappability_filter = params.low_mappability_file ? Channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : Channel.empty()
-    nanoseq_snp_filter = params.nanoseq_snp_file ? Channel.fromPath( params.nanoseq_snp_file, checkIfExists: true).first() : Channel.empty()
-    nanoseq_noise_filter = params.nanoseq_noise_file ? Channel.fromPath( params.nanoseq_noise_file, checkIfExists: true).first() : Channel.empty()
+    low_complex_filter = params.low_complex_file ? channel.fromPath(params.low_complex_file, checkIfExists: true).first() : channel.empty()
+    low_mappability_filter = params.low_mappability_file ? channel.fromPath( params.low_mappability_file, checkIfExists: true).first() : channel.empty()
+    nanoseq_snp_filter = params.nanoseq_snp_file ? channel.fromPath( params.nanoseq_snp_file, checkIfExists: true).first() : channel.empty()
+    nanoseq_noise_filter = params.nanoseq_noise_file ? channel.fromPath( params.nanoseq_noise_file, checkIfExists: true).first() : channel.empty()
 
     vcf_file
     .join( bed_file )
@@ -142,7 +142,7 @@ workflow RECOUNT_MUTS {
     // Switch from amplified to non-amplified BED regions
     ch_after_lowcomplex
         .join(ch_readjustregions_noamp)
-        .map { meta, vcf, bed_amp, bed_noamp -> 
+        .map { meta, vcf, _bed_amp, bed_noamp -> 
             [meta, vcf, bed_noamp] 
         }
         .set { ch_with_noamp_bed }
@@ -183,7 +183,7 @@ workflow RECOUNT_MUTS {
     // FILTER N RICH
     ch_vcf_final
     .map { tuple -> 
-        def (meta, vcf_file_path, vcf_derived_bed_path, ns_position_file, ns_position_index) = tuple
+        def (meta, vcf_file_path, _vcf_derived_bed_path, ns_position_file, ns_position_index) = tuple
         [meta, vcf_file_path, ns_position_file, ns_position_index]
     }
     .set { ch_vcf_nrich_input }
@@ -203,7 +203,7 @@ workflow RECOUNT_MUTS {
     .set { ch_bam_bai_vcf }
     
     MUTSPERPOS(ch_bam_bai_vcf)
-    MUTSPERPOS.out.positions_csv.map{ it[1] }.collect().set{ mutations_position_csv }
+    MUTSPERPOS.out.positions_csv.map{ it -> it[1] }.collect().set{ mutations_position_csv }
 
     COHORTMUTSPERPOS(mutations_position_csv)
 

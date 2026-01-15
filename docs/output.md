@@ -19,16 +19,17 @@ This document describes the output produced by the pipeline.
 {outdir}
 ├──callingvardictduplex
 ├──cohortmutsperpos
-├──collectduplexseqmetrics
-├──collectduplexseqmetricsontarget
+├──collectseqmetrics
+├──collectseqmetricsontarget
 ├──computedepth
 ├──coverageglobal
+├──coveragetargeted
 ├──createbedmed
 ├──discardedcoverageglobal
 ├──discardedcoveragetargeted
 ├──familymetrics
 ├──familymetricsontarget
-│   ├── <sample>.med.pdf
+│   ├── <sample>.duplex.pdf
 │   └── metrics_summary.tsv
 ├──fastqc
 ├──multiqc
@@ -41,8 +42,9 @@ This document describes the output produced by the pipeline.
 ├──qualimapqcduplex
 ├──qualimapqcraw
 ├──sigprofplot
-├──sigprofplotpur
-├──sigprofplotpyr
+│   ├── all
+│   ├── purine
+│   └── pyrimidine
 ├──sortbamamfiltered
 └──sortbamduplexcons
    └── <sample>.bam
@@ -91,8 +93,8 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
-- collectduplexseqmetrics
-- collectduplexseqmetricsontarget
+- collectseqmetrics
+- collectseqmetricsontarget
 
 - discardedcoverageglobal
 - discardedcoveragetargeted

@@ -64,7 +64,7 @@
                 "annotate_mutations": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable for filtering Ns",
+                    "description": "Enable mutation annotation (VCF annotation of called variants).",
                     "help_text": "",
                     "hidden": true
                 }

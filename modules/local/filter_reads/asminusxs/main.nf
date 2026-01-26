@@ -1,6 +1,6 @@
 process ASMINUSXS {
     tag "$meta.id"
-    label 'process_memory_intensive'
+    label 'bam_processing_heavy'
     
     conda "bioconda::pysam=0.23.3 conda-forge::click"
     container 'docker.io/bbglab/pysam-0.23.3:latest'

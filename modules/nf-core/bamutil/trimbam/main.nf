@@ -1,5 +1,6 @@
 process BAMUTIL_TRIMBAM {
     tag "$meta.id"
+    label 'bam_processing_heavy'
     
     conda "bioconda::bamutil=1.0.15"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

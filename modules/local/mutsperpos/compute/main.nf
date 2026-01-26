@@ -1,6 +1,6 @@
 process MUTS_PER_POS {
     tag "$meta.id"
-    label 'process_low'
+    label 'pileup_extreme'
     
     // conda "bioconda::pysam=0.21.0--py38h15b938a_1"
     // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

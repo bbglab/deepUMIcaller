@@ -1,5 +1,6 @@
 process QUERY_TABIX {
     tag "$meta.id"
+    label 'postprocess_compute'
 
     conda "bioconda::tabix=1.11"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

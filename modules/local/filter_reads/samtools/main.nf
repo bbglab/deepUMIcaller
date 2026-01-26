@@ -1,6 +1,6 @@
 process SAMTOOLS_FILTER {
     tag "$meta.id"
-    label 'process_medium_high_memory'
+    label 'consensus_filter'
 
     conda "bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

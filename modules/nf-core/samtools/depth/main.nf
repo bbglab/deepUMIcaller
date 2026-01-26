@@ -1,6 +1,6 @@
 process SAMTOOLS_DEPTH {
     tag "$meta.id"
-    label 'process_low'
+    label 'coverage_compute'
     
     conda "bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

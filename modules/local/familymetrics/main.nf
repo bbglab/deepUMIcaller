@@ -1,6 +1,6 @@
 process FAMILYSIZEMETRICS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'family_metrics'
 
     container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 

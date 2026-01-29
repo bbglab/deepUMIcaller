@@ -15,6 +15,44 @@ extra_fn_clean_exts:
 
 export_plots: true
 
+custom_data:
+  mutsperpos_ratios:
+    id: 'mutsperpos_ratios_section'
+    section_name: 'Mutations per Position - Sample Ratios'
+    description: 'This table shows the ratio of mutations at initial vs final positions for each sample.'
+    plot_type: 'table'
+    pconfig:
+      id: 'mutsperpos_ratios_table'
+      title: 'Sample Mutation Ratios'
+    file_format: 'tsv'
+    sp:
+      fn: 'ratios_per_sample_mqc.tsv'
+
+
+  mutsperpos_failing:
+    id: 'mutsperpos_ratios_enriched_section'
+    section_name: 'Mutations per Position - Samples failing'
+    description: 'This table shows the samples for which the ratio of mutations at initial vs final positions is bigger than 2.'
+    plot_type: 'table'
+    pconfig:
+      id: 'mutsperpos_ratios_enriched_table'
+      title: 'Flagged Sample Mutation Ratios'
+    file_format: 'tsv'
+    sp:
+      fn: 'samples_passing_ratio_threshold_mqc.tsv'
+
+sp:
+  mutsperpos_images:
+    fn: '*_mqc.png'
+  mutsperpos_csv:
+    fn: '*_MutsPerCycle_mqc.csv'
+  mutsperpos_pdf:
+    fn: '*_summary_mqc.pdf'
+
+custom_content:
+  order:
+    - mutsperpos_ratios
+
 top_modules:
   - qualimap:
       name: "QualiMAP (raw)"

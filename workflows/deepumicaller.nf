@@ -588,6 +588,14 @@ workflow DEEPUMICALLER {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
 
+    // Collect mutsperpos outputs for MultiQC
+    ch_multiqc_files = ch_multiqc_files.mix(POSTPROCESSMUTATIONS.out.mutsperpos_plots.map{it -> it[1]}.flatten().collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(POSTPROCESSMUTATIONS.out.mutsperpos_csv.map{it -> it[1]}.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(POSTPROCESSMUTATIONS.out.cohortmutsperpos_table.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(POSTPROCESSMUTATIONS.out.cohortmutsperpos_fail.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(POSTPROCESSMUTATIONS.out.cohortmutsperpos_pdf.collect().ifEmpty([]))
+
+
     MULTIQC (
         ch_multiqc_files.collect()
     )

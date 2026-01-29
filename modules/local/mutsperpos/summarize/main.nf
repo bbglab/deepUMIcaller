@@ -11,15 +11,20 @@ process SUMMARIZE_MUTS_PER_POS {
     path (csv_files)
 
     output:
-    path 'ratios_per_sample.tsv'                , optional : true,  emit: ratios_table
-    path 'mutation_ratios_summary.pdf'          , optional : true,  emit: summary_pdf
-    path 'samples_passing_ratio_threshold.tsv'  , optional : true,  emit: failing_samples
-    path  "versions.yml"                        , topic: versions
+    path 'ratios_per_sample_mqc.tsv'                , optional : true,  emit: ratios_table
+    path 'mutation_ratios_summary_mqc.pdf'          , optional : true,  emit: summary_pdf
+    path 'samples_passing_ratio_threshold_mqc.tsv'  , optional : true,  emit: failing_samples
+    path  "versions.yml"                            , topic: versions
 
     script:
     def args = task.ext.args ?: '--initial 5'
     """
     summarize_muts_per_cycle.py ${args}
+    
+    # Rename files for MultiQC recognition
+    [ -f ratios_per_sample.tsv ] && mv ratios_per_sample.tsv ratios_per_sample_mqc.tsv
+    [ -f mutation_ratios_summary.pdf ] && mv mutation_ratios_summary.pdf mutation_ratios_summary_mqc.pdf
+    [ -f samples_passing_ratio_threshold.tsv ] && mv samples_passing_ratio_threshold.tsv samples_passing_ratio_threshold.tsv
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -29,8 +34,8 @@ process SUMMARIZE_MUTS_PER_POS {
 
     stub:
     """
-    touch mutation_ratios_summary.pdf
-    touch ratios_per_sample.tsv
+    touch mutation_ratios_summary_mqc.pdf
+    touch ratios_per_sample_mqc.tsv
     touch samples_passing_ratio_threshold.tsv
 
     cat <<-END_VERSIONS > versions.yml

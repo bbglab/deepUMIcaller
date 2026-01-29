@@ -19,11 +19,15 @@ custom_data:
   mutsperpos_ratios:
     id: 'mutsperpos_ratios_section'
     section_name: 'Mutations per Position - Sample Ratios'
-    description: 'This table shows the ratio of mutations at initial vs final positions for each sample.'
-    plot_type: 'table'
+    description: 'Line plot showing the ratio of mutations at initial vs final positions for each sample across different mutation types.'
+    plot_type: 'linegraph'
     pconfig:
-      id: 'mutsperpos_ratios_table'
-      title: 'Sample Mutation Ratios'
+      id: 'mutsperpos_ratios_lineplot'
+      title: 'Sample Mutation Ratios by Type'
+      xlab: 'Mutation Type'
+      ylab: 'Ratio (Initial / Final)'
+      categories: true
+
     file_format: 'tsv'
     sp:
       fn: 'ratios_per_sample_mqc.tsv'
@@ -40,18 +44,24 @@ custom_data:
     file_format: 'tsv'
     sp:
       fn: 'samples_passing_ratio_threshold_mqc.tsv'
-
-sp:
+  
   mutsperpos_images:
-    fn: '*_mqc.png'
-  mutsperpos_csv:
-    fn: '*_MutsPerCycle_mqc.csv'
-  mutsperpos_pdf:
-    fn: '*_summary_mqc.pdf'
+    id: 'mutsperpos_images_section'
+    section_name: 'Mutations per Position - Summary Plots'
+    description: 'This section shows plots of mutations per position for all samples.'
+    plot_type: 'images'
+    pconfig:
+      id: 'mutsperpos_images_plots'
+      title: 'Mutations per position plots'
+    file_format: 'png'
+    sp:
+      fn: '*BasePerPosWithoutNs_mqc.png'
 
 custom_content:
   order:
-    - mutsperpos_ratios
+    - mutsperpos_failing
+    - mutsperpos_ratios    
+    - mutsperpos_images
 
 top_modules:
   - qualimap:

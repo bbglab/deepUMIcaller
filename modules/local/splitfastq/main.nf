@@ -1,7 +1,5 @@
 process SPLITFASTQ {
     tag "$meta.id"
-    label 'process_low'
-    label 'process_low_memory'
 
     conda "bioconda::seqkit=2.3.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

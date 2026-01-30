@@ -1,6 +1,6 @@
 process FGBIO_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
-    label 'process_low_memory'
+    label 'collect_duplex_metrics'
     
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

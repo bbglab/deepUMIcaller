@@ -7,6 +7,7 @@
 import argparse
 import csv
 import logging
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -90,8 +91,24 @@ class RowChecker:
         """Assert that the sample name exists and convert spaces to underscores."""
         sample_value = row.get(self._sample_col, None)
         assert sample_value is not None and len(sample_value) > 0, "Sample input is required."
-        # Sanitize samples slightly.
-        row[self._sample_col] = sample_value.replace(" ", "_")
+        
+        # Validate that sample name only contains safe characters
+        # Allow alphanumeric, underscores, hyphens, and dots
+        if not re.match(r'^[a-zA-Z0-9_-]+$', sample_value):
+            raise AssertionError(
+                f"Sample name '{sample_value}' contains invalid characters. "
+                "Only alphanumeric characters, underscores (_) and hyphens (-) are allowed. "
+                "This prevents potential shell injection vulnerabilities."
+            )
+        
+        # Additional check: ensure sample name doesn't start with a hyphen (could be interpreted as a flag)
+        if sample_value.startswith('-'):
+            raise AssertionError(
+                f"Sample name '{sample_value}' cannot start with a hyphen (-). "
+                "This prevents potential command-line flag injection."
+            )
+
+        row[self._sample_col] = sample_value
 
     def _validate_pair(self, row):
         """Assert that read pairs have the same file extension. Report pair status."""
@@ -126,6 +143,8 @@ class RowChecker:
             # which is important for downstream grouping and processing.
             if counts[sample] > 1:
                 row['id'] = f"{sample}_LPART{seen[sample]}"
+                logger.warning("Multiple parts detected for sample '%s'. Assigning unique IDs to each of them.", sample)
+
             else:
                 # If the sample is unique, use the sample name as the id.
                 row['id'] = sample

@@ -7,7 +7,6 @@ This document describes the output produced by the pipeline.
 ## Pipeline overview
 
 - [Directory Structure](#directory-structure)
-- [Input and configuration](#input-and-configuration)
 - [Mutations](#mutations)
 - [BAM files](#bam-files)
 - [Duplex QC metrics](#duplex-qc-metrics)
@@ -20,16 +19,17 @@ This document describes the output produced by the pipeline.
 {outdir}
 ├──callingvardictduplex
 ├──cohortmutsperpos
-├──collectduplexseqmetrics
-├──collectduplexseqmetricsontarget
+├──collectseqmetrics
+├──collectseqmetricsontarget
 ├──computedepth
 ├──coverageglobal
-├──createbedmed
+├──coveragetargeted
+├──createbed
 ├──discardedcoverageglobal
 ├──discardedcoveragetargeted
 ├──familymetrics
 ├──familymetricsontarget
-│   ├── <sample>.med.pdf
+│   ├── <sample>.duplex.pdf
 │   └── metrics_summary.tsv
 ├──fastqc
 ├──multiqc
@@ -42,16 +42,13 @@ This document describes the output produced by the pipeline.
 ├──qualimapqcduplex
 ├──qualimapqcraw
 ├──sigprofplot
-├──sigprofplotpur
-├──sigprofplotpyr
+│   ├── all
+│   ├── purine
+│   └── pyrimidine
 ├──sortbamamfiltered
 └──sortbamduplexcons
    └── <sample>.bam
 ```
-
-## Input and configuration
-
-This information is available in the usage.md document.
 
 ## Mutations
 
@@ -96,8 +93,8 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
-- collectduplexseqmetrics
-- collectduplexseqmetricsontarget
+- collectseqmetrics
+- collectseqmetricsontarget
 
 - discardedcoverageglobal
 - discardedcoveragetargeted

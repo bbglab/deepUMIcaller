@@ -16,8 +16,6 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process SIGPROFILER_MATRIXGENERATOR {
-    tag "rrr"
-    label 'process_single'
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").

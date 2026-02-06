@@ -1,8 +1,6 @@
 process PATCH_DEPTH {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_medium_high_memory'
+    label 'postprocess_memory'
 
     container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 
@@ -10,8 +8,9 @@ process PATCH_DEPTH {
     tuple val(meta), path(pileup_mutations), path(vcf)
 
     output:
-    tuple val(meta), path("*.readjusted.vcf")     , emit: patched_vcf
-    path  "versions.yml"                          , topic: versions
+    tuple val(meta), path("*.readjusted.vcf")       , emit: patched_vcf
+    tuple val(meta), path("*.mutated_reads.tsv.gz") , emit: mutated_reads
+    path  "versions.yml"                            , topic: versions
 
 
     script:
@@ -24,9 +23,9 @@ process PATCH_DEPTH {
     recompute_depth.py \\
             --mpileup-file ${pileup_mutations} \\
             --vcf-file ${vcf} \\
-            --output-filename ${prefix}.readjusted.vcf \\
+            --output-filename ${prefix}.readjusted \\
             ${suffix}
-            
+    gzip ${prefix}.readjusted.mutated_reads.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

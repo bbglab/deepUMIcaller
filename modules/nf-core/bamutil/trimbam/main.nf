@@ -1,7 +1,7 @@
 process BAMUTIL_TRIMBAM {
     tag "$meta.id"
-    label 'process_single'
-
+    label 'bam_processing_heavy'
+    
     conda "bioconda::bamutil=1.0.15"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bamutil:1.0.15--h2e03b76_1' :
@@ -9,6 +9,9 @@ process BAMUTIL_TRIMBAM {
 
     input:
     tuple val(meta), path(bam)
+    
+    // TODO
+    // define these values in the modules.config file
     val(trim_left)
     val(trim_right)
 

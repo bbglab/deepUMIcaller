@@ -1,7 +1,7 @@
 process FGBIO_CLIPBAM {
     tag "$meta.id"
-    label 'process_medium'
-
+    label 'bam_processing_heavy'
+    
     conda "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
             'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
@@ -22,6 +22,7 @@ process FGBIO_CLIPBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    def manual_clipping = task.ext.extra_clipping ?: ""
     def mem_gb = 8
     if (!task.memory) {
         log.info '[fgbio ClipBam] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
@@ -29,13 +30,14 @@ process FGBIO_CLIPBAM {
         mem_gb = task.memory.giga
     }
     """  
-    samtools sort -n -u $bam \
+    samtools sort -n -@ ${task.cpus} -u $bam \
         | fgbio \\
             -Xmx${mem_gb}g \\
             --tmp-dir=. \\
             ClipBam \\
             --input /dev/stdin/ \\
             --ref ${fasta} \\
+            ${manual_clipping} \\
             $args \\
             --output ${prefix}.clipped.bam
     cat <<-END_VERSIONS > versions.yml

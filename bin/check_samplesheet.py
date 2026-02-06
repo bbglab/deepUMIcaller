@@ -7,6 +7,7 @@
 import argparse
 import csv
 import logging
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -16,7 +17,8 @@ logger = logging.getLogger()
 
 
 requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
-                    "groupbyumi": ["bam"],
+                    "groupreadsbyumi": ["bam"],
+                    "unmapped_consensus": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
                     "allmoleculesfile": ["duplexbam", "csi"]
@@ -87,9 +89,26 @@ class RowChecker:
 
     def _validate_sample(self, row):
         """Assert that the sample name exists and convert spaces to underscores."""
-        assert len(row[self._sample_col]) > 0, "Sample input is required."
-        # Sanitize samples slightly.
-        row[self._sample_col] = row[self._sample_col].replace(" ", "_")
+        sample_value = row.get(self._sample_col, None)
+        assert sample_value is not None and len(sample_value) > 0, "Sample input is required."
+        
+        # Validate that sample name only contains safe characters
+        # Allow alphanumeric, underscores, hyphens, and dots
+        if not re.match(r'^[a-zA-Z0-9_-]+$', sample_value):
+            raise AssertionError(
+                f"Sample name '{sample_value}' contains invalid characters. "
+                "Only alphanumeric characters, underscores (_) and hyphens (-) are allowed. "
+                "This prevents potential shell injection vulnerabilities."
+            )
+        
+        # Additional check: ensure sample name doesn't start with a hyphen (could be interpreted as a flag)
+        if sample_value.startswith('-'):
+            raise AssertionError(
+                f"Sample name '{sample_value}' cannot start with a hyphen (-). "
+                "This prevents potential command-line flag injection."
+            )
+
+        row[self._sample_col] = sample_value
 
     def _validate_pair(self, row):
         """Assert that read pairs have the same file extension. Report pair status."""
@@ -112,14 +131,23 @@ class RowChecker:
 
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
-        if len({pair[0] for pair in self._seen}) < len(self._seen):
-            counts = Counter(pair[0] for pair in self._seen)
-            seen = Counter()
-            for row in self.modified:
-                sample = row[self._sample_col]
-                seen[sample] += 1
-                if counts[sample] > 1:
-                    row[self._sample_col] = f"{sample}_T{seen[sample]}"
+        # Count how many times each sample name appears in the input (e.g., for multi-lane samples)
+        counts = Counter(row[self._sample_col] for row in self.modified)
+        seen = Counter()
+        for row in self.modified:
+            sample = row[self._sample_col]
+            seen[sample] += 1
+            # If a sample appears more than once (e.g., multiple lanes/files for the same sample),
+            # assign a unique id by appending '_LPART{n}' where n is the occurrence count.
+            # This ensures that each part (lane/file) from the same sample gets a distinct id,
+            # which is important for downstream grouping and processing.
+            if counts[sample] > 1:
+                row['id'] = f"{sample}_LPART{seen[sample]}"
+                logger.warning("Multiple parts detected for sample '%s'. Assigning unique IDs to each of them.", sample)
+
+            else:
+                # If the sample is unique, use the sample name as the id.
+                row['id'] = sample
 
 
 def read_head(handle, num_lines=10):
@@ -150,10 +178,28 @@ def sniff_format(handle):
     peek = read_head(handle)
     handle.seek(0)
     sniffer = csv.Sniffer()
-    if not sniffer.has_header(peek):
-        logger.critical(f"The given sample sheet does not appear to contain a header.")
-        sys.exit(1)
-    dialect = sniffer.sniff(peek)
+    
+    # Check if header detection fails but we can manually verify a reasonable header
+    has_header = sniffer.has_header(peek)
+    if not has_header:
+        # Manual header validation for common cases
+        first_line = peek.split('\n')[0] if peek else ""
+        # Check if first line looks like a header (contains expected column names)
+        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'duplexbam', 'csi']
+        if any(header in first_line.lower() for header in expected_headers):
+            logger.warning("CSV sniffer failed to detect header, but header appears valid based on column names.")
+        else:
+            logger.critical(f"The given sample sheet does not appear to contain a header.")
+            sys.exit(1)
+    
+    try:
+        # Try to detect the dialect, but specify common delimiters to check
+        dialect = sniffer.sniff(peek, delimiters=",;\t")
+    except csv.Error:
+        # If sniffing fails, default to comma-delimited
+        logger.warning("Could not automatically detect CSV format, defaulting to comma-delimited.")
+        dialect = csv.excel  # This is comma-delimited by default
+    
     return dialect
 
 
@@ -183,17 +229,22 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
 
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_in.open(newline="") as in_handle:
-        reader = csv.DictReader(in_handle)
+        reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))
         # Validate each row.
         checker = RowChecker(step = step, init_cols= required_columns)
         for i, row in enumerate(reader):
             try:
+                # Ensure all fieldnames are present in the row dict, even if empty
+                for fieldname in reader.fieldnames:
+                    if fieldname not in row:
+                        row[fieldname] = None
                 checker.validate_and_transform(row)
             except AssertionError as error:
                 logger.critical(f"{str(error)} On line {i + 2}.")
                 sys.exit(1)
         checker.validate_unique_samples()
-    header = list(reader.fieldnames)
+    # Remove 'original_sample' from the output header
+    header = list(reader.fieldnames) + ['id']
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_out.open(mode="w", newline="") as out_handle:
         writer = csv.DictWriter(out_handle, header, delimiter=",")
@@ -231,7 +282,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "filterconsensus", "calling", "allmoleculesfile", "groupbyumi"),
+        choices=("mapping", "groupreadsbyumi", "unmapped_consensus", "allmoleculesfile", "filterconsensus", "calling"),
         default="mapping",
     )
     return parser.parse_args(argv)

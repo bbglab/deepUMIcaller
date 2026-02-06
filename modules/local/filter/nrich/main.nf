@@ -2,14 +2,10 @@
 
 process FILTER_N_RICH {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'memory_medium'
+    label 'process_memory_intensive'
     
-    conda "conda-forge::pandas=1.5.2"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-            'https://depot.galaxyproject.org/singularity/pandas:1.5.2' : 
-            'biocontainers/pandas:1.5.2' }"
+    conda "conda-forge::pandas=2.3.2 conda-forge::click"
+    container 'docker.io/bbglab/pysam-0.23.3:latest'
 
 
     input:
@@ -34,18 +30,18 @@ process FILTER_N_RICH {
     // and with the proportion of Ns of all those positions we estimate a
     // distribution from which we compute the mean + 2 std as the threshold for the max. proportion of Ns
 
-    // TODO think if we want to reimplement this with click
     """
     add_filter_nrich.py \\
-            ${vcf_file} \\
-            ${ns_position_file} \\
-            ${prefix}.filtered.vcf \\
-            ${filter_name} \\
-            ${minimum_depth}
+            --vcf_file ${vcf_file} \\
+            --ns_position_file ${ns_position_file} \\
+            --output_filename ${prefix}.filtered.vcf \\
+            --filter_name ${filter_name} \\
+            --min_valid_depth ${minimum_depth}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
+        click: \$(python3 -c "import click; print(click.__version__)")
     END_VERSIONS
     """
 

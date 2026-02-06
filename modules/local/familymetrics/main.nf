@@ -1,6 +1,6 @@
 process FAMILYSIZEMETRICS {
     tag "$meta.id"
-    label 'process_medium'
+    label 'family_metrics'
 
     container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 
@@ -18,10 +18,13 @@ process FAMILYSIZEMETRICS {
     def sample_name = "${meta.id}"
     prefix = "${meta.id}${prefix}"
     def confidence = task.ext.confidence ? "--confidence-level '${task.ext.confidence}' " : ""
+    
+    // Handle single file or multiple files (list/collection)
+    def input_files = [duplex_metrics].flatten().collect { file -> "--input-file ${file}" }.join(' ')    
     """
     family_size_plots.py \\
                 --sample-name ${sample_name} \\
-                --input-file ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt \\
+                ${input_files} \\
                 --output-file ${prefix}.family_sizes_plot_n_stats \\
                 ${confidence}
 
@@ -44,4 +47,3 @@ process FAMILYSIZEMETRICS {
     END_VERSIONS
     """
 }
-

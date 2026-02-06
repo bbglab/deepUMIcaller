@@ -1,6 +1,5 @@
 process PICARD_MERGESAMFILES {
     tag "$meta.id"
-    label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -26,10 +25,12 @@ process PICARD_MERGESAMFILES {
     }
     if (bam_files.size() > 1) {
         """
+        mkdir tempdir
         picard \\
             -Xmx${avail_mem}M \\
             MergeSamFiles \\
             $args \\
+            --TMP_DIR ./tempdir/ \\
             ${'--INPUT '+bam_files.join(' --INPUT ')} \\
             --OUTPUT ${prefix}.bam
         cat <<-END_VERSIONS > versions.yml

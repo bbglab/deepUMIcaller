@@ -1,7 +1,7 @@
 process FGBIO_FILTERCONSENSUSREADS {
     tag "$meta.id"
-    label 'process_medium_mem'
-
+    label 'consensus_filter'
+    
     conda "bioconda::fgbio=2.1.0 bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :

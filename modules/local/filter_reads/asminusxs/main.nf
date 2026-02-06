@@ -1,20 +1,17 @@
 process ASMINUSXS {
     tag "$meta.id"
-    label 'process_medium'
-    label 'process_medium_high_memory'
-
-    conda "bioconda::pysam-0.21.0"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/pysam-0.21.0--py38h15b938a_1' :
-        'biocontainers/pysam-0.21.0--py38h15b938a_1' }"
+    label 'bam_processing_heavy'
+    
+    conda "bioconda::pysam=0.23.3 conda-forge::click"
+    container 'docker.io/bbglab/pysam-0.23.3:latest'
 
     input:
     tuple val(meta), path(bam), path (bam_index)
 
     output:
-    tuple val(meta), path("*.AS-XS_*.bam"), emit: bam
+    tuple val(meta), path("*.AS-XS_*.bam")          , emit: bam
     tuple val(meta), path("*.discarded_AS-XS_*.bam"), emit: discarded_bam
-    path  "versions.yml"                  , topic: versions
+    path  "versions.yml"                            , topic: versions
 
 
     script:
@@ -24,13 +21,18 @@ process ASMINUSXS {
     def prefix_discard = task.ext.prefix_discard ?: ".discarded_AS-XS_${threshold}"
     prefix_discard = "${meta.id}${prefix_discard}"
     
-    // TODO think of reimplementing with click
     """
-    as_minus_xs.py ${bam} ${prefix}.bam ${prefix_discard}.bam ${threshold}
+    as_minus_xs.py \
+        --input_bam ${bam} \
+        --output_bam ${prefix}.bam \
+        --output_bam_discarded ${prefix_discard}.bam \
+        --threshold ${threshold} \
+        --tthreads ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        pysam: 0.21.0
+        pysam: 0.23.3
+        click: \$(python3 -c "import click; print(click.__version__)")
     END_VERSIONS
     """
 

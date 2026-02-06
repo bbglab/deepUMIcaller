@@ -1,0 +1,44 @@
+name: SPLITFASTQ
+description: Splits FASTQ files into multiple smaller files
+keywords:
+  - fastq
+  - split
+  - seqkit
+tools:
+  - seqkit:
+      description: "SeqKit is a cross-platform and ultrafast toolkit for FASTA/Q file manipulation"
+      homepage: "https://bioinf.shenwei.me/seqkit/"
+      documentation: "https://bioinf.shenwei.me/seqkit/usage/"
+      tool_dev_url: "https://github.com/shenwei356/seqkit"
+      doi: "10.1371/journal.pone.0163962"
+      licence: "['MIT']"
+      args_id: "$args"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - fastqs:
+      type: file
+      description: Input FASTQ files
+      pattern: "*.{fastq,fq,fastq.gz,fq.gz}"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - split_fastqs:
+      type: file
+      description: Split FASTQ files
+      pattern: "split_fastq/*_{1,2}.fastq.gz"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@mgrau"

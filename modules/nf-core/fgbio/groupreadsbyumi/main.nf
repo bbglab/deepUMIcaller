@@ -1,10 +1,8 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
-    label 'process_low_multicpu'
-    label 'memory_medium'
-    label 'time_medium'
-
-
+    cache 'lenient'
+    label 'groupreads_io'
+    
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
@@ -21,6 +19,7 @@ process FGBIO_GROUPREADSBYUMI {
 
 
     script:
+
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"

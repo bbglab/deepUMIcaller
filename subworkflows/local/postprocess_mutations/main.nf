@@ -217,4 +217,10 @@ workflow POSTPROCESS_MUTATIONS {
     purvcf          = FILTERVCFSOMATIC.out.pur_vcf
     pyrvcf          = FILTERVCFSOMATIC.out.pyr_vcf
 
+    mutsperpos_plots        = MUTSPERPOS.out.plots                  // channel: [ val(meta), [ png ] ]
+    mutsperpos_csv          = MUTSPERPOS.out.positions_csv          // channel: [ val(meta), [ csv ] ]
+    cohortmutsperpos_table  = COHORTMUTSPERPOS.out.ratios_table     // channel: [ tsv ]
+    cohortmutsperpos_fail   = COHORTMUTSPERPOS.out.failing_samples  // channel: [ tsv ]
+    cohortmutsperpos_pdf    = COHORTMUTSPERPOS.out.summary_pdf      // channel: [ pdf ]
+
 }

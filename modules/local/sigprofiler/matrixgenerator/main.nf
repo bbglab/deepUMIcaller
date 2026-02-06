@@ -1,6 +1,6 @@
 process SIGPROFILER_MATRIXGENERATOR {
     tag "${task.ext.prefix}"
-    label 'process_single'
+    label 'signature_analysis'
 
     container 'docker.io/ferriolcalvet/sigprofilermatrixgenerator:1.3.5'
 

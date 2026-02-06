@@ -1,6 +1,6 @@
 process QUALIMAP_BAMQC {
     tag "$meta.id"
-    label 'process_high_memory'
+    label 'qc_memory_intensive'
 
     conda "bioconda::qualimap=2.2.2d"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

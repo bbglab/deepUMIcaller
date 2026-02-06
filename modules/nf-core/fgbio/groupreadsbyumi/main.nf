@@ -1,7 +1,7 @@
 process FGBIO_GROUPREADSBYUMI {
     tag "$meta.id"
     cache 'lenient'
-    label 'process_low_memory'
+    label 'groupreads_io'
     
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

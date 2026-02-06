@@ -1,6 +1,6 @@
 process FGBIO_FILTERCONSENSUSREADS {
     tag "$meta.id"
-    label 'process_single'
+    label 'consensus_filter'
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

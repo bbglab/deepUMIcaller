@@ -1,6 +1,6 @@
 process MERGE_VARDICT_RESULTS {
     tag "$meta.id"
-    label 'process_low'
+    label 'variant_calling'
     
     conda "bioconda::vardict-java=1.8.3"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

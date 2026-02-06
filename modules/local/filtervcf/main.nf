@@ -1,6 +1,5 @@
 process FILTERMUTATIONS {
     tag "$meta.id"
-    label 'process_low'
     
     // TODO
     // update this in the nfcore format once the container is available in biocontainers and galaxy singularity

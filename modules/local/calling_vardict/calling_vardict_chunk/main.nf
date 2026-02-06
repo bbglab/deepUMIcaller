@@ -1,6 +1,6 @@
 process CALLING_VARDICT_CHUNK {
     tag "$meta.id-${chunk_file.simpleName}"
-    label 'process_high'
+    label 'variant_calling'
     
     conda "bioconda::vardict-java=1.8.3"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

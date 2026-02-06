@@ -1,7 +1,7 @@
 process FGBIO_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
     cache 'lenient'
-    label 'process_medium_low'
+    label 'consensus_calling'
 
     conda "bioconda::fgbio=2.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

@@ -91,15 +91,13 @@ class RowChecker:
         """Assert that the sample name exists and convert spaces to underscores."""
         sample_value = row.get(self._sample_col, None)
         assert sample_value is not None and len(sample_value) > 0, "Sample input is required."
-        # Sanitize samples slightly.
-        sample_value = sample_value.replace(" ", "_")
         
         # Validate that sample name only contains safe characters
         # Allow alphanumeric, underscores, hyphens, and dots
-        if not re.match(r'^[a-zA-Z0-9._-]+$', sample_value):
+        if not re.match(r'^[a-zA-Z0-9_-]+$', sample_value):
             raise AssertionError(
                 f"Sample name '{sample_value}' contains invalid characters. "
-                "Only alphanumeric characters, underscores (_), hyphens (-), and dots (.) are allowed. "
+                "Only alphanumeric characters, underscores (_) and hyphens (-) are allowed. "
                 "This prevents potential shell injection vulnerabilities."
             )
         
@@ -145,6 +143,8 @@ class RowChecker:
             # which is important for downstream grouping and processing.
             if counts[sample] > 1:
                 row['id'] = f"{sample}_LPART{seen[sample]}"
+                logger.warning("Multiple parts detected for sample '%s'. Assigning unique IDs to each of them.", sample)
+
             else:
                 # If the sample is unique, use the sample name as the id.
                 row['id'] = sample

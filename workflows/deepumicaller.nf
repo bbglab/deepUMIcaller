@@ -41,6 +41,7 @@ include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       
 include { ASMINUSXS                         as ASMINUSXS                        } from '../modules/local/filter_reads/asminusxs/main'
 
 include { FGBIO_CLIPBAM                     as CLIPBAM                          } from '../modules/local/clipbam/main'
+include { FGBIO_CLIPBAM                     as CLIPBAMAM                        } from '../modules/local/clipbam/main'
 
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
 include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgbio/filterconsensusreads/main'
@@ -458,7 +459,8 @@ workflow DEEPUMICALLER {
 
 
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
-        SORTBAMAMHQ(FILTERCONSENSUSREADSAM.out.bam)
+        CLIPBAMAM(FILTERCONSENSUSREADSAM.out.bam, ch_ref_fasta)
+        SORTBAMAMHQ(CLIPBAMAM.out.bam)
         
         // join the bam and the bamindex channels to have
         // the ones from the same samples together

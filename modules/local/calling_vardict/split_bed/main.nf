@@ -1,6 +1,6 @@
 process SPLIT_BED {
     tag "$meta.id"
-    label 'process_low'
+    label 'bed_operations'
 
     input:
     tuple val(meta), path(targets_file)

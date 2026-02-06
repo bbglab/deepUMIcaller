@@ -1,6 +1,6 @@
 process FGBIO_CLIPBAM {
     tag "$meta.id"
-    label 'process_medium_high_memory'
+    label 'bam_processing_heavy'
     
     conda "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 

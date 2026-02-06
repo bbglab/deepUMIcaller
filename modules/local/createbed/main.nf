@@ -1,6 +1,6 @@
 process CREATEBED_FROM_TSV {
     tag "$meta.id"
-    label 'process_single'
+    label 'bed_operations'
     
     conda "bioconda::bedtools=2.31.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

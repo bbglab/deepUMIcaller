@@ -1,8 +1,6 @@
 process FILTER_FROM_BED {
     tag "$meta.id"
-    label 'cpu_single'
-    label 'time_low'
-    label 'process_medium_high_memory'
+    label 'variant_filtering'
 
     // Use either conda or container, depending on profile
     conda "bioconda::pybedtools=0.9.1"

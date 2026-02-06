@@ -1,6 +1,5 @@
 process FASTP {
     tag "$meta.id"
-    label 'process_medium'
 
     conda "bioconda::fastp=0.23.2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

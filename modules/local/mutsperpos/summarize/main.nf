@@ -1,9 +1,6 @@
 process SUMMARIZE_MUTS_PER_POS {
     tag "cohort"
-
-    label 'process_single'
-    label 'time_medium'
-    label 'cpu_low'
+    label 'cohort_analysis'
 
     container "docker.io/bbglab/deepcsa-core:0.0.1-alpha"
 

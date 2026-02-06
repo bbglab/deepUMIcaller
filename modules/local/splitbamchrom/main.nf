@@ -1,6 +1,6 @@
 process SPLITBAMCHROM {
     tag "$meta.id"
-    label 'process_medium'
+    label 'genomic_prep'
     
     conda "bioconda::samtools=1.20"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

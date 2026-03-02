@@ -61,6 +61,8 @@ Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pi
 
 ## Documentation
 
+For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
+
 Find a detailed explanation of the deepUMIcaller pipeline and its use within the DeepClone protocol for the analysis of duplex sequencing data here:
 
 > **DeepClone, an end-to-end protocol to study somatic mutagenesis and selection at high resolution.**
@@ -68,8 +70,6 @@ Find a detailed explanation of the deepUMIcaller pipeline and its use within the
 > Ferriol Calvet, Morena Pinheiro-Santin, Erika Lopez-Arribillaga, Raquel Blanco Martinez-Illescas, Núria Samper, Miguel L. Grau, Ferran Muiños, Rocío Chamorro González, Maria Andrianova, Federica Brando, Stefano Pellegrini, Marta Huertas, Elisabet Figuerola-Bou, Coohleen Coombes, Brendan F. Kohrn, Jeanne Fredrickson, Rosa Ana Risques, Nuria Lopez-Bigas, Abel Gonzalez-Perez.
 >
 > protocols.io (2026) https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2
-
-For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
 
 For information on the [read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet, check this link.
 
@@ -145,4 +145,3 @@ sample1,.../mutations_vcf/<sample1>.vcf,.../duplex_reads_bam/<sample1>.bam
 sample2,.../mutations_vcf/<sample2>.vcf,.../duplex_reads_bam/<sample2>.bam
 sample3,.../mutations_vcf/<sample3>.vcf,.../duplex_reads_bam/<sample3>.bam
 ```
-

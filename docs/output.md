@@ -48,6 +48,52 @@ This document describes the output produced by the pipeline.
 ├──sortbamamfiltered
 └──sortbamduplexcons
    └── <sample>.bam
+
+metrics
+   duplex
+      collectseqmetrics
+      collectseqmetricsontarget
+      familymetrics
+      familymetricsontarget
+
+   coverage_n_depth
+      duplex/
+         computedepth
+         coverageglobal
+         coveragetargeted
+         qualimapqcduplex
+
+      all_molecules/
+         discardedcoverageglobal
+         discardedcoveragetargeted
+         qualimapqcallmolecules
+
+      raw/
+         qualimapqcraw
+
+   fastqc
+
+   mutations
+      mutated_reads
+      mutsperpos
+      cohortmutsperpos
+      sigprofiler
+
+multiqc
+
+mutations_vcf
+
+pipeline_info
+
+processing_files
+   callingvardictduplex
+   createbed
+   multiqc_duplex
+   nsxposition
+   readjustregions
+   sortbamamfiltered
+
+sortbamduplexcons
 ```
 
 ## Mutations

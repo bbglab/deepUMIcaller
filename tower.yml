@@ -2,23 +2,26 @@ reports:
   "**/*multiqc_report.html":
     display: "MULTIQC report"
   
-  "familymetricsontarget/*.duplex.pdf":
-    display: "Family metrics"
+  "metrics/duplex/familymetricsontarget/*.duplex.pdf":
+    display: "Family metricson target plots"
   
-  "familymetricsontarget/metrics_summary.tsv":
-    display: "Compiled family metrics on target"
+  "metrics/duplex/familymetricsontarget/metrics_summary.tsv":
+    display: In-house family metrics on target"
 
-  "familymetrics/metrics_summary.tsv":
-    display: "Compiled family metrics"
+  "metrics/duplex/familymetrics/metrics_summary.tsv":
+    display: "In-house family metrics"
 
-  "fastqc/*.html":
+  "metrics/duplex/fgbio_seqmetricsontarget/*.pdf":
+    display: "fgbio family metrics"
+
+  "metrics/fastqc/*.html":
     display: "FastQC report"
 
-  "sigprofplot/input_mutations/output/plots/*.pdf":
+  "metrics/mutations/sigprofiler/allinput_mutations/output/plots/*.pdf":
     display: "Mutational profiles"
 
-  "cohortmutsperpos/*":
+  "metrics/mutations/cohortmutsperpos/*":
     display: "Mutations per position in read at cohort level"
 
-  "mutsperpos/*BasePerPosWithoutNs.png":
+  "metrics/mutations/mutsperpos/*BasePerPosWithoutNs.png":
     display: "Mutations per position in read at sample level"

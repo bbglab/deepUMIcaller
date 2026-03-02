@@ -323,8 +323,8 @@ workflow DEEPUMICALLER {
         // Plot the family size metrics
         FAMILYMETRICS(family_sizes_metrics)
 
-        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
-        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
@@ -352,8 +352,8 @@ workflow DEEPUMICALLER {
         // Plot the family size metrics
         FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
 
-        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
-        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CallDuplexConsensusReads
@@ -454,8 +454,8 @@ workflow DEEPUMICALLER {
 
         // store csv with all AM BAMs
         duplex_filtered_bam
-            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
-            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/processing_files/sortbamamfiltered/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
 
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
@@ -568,7 +568,7 @@ workflow DEEPUMICALLER {
         // Generate deepCSA input example
         POSTPROCESSMUTATIONS.out.filtered_vcf
         .join(cons_duplex_bam_only)
-        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/sortbamduplexcons/${bam.name}\n" }
+        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/duplex_reads_bam/${bam.name}\n" }
         .collectFile(name: 'deepCSA_input_template.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
     }

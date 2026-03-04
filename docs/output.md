@@ -17,6 +17,9 @@ This document describes the output produced by the pipeline.
 
 ```{console}
 {outdir}
+├── duplex_reads_bam
+│   ├── <sample>.sorted.bam
+│   └── <sample>.sorted.bam.csi
 ├── metrics
 │   ├── duplex
 │   │   ├── collectseqmetrics
@@ -48,18 +51,15 @@ This document describes the output produced by the pipeline.
 │           └── pyrimidine
 ├── multiqc
 ├── mutations_vcf
-│   └── <sample>.vcf
+│   └── <sample>.duplex.filtered.vcf
 ├── pipeline_info
-├── processing_files
-│   ├── callingvardictduplex
-│   ├── createbed
-│   ├── multiqc_duplex
-│   ├── nsxposition
-│   ├── readjustregions
-│   └── sortbamamfiltered
-└── sortbamduplexcons
-    ├── <sample>.bam
-    └── <sample>.bam.csi
+└── processing_files
+    ├── callingvardictduplex
+    ├── createbed
+    ├── multiqc_duplex
+    ├── nsxposition
+    ├── readjustregions
+    └── sortbamamfiltered
 ```
 
 ## Mutations

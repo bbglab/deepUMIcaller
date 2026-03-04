@@ -7,6 +7,7 @@
 
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { process_bams              } from '../modules/local/utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +113,6 @@ include { POSTPROCESS_MUTATIONS             as POSTPROCESSMUTATIONS         } fr
 
 // Annotation
 include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                  } from '../subworkflows/local/vcf_annotate_all/main'
-include { process_bams                                                      } from '../modules/local/utils'
 
 // Versions and reports
 include { MULTIQC                                                           } from '../modules/nf-core/multiqc/main'
@@ -185,23 +185,24 @@ workflow DEEPUMICALLER {
         
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
-        // Optional: Include fastqs split
-        if (params.run_splitfastq) {
-            SPLITFASTQ ( reads_to_qc )
-            SPLITFASTQ.out.split_fastqs
-            .transpose()
-            .map { meta, fastqs -> 
-                def new_meta = meta.clone()
-                // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
-                def match = fastqs[0].name =~ /^([^. _-]+)/
-                def part_id = match ? match[0][1] : "unknown"
-                new_meta.id = "${meta.id}_${part_id}"
-                [new_meta, fastqs]
-            }
-            .set { split_fastqs_ch }
-        } else {
-            split_fastqs_ch = reads_to_qc
-        }
+        // // Optional: Include fastqs split
+        // if (params.run_splitfastq) {
+        //     SPLITFASTQ ( reads_to_qc )
+        //     SPLITFASTQ.out.split_fastqs
+        //     .transpose()
+        //     .map { meta, fastqs -> 
+        //         def new_meta = meta.clone()
+        //         // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
+        //         def match = fastqs[0].name =~ /^([^. _-]+)/
+        //         def part_id = match ? match[0][1] : "unknown"
+        //         new_meta.id = "${meta.id}_${part_id}"
+        //         [new_meta, fastqs]
+        //     }
+        //     .set { split_fastqs_ch }
+        // } else {
+        //     split_fastqs_ch = reads_to_qc
+        // }
+        split_fastqs_ch = reads_to_qc
 
         FASTQTOBAM(split_fastqs_ch)
 

@@ -71,9 +71,9 @@
             }
         },
         "raw_data_processing_options": {
-            "title": "Raw data processing options",
+            "title": "Raw data processing options & optimization",
             "type": "object",
-            "description": "Most common options used for the pipeline",
+            "description": "Options for customizing raw data processing and optimizing performance.",
             "properties": {
                 "splitted_original_sample": {
                     "type": "boolean",
@@ -81,11 +81,19 @@
                     "description": "Input CSV contains several FASTQs from the same original library (sample).",
                     "help_text": "Merges multiple sequencing lanes/files from the same biological sample. Only applicable when --step is 'mapping'. Ignored for other entry points."
                 },
+                "run_splitfastq": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Enable splitting of FASTQ files.",
+                    "default": false,
+                    "hidden": true
+                },
                 "splitfastq_parts": {
                     "type": "integer",
                     "fa_icon": "fas fa-dna",
                     "description": "Number of parts to split FASTQ files into.",
-                    "default": 20
+                    "default": 5,
+                    "hidden": true
                 },
                 "split_by_chrom": {
                     "type": "boolean",
@@ -529,6 +537,14 @@
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
                     "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"]
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
+                    "hidden": true
                 },
                 "email_on_fail": {
                     "type": "string",

@@ -133,15 +133,8 @@ sample3,.../mutations_vcf/<sample3>.vcf,.../duplex_reads_bam/<sample3>.bam
 
 ### Duplex sequencing metrics compilation & analysis
 
-The output of deepUMIcaller that is generated with a targeted gene panel and with the goal of analyzing clonal selection in a given set of samples can be then run through [deepCSA](https://https://github.com/bbglab/deepCSA).
+deepUMIcaller generates a rich set of duplex sequencing metrics that allow the users to assess the performance of the duplex libraries that are being analyzed.
 
-The repo contains a detailed explanation of the usage and outputs that it will provide, but here we list which files from deepUMIcaller need to be used for then running deepCSA.
+This is useful for compiling the metrics and being able to compare across samples & experiments and identify any patterns of variable performance that could lead to actionable decisions.
 
-Find a default template for running deepCSA inside the pipeline_info directory that is part of the output.
-
-```csv
-sample,vcf,bam
-sample1,.../mutations_vcf/<sample1>.vcf,.../duplex_reads_bam/<sample1>.bam
-sample2,.../mutations_vcf/<sample2>.vcf,.../duplex_reads_bam/<sample2>.bam
-sample3,.../mutations_vcf/<sample3>.vcf,.../duplex_reads_bam/<sample3>.bam
-```
+One of these decisions is to request for more sequencing output for some of the libraries, with the family size distribution curves the user can assess how appropriately sequenced was a given library and then decide if more Gbs are required. We provide an estimation of the optimal sequencing and the approximate amount of giga-bases/reads that would need to be sequenced.

@@ -17,83 +17,49 @@ This document describes the output produced by the pipeline.
 
 ```{console}
 {outdir}
-├──callingvardictduplex
-├──cohortmutsperpos
-├──collectseqmetrics
-├──collectseqmetricsontarget
-├──computedepth
-├──coverageglobal
-├──coveragetargeted
-├──createbed
-├──discardedcoverageglobal
-├──discardedcoveragetargeted
-├──familymetrics
-├──familymetricsontarget
-│   ├── <sample>.duplex.pdf
-│   └── metrics_summary.tsv
-├──fastqc
-├──multiqc
-├──mutations_vcf
-│   └── <sample>.med.vcf
-├──mutsperpos
-├──nsxposition
-├──pipeline_info
-├──qualimapqcallmolecules
-├──qualimapqcduplex
-├──qualimapqcraw
-├──sigprofplot
-│   ├── all
-│   ├── purine
-│   └── pyrimidine
-├──sortbamamfiltered
-└──sortbamduplexcons
-   └── <sample>.bam
-
-metrics
-   duplex
-      collectseqmetrics
-      collectseqmetricsontarget
-      familymetrics
-      familymetricsontarget
-
-   coverage_n_depth
-      duplex/
-         computedepth
-         coverageglobal
-         coveragetargeted
-         qualimapqcduplex
-
-      all_molecules/
-         discardedcoverageglobal
-         discardedcoveragetargeted
-         qualimapqcallmolecules
-
-      raw/
-         qualimapqcraw
-
-   fastqc
-
-   mutations
-      mutated_reads
-      mutsperpos
-      cohortmutsperpos
-      sigprofiler
-
-multiqc
-
-mutations_vcf
-
-pipeline_info
-
-processing_files
-   callingvardictduplex
-   createbed
-   multiqc_duplex
-   nsxposition
-   readjustregions
-   sortbamamfiltered
-
-sortbamduplexcons
+├── metrics
+│   ├── duplex
+│   │   ├── collectseqmetrics
+│   │   ├── collectseqmetricsontarget
+│   │   ├── familymetrics
+│   │   └── familymetricsontarget
+│   │       ├── <sample>.duplex.pdf
+│   │       └── metrics_summary.tsv
+│   ├── coverage_n_depth
+│   │   ├── duplex
+│   │   │   ├── computedepth
+│   │   │   ├── coverageglobal
+│   │   │   ├── coveragetargeted
+│   │   │   └── qualimapqcduplex
+│   │   ├── all_molecules
+│   │   │   ├── discardedcoverageglobal
+│   │   │   ├── discardedcoveragetargeted
+│   │   │   └── qualimapqcallmolecules
+│   │   └── raw
+│   │       └── qualimapqcraw
+│   ├── fastqc
+│   └── mutations
+│       ├── mutated_reads
+│       ├── mutsperpos
+│       ├── cohortmutsperpos
+│       └── sigprofiler
+│           ├── all
+│           ├── purine
+│           └── pyrimidine
+├── multiqc
+├── mutations_vcf
+│   └── <sample>.vcf
+├── pipeline_info
+├── processing_files
+│   ├── callingvardictduplex
+│   ├── createbed
+│   ├── multiqc_duplex
+│   ├── nsxposition
+│   ├── readjustregions
+│   └── sortbamamfiltered
+└── sortbamduplexcons
+    ├── <sample>.bam
+    └── <sample>.bam.csi
 ```
 
 ## Mutations

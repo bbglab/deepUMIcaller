@@ -5,10 +5,10 @@ reports:
   "metrics/duplex/familymetricsontarget/*.duplex.pdf":
     display: "Family metricson target plots"
   
-  "metrics/duplex/familymetricsontarget/metrics_summary.tsv":
-    display: In-house family metrics on target"
+  "metrics/duplex/familymetricsontarget/*.tsv":
+    display: "In-house family metrics on target"
 
-  "metrics/duplex/familymetrics/metrics_summary.tsv":
+  "metrics/duplex/familymetrics/*.tsv":
     display: "In-house family metrics"
 
   "metrics/duplex/fgbio_seqmetricsontarget/*.pdf":
@@ -17,10 +17,10 @@ reports:
   "metrics/fastqc/*.html":
     display: "FastQC report"
 
-  "metrics/mutations/sigprofiler/allinput_mutations/output/plots/*.pdf":
+  "metrics/mutations/sigprofiler/all/input_mutations/output/plots/*.pdf":
     display: "Mutational profiles"
 
-  "metrics/mutations/cohortmutsperpos/*":
+  "metrics/mutations/mutsperpos_cohort_summary/*":
     display: "Mutations per position in read at cohort level"
 
   "metrics/mutations/mutsperpos/*BasePerPosWithoutNs.png":

@@ -158,7 +158,6 @@ workflow DEEPUMICALLER {
         file(params.input), 
         params.step
     )
-    
 
     if (params.step == 'mapping') {
 
@@ -232,7 +231,7 @@ workflow DEEPUMICALLER {
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
-        if (params.splitted_original_sample){
+        if (INPUT_CHECK.out.splitted_input){
             // Group BAMs by original sample name
             SORTBAMRAW.out.bam
             .map { meta, bam -> 

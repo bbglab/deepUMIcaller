@@ -12,8 +12,9 @@ process SAMPLESHEET_CHECK {
     val step
 
     output:
-    path '*.csv'       , emit: csv
-    path "versions.yml", topic: versions
+    path '*.csv'                        , emit: csv
+    path 'splitted'    , optional: true , emit: splitted_input
+    path "versions.yml"                 , topic: versions
 
     script: // This script is bundled with the pipeline, in nf-core/fgcons/bin/
     """

@@ -11,13 +11,17 @@ workflow INPUT_CHECK {
 
     main:
     SAMPLESHEET_CHECK ( samplesheet, step )
-        .csv
+    
+    SAMPLESHEET_CHECK.out.csv
         .splitCsv ( header:true, sep:',' )
         .map { it -> create_input_channel(it,step) }
         .set { reads }
 
+    splitted = SAMPLESHEET_CHECK.out.splitted_input.isEmpty() ? false : true   // boolean flag to indicate if any sample from the input is splitted
+
     emit:
     reads                                     // channel: [ val(meta), [ reads ] ]
+    splitted_input  = splitted
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]

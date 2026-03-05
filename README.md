@@ -118,7 +118,7 @@ You can cite the `nf-core` publication as follows:
 
 ### Clonal selection analysis via deepCSA
 
-If you are running deepUMIcaller with the goal of analyzing clonal selection in a given set of samples, then you can use [deepCSA](https://https://github.com/bbglab/deepCSA) as the next downstream step.
+If you are running deepUMIcaller with the goal of analyzing clonal selection in a given set of samples, then you can use [deepCSA](https://github.com/bbglab/deepCSA) as the next downstream step.
 
 The repo contains a detailed explanation of the usage and outputs that it will provide, but here we list which files from deepUMIcaller need to be used for then running deepCSA.
 

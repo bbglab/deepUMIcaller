@@ -3,7 +3,7 @@ reports:
     display: "MULTIQC report"
   
   "metrics/duplex/familymetricsontarget/*.duplex.pdf":
-    display: "Family metricson target plots"
+    display: "Family metrics on target plots"
   
   "metrics/duplex/familymetricsontarget/*.tsv":
     display: "In-house family metrics on target"

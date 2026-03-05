@@ -44,7 +44,7 @@ Notes:
 
 - For `calling` and `allmoleculesfile`, provide both the BAM and its CSI index.
 
-- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/processing_files/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
+- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/pipeline_info/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
 
 ## Input Scenarios
 
@@ -63,7 +63,7 @@ Sample_C,/path/to/Sample_C_R1.fastq.gz,/path/to/Sample_C_R2.fastq.gz,10M1S+T 10M
 
 **Pipeline Parameters:**
 
-No additional tunning of parameters required.
+No additional tuning of parameters required.
 
 **Expected Output:**
 
@@ -113,7 +113,7 @@ Sample_B_DNA2_P2,/path/to/Sample_B_DNA2_P2_R1.fastq.gz,/path/to/Sample_B_DNA2_P2
 
 If this is the case, note that there is an extra column in the input samplesheet, but apart from this extra column there is no other parameter that should be updated.
 
-No additional tunning of parameters required.
+No additional tuning of parameters required.
 
 **Expected Output:**
 
@@ -129,7 +129,7 @@ No additional tunning of parameters required.
 
 ### 4. Combine scenarios 2 & 3: Multiple lanes, and multiple libraries
 
-**Use Case**: A sample was splitted across multiple lanes & there are several libraries belonging to the same sample.
+**Use Case**: A sample was split across multiple lanes & there are several libraries belonging to the same sample.
 
 **Input Structure:**
 
@@ -157,7 +157,7 @@ Sample_B_DNA2_P2,/path/to/Sample_B_DNA2_P2_R1.fastq.gz,/path/to/Sample_B_DNA2_P2
 
 Duplex data is known to require to computationally heavy processing.
 
-In certain scenarios, where the targetted panel is very big (i.e. exome) and/or the desired sequencing depth is also very big, the execution of deepUMIcaller might be slow or even get stuck failing to reach the last steps.
+In certain scenarios, where the targeted panel is very big (i.e. exome) and/or the desired sequencing depth is also very big, the execution of deepUMIcaller might be slow or even get stuck failing to reach the last steps.
 
 Here we list two possibilities for speeding up the processing of the duplex reads that should be used in case of time or memory related issues.
 
@@ -184,7 +184,7 @@ Here we list two possibilities for speeding up the processing of the duplex read
 
 ### Split input FASTQs
 
-If the input FASTQs are very big, this will result in long execution times of the first read preprocessing steps. Having the input splitted across multiple FASTQ files for the same sample will speed up the execution of this steps, or help solve resource-related issues.
+If the input FASTQs are very big, this will result in long execution times of the first read preprocessing steps. Having the input split across multiple FASTQ files for the same sample will speed up the execution of this steps, or help solve resource-related issues.
 
 We are working to allow the user split the FASTQs within deepUMIcaller, but as of now this is not an option.
 

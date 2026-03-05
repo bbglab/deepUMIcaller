@@ -224,16 +224,28 @@ workflow DEEPUMICALLER {
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
 
         SORTBAMRAW(ALIGNRAWBAM.out.bam)
-        aligned_raw_bam = SORTBAMRAW.out.bam.join(SORTBAMRAW.out.csi)
-
         if (params.perform_qcs) {
             QUALIMAPQCRAW(SORTBAMRAW.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
-        if (INPUT_CHECK.out.splitted_input){
-            // Group BAMs by original sample name
-            SORTBAMRAW.out.bam
+        // Combine sorted BAMs with the flag and branch
+        SORTBAMRAW.out.bam
+            .combine(INPUT_CHECK.out.splitted_input)
+            .branch { meta, bam, flag ->
+                split: flag == true
+                    return tuple(meta, bam)
+                normal: flag == false
+                    return tuple(meta, bam)
+            }
+            .set { branched_bams }
+
+        // Handle normal mode (no splitting)
+        aligned_raw_bam_normal = branched_bams.normal
+            .join(SORTBAMRAW.out.csi)
+
+        // Handle split mode (with merging)
+        branched_bams.split
             .map { meta, bam -> 
                 def sample = meta.sample
                 tuple(sample, meta, bam)
@@ -249,10 +261,11 @@ workflow DEEPUMICALLER {
             }
             .set { grouped_bams }
 
-            // Merge BAMs for each sample
-            MERGEBAM(grouped_bams)
-            aligned_raw_bam = MERGEBAM.out.bam_bai
-        }
+        MERGEBAM(grouped_bams)
+        aligned_raw_bam_split = MERGEBAM.out.bam_bai
+
+        // Combine both paths into a single channel
+        aligned_raw_bam = aligned_raw_bam_normal.mix(aligned_raw_bam_split)
 
         if (params.split_by_chrom) {
             // Split merged BAMs by chromosome

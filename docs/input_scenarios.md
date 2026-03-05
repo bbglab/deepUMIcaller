@@ -87,12 +87,6 @@ Sample_B,/path/to/Sample_B_L1_R1.fastq.gz,/path/to/Sample_B_L1_R2.fastq.gz,10M1S
 Sample_B,/path/to/Sample_B_L2_R1.fastq.gz,/path/to/Sample_B_L2_R2.fastq.gz,10M1S+T 10M1S+T
 ```
 
-**Pipeline Parameters:**
-
-```bash
-  --splitted_original_sample true
-```
-
 **Expected Output:**
 
 - A single VCF per sample: `Sample_A.vcf`, `Sample_B.vcf`
@@ -147,14 +141,6 @@ Sample_A_DNA2_P1,/path/to/Sample_A_DNA2_P1_L3_R1.fastq.gz,/path/to/Sample_A_DNA2
 Sample_A_DNA2_P1,/path/to/Sample_A_DNA2_P1_L4_R1.fastq.gz,/path/to/Sample_A_DNA2_P1_L4_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
 Sample_B_DNA1_P2,/path/to/Sample_B_DNA1_P2_R1.fastq.gz,/path/to/Sample_B_DNA1_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
 Sample_B_DNA2_P2,/path/to/Sample_B_DNA2_P2_R1.fastq.gz,/path/to/Sample_B_DNA2_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
-```
-
-**Pipeline Parameters:**
-
-Since there are some samples whose raw reads come splitted into different lanes, this parameter needs to be indicated when running the pipeline.
-
-```bash
-  --splitted_original_sample true
 ```
 
 **Benefits:**
@@ -435,7 +421,6 @@ nextflow run main.nf \
 | Parameter | Default | Effect |
 |-----------|---------|--------|
 | `step` | `"mapping"` | Pipeline entry point (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile) |
-| `splitted_original_sample` | `false` | Enables technical replicate merging |
 | `split_by_chrom` | `false` | Enables chromosome-based parallelization |
 | `parent_dna` column | - | Enables biological replicate grouping |
 

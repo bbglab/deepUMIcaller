@@ -260,6 +260,10 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
         logger.info("The input samplesheet contains samples with multiple FASTQ files (e.g., multi-lane samples). ")
         with open("splitted", "w") as splitted_handle:
             splitted_handle.write("true")
+    else:
+        logger.info("The input samplesheet does not contain any sample with multiple FASTQ files (e.g., multi-lane samples). ")
+        with open("splitted", "w") as splitted_handle:
+            splitted_handle.write("false")
 
 
 def parse_args(argv=None):

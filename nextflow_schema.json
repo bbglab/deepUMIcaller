@@ -75,12 +75,6 @@
             "type": "object",
             "description": "Options for customizing raw data processing and optimizing performance.",
             "properties": {
-                "splitted_original_sample": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-dna",
-                    "description": "Input CSV contains several FASTQs from the same original library (sample).",
-                    "help_text": "Merges multiple sequencing lanes/files from the same biological sample. Only applicable when --step is 'mapping'. Ignored for other entry points."
-                },
                 "run_splitfastq": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",

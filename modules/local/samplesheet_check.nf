@@ -12,13 +12,13 @@ process SAMPLESHEET_CHECK {
     val step
 
     output:
-    path '*.csv'                        , emit: csv
-    path 'splitted'    , optional: true , emit: splitted_input
-    path "versions.yml"                 , topic: versions
+    path '*.csv'            , emit: csv
+    path 'splitted'         , emit: splitted_input
+    path "versions.yml"     , topic: versions
 
-    script: // This script is bundled with the pipeline, in nf-core/fgcons/bin/
+    script:
     """
-    check_samplesheet.py $samplesheet samplesheet.valid.csv --step $step
+    check_samplesheet.py $samplesheet samplesheet.valid.csv --log-level DEBUG --step $step
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

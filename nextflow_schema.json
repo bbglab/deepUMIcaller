@@ -79,7 +79,6 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable splitting of FASTQ files.",
-                    "default": false,
                     "hidden": true
                 },
                 "splitfastq_parts": {

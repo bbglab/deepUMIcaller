@@ -91,6 +91,7 @@ def update_vcf_fields(row, suffix = ''):
     formats = row["FORMAT"].split(':')
     values = row["SAMPLE"].split(':')
     formats_values = dict( zip(formats, values) )
+    formats_values["AF"] = str(min(float(formats_values["AF"]), 1))
     formats_values[f"CDP{suffix}"] = f'{int(row["TOT_DP"])}'
     formats_values[f"CAD{suffix}"] = f'{int(row["REF_DP"])},{int(row["ALT_DP"])}'
     formats_values[f"NDP{suffix}"] = f'{int(row["Ns_DP"])}'

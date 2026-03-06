@@ -80,7 +80,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -149,7 +149,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing  
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -221,7 +221,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting merged sample-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -293,7 +293,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting both sample-level and patient-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -374,7 +374,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting optimized multi-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -454,7 +454,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from groupreadsbyumi onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -535,7 +535,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from filterconsensus onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -617,7 +617,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from variant calling only
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -699,7 +699,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from unmapped consensus onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -781,7 +781,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from variant calling
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"

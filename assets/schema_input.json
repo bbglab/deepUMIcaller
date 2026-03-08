@@ -8,8 +8,15 @@
         "type": "object",
         "properties": {
             "sample": {
-                "type": "string",
-                "pattern": "^\\S+$",
+                "oneOf": [
+                    {
+                        "type": "string",
+                        "pattern": "^\\S+$"
+                    },
+                    {
+                        "type": "integer"
+                    }
+                ],
                 "errorMessage": "Sample name must be provided and cannot contain spaces"
             },
             "fastq_1": {

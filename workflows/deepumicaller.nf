@@ -427,6 +427,11 @@ workflow DEEPUMICALLER {
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
+        
+        // store csv with all AM BAMs
+        duplex_filtered_init_bam
+            .map { meta, bam -> "sample,bam,parent_dna\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name},${meta.parent_dna}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
         ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
@@ -467,8 +472,8 @@ workflow DEEPUMICALLER {
 
         // store csv with all AM BAMs
         duplex_filtered_bam
-            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/processing_files/sortbamamfiltered/${bam.name}\n" }
-            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.with_merged.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
 
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)

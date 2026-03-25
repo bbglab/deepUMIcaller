@@ -18,7 +18,6 @@
        - MultiAll: Combined multi-file + multi-sample + chromosome splitting
     
     3. PARAMETER COMBINATIONS
-       - splitted_original_sample: Controls sample-level merging
        - split_by_chrom: Controls chromosome-based processing
        - parent_dna: Controls patient-level aggregation
     
@@ -49,7 +48,7 @@ nextflow_pipeline {
     
     Input: Single FASTQ pair per sample
     Parameters: 
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -71,7 +70,7 @@ nextflow_pipeline {
                 // Output: Results stored in dedicated directory
                 outdir = "${projectDir}/tests_results_default"
                 
-                // Default parameters (splitted_original_sample=false, split_by_chrom=false)
+                // Default parameters (split_by_chrom=false)
                 // No explicit parameter overrides = standard processing mode
             }
         }
@@ -116,7 +115,6 @@ nextflow_pipeline {
     Input: Same single FASTQ pair as Test 1
     Parameters: 
         - split_by_chrom = true (enables chromosome-based splitting)
-        - splitted_original_sample = false (default)
     
     Expected Behavior:
         - Splits processing by chromosome for parallelization
@@ -187,7 +185,6 @@ nextflow_pipeline {
            - Different sequencing lanes/runs
     
     Parameters: 
-        - splitted_original_sample = true (enables lane merging)
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -212,8 +209,6 @@ nextflow_pipeline {
                 // Output: Results for merged technical replicates
                 outdir = "${projectDir}/tests_results_multi-file/"
                 
-                // Enable sample-level merging for technical replicates
-                splitted_original_sample = true
             }
         }
         then {
@@ -259,7 +254,6 @@ nextflow_pipeline {
            - Each sample processed independently first
     
     Parameters: 
-        - splitted_original_sample = false (default - no sample merging)
         - parent_dna column specified in input (enables patient-level merging)
     
     Expected Behavior:
@@ -285,7 +279,6 @@ nextflow_pipeline {
                 outdir = "${projectDir}/tests_results_multi-sample"
                 
                 // Default parameters - parent_dna grouping handled by input CSV
-                // splitted_original_sample = false (samples processed individually first)
             }
         }
         then {
@@ -333,7 +326,6 @@ nextflow_pipeline {
            - Chromosome-based parallelization
     
     Parameters: 
-        - splitted_original_sample = true (merge technical replicates)
         - split_by_chrom = true (chromosome parallelization)
         - parent_dna specified (patient-level grouping)
     
@@ -365,7 +357,6 @@ nextflow_pipeline {
                 
                 // Enable all optimization and merging features
                 split_by_chrom = true              // Chromosome-based parallelization
-                splitted_original_sample = true    // Technical replicate merging
                 // parent_dna grouping enabled via input CSV
             }
         }
@@ -413,7 +404,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "groupreadsbyumi" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -443,9 +434,9 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip mapping, start from UMI grouping
                 step = "groupreadsbyumi"
+                left_clip = 0
                 
                 // Default parameters for intermediate step validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -493,7 +484,6 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "filterconsensus" (pipeline entry point)
-        - splitted_original_sample = false (default)
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -524,9 +514,9 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip mapping and grouping, start from consensus filtering
                 step = "filterconsensus"
+                left_clip = 0
                 
                 // Default parameters for consensus filtering validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -574,7 +564,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "calling" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -608,7 +598,6 @@ nextflow_pipeline {
                 step = "calling"
                 
                 // Default parameters for variant calling validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -657,7 +646,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "unmapped_consensus" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -688,9 +677,10 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip grouping, start from consensus alignment
                 step = "unmapped_consensus"
+                left_clip = 0
                 
                 // Default parameters for unmapped consensus validation
-                // splitted_original_sample = false (default)
+                
                 // split_by_chrom = false (default)
             }
         }
@@ -739,7 +729,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "allmoleculesfile" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -770,9 +760,10 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: generate molecule-level metrics and call variants
                 step = "allmoleculesfile"
+                left_clip = 0
                 
                 // Default parameters for all molecules file validation
-                // splitted_original_sample = false (default)
+                
                 // split_by_chrom = false (default)
             }
         }

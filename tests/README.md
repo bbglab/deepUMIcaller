@@ -66,7 +66,6 @@ nf-test test --update-snapshot
 - **Tag**: `multi-file`
 - **Purpose**: Validates merging of technical replicates (sequencing lanes)
 - **Input**: Multiple FASTQ pairs from the same biological sample
-- **Parameters**: `splitted_original_sample = true`
 - **Expected**: Merged results at sample level, improved sensitivity
 
 #### Test 4: Biological Replicates - Multi-sample Patient Processing
@@ -79,7 +78,7 @@ nf-test test --update-snapshot
 - **Tag**: `multiAll`
 - **Purpose**: Most complex scenario combining all processing modes
 - **Input**: Technical + biological replicates with chromosome splitting
-- **Parameters**: `splitted_original_sample = true`, `split_by_chrom = true`
+- **Parameters**: `split_by_chrom = true`
 - **Expected**: Multi-level processing with maximum computational efficiency
 
 ### 3. Intermediate Step Testing

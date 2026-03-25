@@ -6,7 +6,7 @@
 
 ## Samplesheet input
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
+You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 4 columns, and a header row as shown in the examples below.
 
 ```console
 --input '[path to samplesheet file]'
@@ -29,6 +29,8 @@ sample3,sample3_R1.fastq.gz,sample3_R2.fastq.gz,8M1S+T 8M1S+T
 | `read_structure` | Duplex sequencing read structure as defined in [fgbio read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures). This will change depending on the duplex sequencing technology used for the library preparation.                                                     |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+
+If you want to run deepUMIcaller in a scenario more complex than a single pair of FASTQs per sample, check the additional documentation on input CSV files available in the [corresponding section of the documentation](input_scenarios.md).
 
 ## Running the pipeline
 
@@ -190,14 +192,14 @@ It should be a BED file in BED4-5-6 format with a single row per exon or continu
 
 To get more accurate metrics for on target proportion and possibly other downstream sequencing metrics we recommend providing a BED file with the targeted regions with an extension of 250 bp on each boundary. This will include reads that partially overlap with the target region but not fully.
 
+## Optional parameters
+
 ### Global exons file
 
 It should be a BED file in BED4-5-6 format with a single row per exon or continuous genomic region that was targeted.
 
 This file will be used to compute general coverage metrics optionally outside the desired targeted areas. We recommend that this is a BED file of all the exonic or potentially interesting regions of the genome.
-Optionally the user can set it as the same targets BED file.
-
-## Optional parameters
+If this file is not provided, it will default to the targets BED file.
 
 ### Filtering BED files
 
@@ -238,10 +240,6 @@ There is some overlap between the BED files used for filtering:
 <p align="center">
   <img src="../assets/images/venn_diagram_masks.png" alt="Alt text" width="500"/>
 </p>
-
-### Global exons file
-
-This file will be used to report the depth of discarded reads because of AS-XS filter. This can be useful for seeing which regions of the genome outside the panel you targeted are getting some coverage, that is lost because of ambiguous mappability.
 
 ## Running deepCSA downsteam
 

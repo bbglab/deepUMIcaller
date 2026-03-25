@@ -63,7 +63,6 @@ process CALLING_VARDICT_CHUNK {
             -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 \
             > ${chunk_name}.genome.vcf
     fi
-
     echo "Done processing chunk ${chunk_name}."
 
     # Count non-header lines (lines not starting with #)

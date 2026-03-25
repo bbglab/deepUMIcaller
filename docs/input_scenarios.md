@@ -36,17 +36,19 @@ You can restart the pipeline from intermediate steps using files produced intern
 |-------------|--------------------------------------|------------------------|
 | `groupreadsbyumi` | `SORTBAMRAWTEMPCOORDINATE` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
 | `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
-| `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/sortbamamfiltered/` |
-| `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/sortbamduplexcons/` |
+| `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/processing_files/sortbamamfiltered/` |
+| `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/duplex_reads_bam/` |
 | `allmoleculesfile` | `SORTBAMALLMOLECULES` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
 
 Notes:
+
 - For `calling` and `allmoleculesfile`, provide both the BAM and its CSI index.
-- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/sortbamamfiltered/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
+
+- For `filterconsensus`, the pipeline also writes a helper CSV with absolute BAM paths in `{outdir}/pipeline_info/samplesheet_bam_filtered_inputs.csv` that you can pass directly with `--step filterconsensus`.
 
 ## Input Scenarios
 
-### 1. Single Sample Processing (Basic)
+### 1. Simple scenario
 
 **Use Case**: Standard processing with one FASTQ pair per sample.
 
@@ -61,23 +63,18 @@ Sample_C,/path/to/Sample_C_R1.fastq.gz,/path/to/Sample_C_R2.fastq.gz,10M1S+T 10M
 
 **Pipeline Parameters:**
 
-```bash
-nextflow run main.nf \
-  --input input.csv \
-  --outdir results/
-```
+No additional tuning of parameters required.
 
 **Expected Output:**
 
 - One VCF file per sample: `Sample_A.vcf`, `Sample_B.vcf`, `Sample_C.vcf`
 - Independent processing of each sample
-- No cross-sample merging
 
 ---
 
-### 2. Technical Replicates (Multi-lane Merging)
+### 2. Multiple FASTQs for the same sample (same duplex sequencing library)
 
-**Use Case**: When the same biological sample was sequenced across multiple lanes or runs.
+**Use Case**: When the duplex library preparation of a given sample was sequenced across multiple lanes or runs.
 
 **Input Structure:**
 
@@ -90,115 +87,87 @@ Sample_B,/path/to/Sample_B_L1_R1.fastq.gz,/path/to/Sample_B_L1_R2.fastq.gz,10M1S
 Sample_B,/path/to/Sample_B_L2_R1.fastq.gz,/path/to/Sample_B_L2_R2.fastq.gz,10M1S+T 10M1S+T
 ```
 
-**Pipeline Parameters:**
-
-```bash
-nextflow run main.nf \
-  --input input.csv \
-  --outdir results/ \
-  --splitted_original_sample true
-```
-
 **Expected Output:**
 
-- Merged VCF per biological sample: `Sample_A.vcf`, `Sample_B.vcf`
-- Improved sensitivity from combined coverage
-- Lane-level BAM files merged before variant calling
-
-**Benefits:**
-
-- Increased sequencing depth per sample
-- Better variant detection sensitivity
-- Reduced false negative rates
+- A single VCF per sample: `Sample_A.vcf`, `Sample_B.vcf`
+- The files from the different lanes are combined **before** building the duplex reads.
+- Independent processing of each sample
 
 ---
 
-### 3. Biological Replicates (Multi-sample Patient Processing)
+### 3. Multiple duplex library preparations for the same sample
 
-**Use Case**: Multiple samples from the same patient/individual (e.g., different tissues, timepoints).
+**Use Case**: When two independent duplex library preparations were done starting from a pool of DNA of the same sample. (e.g., 2x 500 ng library preps to increase duplex coverage).
 
 **Input Structure:**
 
 ```csv
 sample,fastq_1,fastq_2,read_structure,parent_dna
-Sample_A_P1,/path/to/Sample_A_P1_R1.fastq.gz,/path/to/Sample_A_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
-Sample_B_P1,/path/to/Sample_B_P1_R1.fastq.gz,/path/to/Sample_B_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
-Sample_C_P1,/path/to/Sample_C_P1_R1.fastq.gz,/path/to/Sample_C_P1_R2.fastq.gz,10M1S+T 10M1S+T,Patient_001
-Sample_A_P2,/path/to/Sample_A_P2_R1.fastq.gz,/path/to/Sample_A_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
-Sample_B_P2,/path/to/Sample_B_P2_R1.fastq.gz,/path/to/Sample_B_P2_R2.fastq.gz,10M1S+T 10M1S+T,Patient_002
+Sample_A_DNA1_P1,/path/to/Sample_A_DNA1_P1_R1.fastq.gz,/path/to/Sample_A_DNA1_P1_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_A_DNA2_P1,/path/to/Sample_A_DNA2_P1_R1.fastq.gz,/path/to/Sample_A_DNA2_P1_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_B_DNA1_P2,/path/to/Sample_B_DNA1_P2_R1.fastq.gz,/path/to/Sample_B_DNA1_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
+Sample_B_DNA2_P2,/path/to/Sample_B_DNA2_P2_R1.fastq.gz,/path/to/Sample_B_DNA2_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
 ```
 
 **Pipeline Parameters:**
 
-```bash
-nextflow run main.nf \
-  --input input.csv \
-  --outdir results/
-```
+If this is the case, note that there is an extra column in the input samplesheet, but apart from this extra column there is no other parameter that should be updated.
+
+No additional tuning of parameters required.
 
 **Expected Output:**
 
-- Sample-level VCFs: `Sample_A_P1.vcf`, `Sample_B_P1.vcf`, etc.
-- Patient-level merged VCFs: `Patient_001.vcf`, `Patient_002.vcf`
-- Enhanced variant calling through multi-sample evidence
+- The files from the different "samples" of the same original DNA, are analyzed independently and are also combined **after** building the duplex reads.
+- Individual sample VCFs: `Sample_A_DNA1_P1.vcf`, `Sample_B_DNA1_P2.vcf`, etc.
+- Merged sample VCFs: `Sample_A_P1.vcf`, `Sample_B_P2.vcf`
 
 **Benefits:**
 
-- Patient-level variant consolidation
-- Cross-sample variant validation
-- Comprehensive genomic profiling per patient
+- Allows the automated pooling of the sequencing reads in an accurate and robust manner.
 
 ---
 
-### 4. Combined Technical + Biological Replicates
+### 4. Combine scenarios 2 & 3: Multiple lanes, and multiple libraries
 
-**Use Case**: Complex experimental designs with both technical and biological replicates.
+**Use Case**: A sample was split across multiple lanes & there are several libraries belonging to the same sample.
 
 **Input Structure:**
 
 ```csv
 sample,fastq_1,fastq_2,parent_dna
-Sample_A_P1,/path/to/Sample_A_P1_L1_R1.fastq.gz,/path/to/Sample_A_P1_L1_R2.fastq.gz,Patient_001
-Sample_A_P1,/path/to/Sample_A_P1_L2_R1.fastq.gz,/path/to/Sample_A_P1_L2_R2.fastq.gz,Patient_001
-Sample_B_P1,/path/to/Sample_B_P1_L1_R1.fastq.gz,/path/to/Sample_B_P1_L1_R2.fastq.gz,Patient_001
-Sample_B_P1,/path/to/Sample_B_P1_L2_R1.fastq.gz,/path/to/Sample_B_P1_L2_R2.fastq.gz,Patient_001
-Sample_A_P2,/path/to/Sample_A_P2_L1_R1.fastq.gz,/path/to/Sample_A_P2_L1_R2.fastq.gz,Patient_002
-Sample_A_P2,/path/to/Sample_A_P2_L2_R1.fastq.gz,/path/to/Sample_A_P2_L2_R2.fastq.gz,Patient_002
+Sample_A_DNA1_P1,/path/to/Sample_A_DNA1_P1_L1_R1.fastq.gz,/path/to/Sample_A_DNA1_P1_L1_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_A_DNA1_P1,/path/to/Sample_A_DNA1_P1_L2_R1.fastq.gz,/path/to/Sample_A_DNA1_P1_L2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_A_DNA2_P1,/path/to/Sample_A_DNA2_P1_L3_R1.fastq.gz,/path/to/Sample_A_DNA2_P1_L3_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_A_DNA2_P1,/path/to/Sample_A_DNA2_P1_L4_R1.fastq.gz,/path/to/Sample_A_DNA2_P1_L4_R2.fastq.gz,8M1S+T 8M1S+T,Sample_A_P1
+Sample_B_DNA1_P2,/path/to/Sample_B_DNA1_P2_R1.fastq.gz,/path/to/Sample_B_DNA1_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
+Sample_B_DNA2_P2,/path/to/Sample_B_DNA2_P2_R1.fastq.gz,/path/to/Sample_B_DNA2_P2_R2.fastq.gz,8M1S+T 8M1S+T,Sample_B_P2
 ```
 
-**Pipeline Parameters:**
+**Benefits:**
 
-```bash
-nextflow run main.nf \
-  --input input.csv \
-  --outdir results/ \
-  --splitted_original_sample true
-```
-
-**Expected Output:**
-
-- Merged sample-level VCFs: `Sample_A_P1.vcf`, `Sample_B_P1.vcf`, etc.
-- Patient-level consolidated VCFs: `Patient_001.vcf`, `Patient_002.vcf`
-- Maximum sensitivity from both technical and biological aggregation
+- Allows the automated pooling of the sequencing reads in an accurate and robust manner.
+- Adapts to diverse input scenarios.
 
 **Processing Flow:**
 
-1. **Lane Merging**: Technical replicates merged per sample
-2. **Sample Processing**: Individual variant calling per merged sample
-3. **Patient Consolidation**: Biological samples merged per patient
+1. **Splitted sequencing lane merging**: before building duplex consensus.
+2. **Sample merging**: When appropriate, merge the duplex reads of the multiple libraries of the same original sample.
 
----
+## Optimization opportunity
 
-### 5. Performance Optimization (Chromosome Splitting)
+Duplex data is known to require to computationally heavy processing.
+
+In certain scenarios, where the targeted panel is very big (i.e. exome) and/or the desired sequencing depth is also very big, the execution of deepUMIcaller might be slow or even get stuck failing to reach the last steps.
+
+Here we list two possibilities for speeding up the processing of the duplex reads that should be used in case of time or memory related issues.
+
+### Chromosome Splitting
 
 **Use Case**: Large datasets requiring computational efficiency.
 
 **Any Input Structure** + Performance Parameter:
 
 ```bash
-nextflow run main.nf \
-  --input input.csv \
-  --outdir results/ \
   --split_by_chrom true
 ```
 
@@ -212,6 +181,12 @@ nextflow run main.nf \
 **Compatible with all input scenarios above.**
 
 ---
+
+### Split input FASTQs
+
+If the input FASTQs are very big, this will result in long execution times of the first read preprocessing steps. Having the input split across multiple FASTQ files for the same sample will speed up the execution of this steps, or help solve resource-related issues.
+
+We are working to allow the user split the FASTQs within deepUMIcaller, but as of now this is not an option.
 
 ## Intermediate Step Entry Points
 
@@ -446,23 +421,21 @@ nextflow run main.nf \
 | Parameter | Default | Effect |
 |-----------|---------|--------|
 | `step` | `"mapping"` | Pipeline entry point (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile) |
-| `splitted_original_sample` | `false` | Enables technical replicate merging |
 | `split_by_chrom` | `false` | Enables chromosome-based parallelization |
 | `parent_dna` column | - | Enables biological replicate grouping |
 
 ### Parameter Combinations
 
-| Step | Technical Replicates | Biological Replicates | Chromosome Splitting | Use Case |
-|------|---------------------|---------------------|---------------------|----------|
+| Step | FASTQs splitted at origin | Multiple libraries per sample | Chromosome Splitting | Use Case |
+|------|---------------------------|-------------------------------|----------------------|----------|
 | mapping | ❌ | ❌ | ❌ | Basic single-sample processing |
-| mapping | ❌ | ❌ | ✅ | Basic + performance optimization |
-| mapping | ✅ | ❌ | ❌ | Technical replicate merging |
-| mapping | ❌ | ✅ | ❌ | Biological replicate grouping |
-| mapping | ✅ | ✅ | ❌ | Multi-level processing |
-| mapping | ✅ | ✅ | ✅ | Comprehensive + optimized |
+| mapping | ✅ | ❌ | ❌ | 2 |
+| mapping | ❌ | ✅ | ❌ | 3 |
+| mapping | ✅ | ✅ | ❌ | 4 |
+| mapping | ✅/❌ | ✅/❌ | ✅ | Parallelized processing of information per chromosome |
 | groupreadsbyumi | ❌ | ❌ | ❌ | UMI grouping restart |
 | unmapped_consensus | ❌ | ❌ | ❌ | Unmapped consensus processing |
-| filterconsensus | ❌ | ❌ | ✅ | Consensus filtering restart |
+| filterconsensus | ❌ | ❌ | ❌ | Consensus filtering restart |
 | calling | ❌ | ❌ | ❌ | Variant calling only |
 | allmoleculesfile | ❌ | ❌ | ❌ | All-molecules analysis |
 
@@ -477,7 +450,7 @@ nextflow run main.nf \
 ### 2. Sample Naming
 
 - Use **consistent naming conventions**
-- Avoid special characters (spaces, brackets, etc.)
+- Avoid special characters (dots, spaces, brackets, etc.)
 - Keep names descriptive but concise
 
 ### 3. Parent DNA Identifiers
@@ -488,7 +461,7 @@ nextflow run main.nf \
 
 ### 4. Performance Considerations
 
-- Enable `split_by_chrom` for large datasets (>50 samples)
+- Enable `split_by_chrom` for heavy samples (>100 GBs of raw reads )
 - Use technical replicate merging when appropriate
 - Monitor resource usage and adjust accordingly
 
@@ -511,26 +484,11 @@ The pipeline automatically validates:
 
 ## Troubleshooting
 
-### Common Issues:
+### Common Issues
 
 1. **Duplicate sample names**: Ensure unique sample identifiers
-2. **Missing parent_dna**: Required for biological replicate merging
-3. **File path errors**: Verify FASTQ/BAM file accessibility
-4. **Memory issues**: Consider chromosome splitting for large datasets
-5. **Invalid step parameter**: Use valid step names (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile)
-6. **Incompatible input format**: Check column requirements for each step
-7. **Missing BAM indices**: Calling step requires both BAM and CSI files
-8. **Incorrect file format**: Ensure BAM files match the expected processing stage
-
-### Error Messages:
-
-- `VALIDATION ERROR: No VCF files generated` → Check input file paths and format
-- `REFERENCE ERROR: Expected reference file missing` → Verify test data completeness
-- `PRECISION FAILURE: VCF precision below threshold` → Check algorithm parameters
-- `SAMPLESHEET ERROR: Invalid step choice` → Use valid step parameter values
-- `INPUT ERROR: Missing required columns` → Check CSV header matches step requirements
-- `FILE ERROR: BAM index not found` → Ensure CSI files exist for calling step
-
----
+2. **Memory issues**: Consider chromosome splitting for large datasets
+3. **Invalid step parameter**: Use valid step names (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile)
+4. **Incorrect file format**: Ensure BAM files match the expected processing stage
 
 For additional support or questions about input configurations, consult the main deepUMIcaller documentation or contact the development team.

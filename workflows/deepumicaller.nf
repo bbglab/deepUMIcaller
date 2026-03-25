@@ -7,6 +7,7 @@
 
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { process_bams              } from '../modules/local/utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +113,6 @@ include { POSTPROCESS_MUTATIONS             as POSTPROCESSMUTATIONS         } fr
 
 // Annotation
 include { VCF_ANNOTATE_ALL                  as VCFANNOTATE                  } from '../subworkflows/local/vcf_annotate_all/main'
-include { process_bams                                                      } from '../modules/local/utils'
 
 // Versions and reports
 include { MULTIQC                                                           } from '../modules/nf-core/multiqc/main'
@@ -158,7 +158,6 @@ workflow DEEPUMICALLER {
         file(params.input), 
         params.step
     )
-    
 
     if (params.step == 'mapping') {
 
@@ -185,23 +184,24 @@ workflow DEEPUMICALLER {
         
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
-        // Optional: Include fastqs split
-        if (params.run_splitfastq) {
-            SPLITFASTQ ( reads_to_qc )
-            SPLITFASTQ.out.split_fastqs
-            .transpose()
-            .map { meta, fastqs -> 
-                def new_meta = meta.clone()
-                // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
-                def match = fastqs[0].name =~ /^([^. _-]+)/
-                def part_id = match ? match[0][1] : "unknown"
-                new_meta.id = "${meta.id}_${part_id}"
-                [new_meta, fastqs]
-            }
-            .set { split_fastqs_ch }
-        } else {
-            split_fastqs_ch = reads_to_qc
-        }
+        // // Optional: Include fastqs split
+        // if (params.run_splitfastq) {
+        //     SPLITFASTQ ( reads_to_qc )
+        //     SPLITFASTQ.out.split_fastqs
+        //     .transpose()
+        //     .map { meta, fastqs -> 
+        //         def new_meta = meta.clone()
+        //         // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
+        //         def match = fastqs[0].name =~ /^([^. _-]+)/
+        //         def part_id = match ? match[0][1] : "unknown"
+        //         new_meta.id = "${meta.id}_${part_id}"
+        //         [new_meta, fastqs]
+        //     }
+        //     .set { split_fastqs_ch }
+        // } else {
+        //     split_fastqs_ch = reads_to_qc
+        // }
+        split_fastqs_ch = reads_to_qc
 
         FASTQTOBAM(split_fastqs_ch)
 
@@ -224,16 +224,28 @@ workflow DEEPUMICALLER {
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
 
         SORTBAMRAW(ALIGNRAWBAM.out.bam)
-        aligned_raw_bam = SORTBAMRAW.out.bam.join(SORTBAMRAW.out.csi)
-
         if (params.perform_qcs) {
             QUALIMAPQCRAW(SORTBAMRAW.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
-        if (params.splitted_original_sample){
-            // Group BAMs by original sample name
-            SORTBAMRAW.out.bam
+        // Combine sorted BAMs with the flag and branch
+        SORTBAMRAW.out.bam
+            .combine(INPUT_CHECK.out.splitted_input)
+            .branch { meta, bam, flag ->
+                split: flag == true
+                    return tuple(meta, bam)
+                normal: flag == false
+                    return tuple(meta, bam)
+            }
+            .set { branched_bams }
+
+        // Handle normal mode (no splitting)
+        aligned_raw_bam_normal = branched_bams.normal
+            .join(SORTBAMRAW.out.csi)
+
+        // Handle split mode (with merging)
+        branched_bams.split
             .map { meta, bam -> 
                 def sample = meta.sample
                 tuple(sample, meta, bam)
@@ -249,10 +261,11 @@ workflow DEEPUMICALLER {
             }
             .set { grouped_bams }
 
-            // Merge BAMs for each sample
-            MERGEBAM(grouped_bams)
-            aligned_raw_bam = MERGEBAM.out.bam_bai
-        }
+        MERGEBAM(grouped_bams)
+        aligned_raw_bam_split = MERGEBAM.out.bam_bai
+
+        // Combine both paths into a single channel
+        aligned_raw_bam = aligned_raw_bam_normal.mix(aligned_raw_bam_split)
 
         if (params.split_by_chrom) {
             // Split merged BAMs by chromosome
@@ -323,8 +336,8 @@ workflow DEEPUMICALLER {
         // Plot the family size metrics
         FAMILYMETRICS(family_sizes_metrics)
 
-        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
-        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
+        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
@@ -352,8 +365,8 @@ workflow DEEPUMICALLER {
         // Plot the family size metrics
         FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
 
-        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
-        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
+        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
 
 
         // MODULE: Run fgbio CallDuplexConsensusReads
@@ -414,6 +427,11 @@ workflow DEEPUMICALLER {
         SORTBAMAMFILTERED(SAMTOOLSFILTERALLMOLECULES.out.bam)
 
         duplex_filtered_init_bam = SORTBAMAMFILTERED.out.bam
+        
+        // store csv with all AM BAMs
+        duplex_filtered_init_bam
+            .map { meta, bam -> "sample,bam,parent_dna\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name},${meta.parent_dna}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
         ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
@@ -454,8 +472,8 @@ workflow DEEPUMICALLER {
 
         // store csv with all AM BAMs
         duplex_filtered_bam
-            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/sortbamamfiltered/${bam.name}\n" }
-            .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/sortbamamfiltered", skip: 1, keepHeader: true)
+            .map { meta, bam -> "sample,bam\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name}\n" }
+            .collectFile(name: 'samplesheet_bam_filtered_inputs.with_merged.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
 
         FILTERCONSENSUSREADSAM(duplex_filtered_bam, ch_ref_fasta)
@@ -568,7 +586,7 @@ workflow DEEPUMICALLER {
         // Generate deepCSA input example
         POSTPROCESSMUTATIONS.out.filtered_vcf
         .join(cons_duplex_bam_only)
-        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/sortbamduplexcons/${bam.name}\n" }
+        .map { meta, vcf, bam -> "sample,vcf,bam\n${meta.id},${params.outdir}/mutations_vcf/${vcf.name},${params.outdir}/duplex_reads_bam/${bam.name}\n" }
         .collectFile(name: 'deepCSA_input_template.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
     }

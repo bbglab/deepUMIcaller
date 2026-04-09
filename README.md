@@ -63,6 +63,8 @@ Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pi
 
 For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
 
+For instructions on how to obtain the test data required to run the test suite, see the [test data setup documentation](docs/test_data.md).
+
 Find a detailed explanation of the deepUMIcaller pipeline and its use within the DeepClone protocol for the analysis of duplex sequencing data here:
 
 > **DeepClone, an end-to-end protocol to study somatic mutagenesis and selection at high resolution.**

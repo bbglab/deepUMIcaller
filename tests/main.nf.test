@@ -25,6 +25,8 @@
        - GroupReadsByUmi: Pipeline entry from UMI grouping step
        - FilterConsensus: Pipeline entry from consensus filtering step  
        - Calling: Pipeline entry from variant calling step
+       - UnmappedConsensus: Pipeline entry from unmapped consensus alignment step
+       - AllMoleculesFile: Pipeline entry from molecule-level metrics step
     
     Expected Outcomes: All tests should achieve ≥99% VCF precision when compared
     to validated reference outputs.
@@ -68,7 +70,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test.csv"
                 
                 // Output: Results stored in dedicated directory
-                outdir = "${projectDir}/tests_results_default"
+                outdir = "$outputDir"
                 
                 // Default parameters (split_by_chrom=false)
                 // No explicit parameter overrides = standard processing mode
@@ -79,7 +81,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing
-            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
+            def currentDir = file("${outputDir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -136,7 +138,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_new1.csv"
                 
                 // Output: Dedicated directory for chromosome splitting results
-                outdir = "${projectDir}/tests_results_splitChrom/"
+                outdir = "${outputDir}/tests_results_splitChrom/"
                 
                 // Enable chromosome-based parallelization for performance optimization
                 split_by_chrom = true
@@ -207,7 +209,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multi-file.csv"
                 
                 // Output: Results for merged technical replicates
-                outdir = "${projectDir}/tests_results_multi-file/"
+                outdir = "${outputDir}/tests_results_multi-file/"
                 
             }
         }
@@ -276,7 +278,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multi-sample.csv"
                 
                 // Output: Results for both sample-level and patient-level analysis
-                outdir = "${projectDir}/tests_results_multi-sample"
+                outdir = "${outputDir}/tests_results_multi-sample"
                 
                 // Default parameters - parent_dna grouping handled by input CSV
             }
@@ -353,7 +355,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multiAll.csv"
                 
                 // Output: Results for comprehensive multi-level processing
-                outdir = "${projectDir}/tests_results_multiAll/"
+                outdir = "${outputDir}/tests_results_multiAll/"
                 
                 // Enable all optimization and merging features
                 split_by_chrom = true              // Chromosome-based parallelization
@@ -430,7 +432,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_groupreadsbyumi.csv"
                 
                 // Output: Results starting from groupreadsbyumi step
-                outdir = "${projectDir}/tests_results_groupreadsbyumi"
+                outdir = "${outputDir}/tests_results_groupreadsbyumi"
                 
                 // Pipeline entry point: skip mapping, start from UMI grouping
                 step = "groupreadsbyumi"
@@ -510,7 +512,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_filterconsensus.csv"
                 
                 // Output: Results starting from filterconsensus step
-                outdir = "${projectDir}/tests_results_filterconsensus"
+                outdir = "${outputDir}/tests_results_filterconsensus"
                 
                 // Pipeline entry point: skip mapping and grouping, start from consensus filtering
                 step = "filterconsensus"
@@ -592,7 +594,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_calling.csv"
                 
                 // Output: Results starting from variant calling step only
-                outdir = "${projectDir}/tests_results_calling"
+                outdir = "${outputDir}/tests_results_calling"
                 
                 // Pipeline entry point: skip all preprocessing, start from variant calling
                 step = "calling"
@@ -673,7 +675,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_unmapped_consensus.csv"
                 
                 // Output: Results starting from unmapped consensus alignment
-                outdir = "${projectDir}/tests_results_unmapped_consensus"
+                outdir = "${outputDir}/tests_results_unmapped_consensus"
                 
                 // Pipeline entry point: skip grouping, start from consensus alignment
                 step = "unmapped_consensus"
@@ -756,7 +758,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_allmoleculesfile.csv"
                 
                 // Output: Results with all molecules file metrics and variant calls
-                outdir = "${projectDir}/tests_results_allmoleculesfile"
+                outdir = "${outputDir}/tests_results_allmoleculesfile"
                 
                 // Pipeline entry point: generate molecule-level metrics and call variants
                 step = "allmoleculesfile"

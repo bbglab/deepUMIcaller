@@ -10,6 +10,8 @@ The bbglab/deepUMIcaller documentation is split into the following pages:
   - An overview of the different results produced by the pipeline and how to interpret them.
 - [Tools](tools.md)
   - Specific details and comments on tools used in the pipeline or decisions made along the process.
+- [Test Data](test_data.md)
+  - Instructions on how to download and prepare the test data.
 
 ## Additional documentation
 

@@ -21,7 +21,9 @@ tests/
 ### Prerequisites
 - Nextflow installed with nf-test plugin
 - deepUMIcaller dependencies available
-- Test data properly configured
+- Test data properly configured.
+- Python must be available as some test assertions call a python script to compare
+obtained and expected outputs.
 
 ### Commands
 
@@ -141,6 +143,8 @@ nf-test test --update-snapshot
 4. Detailed error reporting with specific failure reasons
 
 ## Test Data
+
+For instructions on how to download and prepare the test data, see [docs/test_data.md](../docs/test_data.md).
 
 ### Input Files Location: `tests/test_data/input/`
 

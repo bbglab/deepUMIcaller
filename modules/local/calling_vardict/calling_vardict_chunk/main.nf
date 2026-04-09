@@ -63,12 +63,23 @@ process CALLING_VARDICT_CHUNK {
             -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 \
             > ${chunk_name}.genome.vcf
     fi
-
     echo "Done processing chunk ${chunk_name}."
+
+    # Count non-header lines (lines not starting with #)
+    data_lines=\$(grep -v '^#' ${chunk_name}.genome.vcf | wc -l)
+
+    if [ "\$data_lines" -eq 0 ]; then
+        echo "ERROR: Output file ${chunk_name}.genome.vcf contains no data lines (only headers)" >&2
+        echo "Total lines: \$(wc -l < ${chunk_name}.genome.vcf)" >&2
+        echo "Header lines: \$(grep -c '^#' ${chunk_name}.genome.vcf || echo 0)" >&2
+        exit 1
+    fi
+
+    echo "Successfully created ${chunk_name}.genome.vcf with \$data_lines data lines"
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        vardict-java: \$(vardict-java -h 2>&1 | grep -oP 'VarDict version \\K[0-9.]+' || echo "1.8.3")
+        vardict-java: 1.8.3
     END_VERSIONS
     """
 }

@@ -21,7 +21,9 @@ tests/
 ### Prerequisites
 - Nextflow installed with nf-test plugin
 - deepUMIcaller dependencies available
-- Test data properly configured
+- Test data properly configured.
+- Python must be available as some test assertions call a python script to compare
+obtained and expected outputs.
 
 ### Commands
 
@@ -33,9 +35,13 @@ nf-test test
 nf-test test --tag "normal"
 nf-test test --tag "multi-file"
 nf-test test --tag "split_by_chrom"
+nf-test test --tag "multi-sample"
+nf-test test --tag "multiAll"
 nf-test test --tag "groupreadsbyumi"
 nf-test test --tag "filterconsensus"
 nf-test test --tag "calling"
+nf-test test --tag "unmapped_consensus"
+nf-test test --tag "allmoleculesfile"
 
 # Run with verbose output
 nf-test test --verbose
@@ -66,7 +72,6 @@ nf-test test --update-snapshot
 - **Tag**: `multi-file`
 - **Purpose**: Validates merging of technical replicates (sequencing lanes)
 - **Input**: Multiple FASTQ pairs from the same biological sample
-- **Parameters**: `splitted_original_sample = true`
 - **Expected**: Merged results at sample level, improved sensitivity
 
 #### Test 4: Biological Replicates - Multi-sample Patient Processing
@@ -79,7 +84,7 @@ nf-test test --update-snapshot
 - **Tag**: `multiAll`
 - **Purpose**: Most complex scenario combining all processing modes
 - **Input**: Technical + biological replicates with chromosome splitting
-- **Parameters**: `splitted_original_sample = true`, `split_by_chrom = true`
+- **Parameters**: `split_by_chrom = true`
 - **Expected**: Multi-level processing with maximum computational efficiency
 
 ### 3. Intermediate Step Testing
@@ -108,6 +113,22 @@ nf-test test --update-snapshot
 - **Parameters**: `step = "calling"`
 - **Expected**: Final high-confidence variant calls, testing only the calling module
 
+#### Test 9: Intermediate Step - Unmapped Consensus Entry Point
+
+- **Tag**: `unmapped_consensus`
+- **Purpose**: Validates pipeline functionality starting from the unmapped consensus step
+- **Input**: Unmapped consensus BAM files ready for alignment (consensus reads not yet aligned)
+- **Parameters**: `step = "unmapped_consensus"`, `left_clip = 0`
+- **Expected**: High-quality VCF output from re-aligned consensus reads
+
+#### Test 10: Intermediate Step - All Molecules File Entry Point
+
+- **Tag**: `allmoleculesfile`
+- **Purpose**: Validates pipeline functionality for generating all molecules file metrics
+- **Input**: Final duplex BAM files with CSI index ready for molecule-level analysis
+- **Parameters**: `step = "allmoleculesfile"`, `left_clip = 0`
+- **Expected**: Molecule-level metrics and high-quality VCF output from duplex consensus BAMs
+
 ## Validation Criteria
 
 ### Success Metrics
@@ -123,15 +144,20 @@ nf-test test --update-snapshot
 
 ## Test Data
 
+For instructions on how to download and prepare the test data, see [docs/test_data.md](../docs/test_data.md).
+
 ### Input Files Location: `tests/test_data/input/`
 
 - `input_test.csv` - Basic single-sample input
+- `input_test_new1.csv` - Alternative single-sample input (used by Test 2)
 - `input_test_multi-file.csv` - Multi-lane technical replicates
 - `input_test_multi-sample.csv` - Multi-sample patient data
 - `input_test_multiAll.csv` - Complex combined scenario
 - `input_groupreadsbyumi.csv` - BAM files for UMI grouping step entry
 - `input_filterconsensus.csv` - BAM files for consensus filtering step entry
 - `input_calling.csv` - BAM files for variant calling step entry
+- `input_unmapped_consensus.csv` - Unmapped consensus BAM files for alignment step entry
+- `input_allmoleculesfile.csv` - Duplex BAM files with CSI index for molecule-level analysis
 
 ### Reference Files Location: `tests/test_data/expected_output/`
 Contains validated VCF outputs for precision comparison.
@@ -148,6 +174,8 @@ Contains validated VCF outputs for precision comparison.
 | 6    | false (default)         | false (default)| default    | groupreadsbyumi | UMI grouping entry point |
 | 7    | false (default)         | false (default)| default    | filterconsensus | Consensus filtering entry |
 | 8    | false (default)         | false (default)| default    | calling | Variant calling entry |
+| 9    | false (default)         | false (default)| default    | unmapped_consensus | Unmapped consensus alignment entry |
+| 10   | false (default)         | false (default)| default    | allmoleculesfile | Molecule-level metrics entry |
 
 ## Adding New Tests
 

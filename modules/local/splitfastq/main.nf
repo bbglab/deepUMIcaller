@@ -18,7 +18,6 @@ process SPLITFASTQ {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     def read1 = fastqs[0]
     def read2 = fastqs[1]  // assume second read exists
 

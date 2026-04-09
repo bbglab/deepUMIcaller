@@ -18,7 +18,6 @@
        - MultiAll: Combined multi-file + multi-sample + chromosome splitting
     
     3. PARAMETER COMBINATIONS
-       - splitted_original_sample: Controls sample-level merging
        - split_by_chrom: Controls chromosome-based processing
        - parent_dna: Controls patient-level aggregation
     
@@ -26,6 +25,8 @@
        - GroupReadsByUmi: Pipeline entry from UMI grouping step
        - FilterConsensus: Pipeline entry from consensus filtering step  
        - Calling: Pipeline entry from variant calling step
+       - UnmappedConsensus: Pipeline entry from unmapped consensus alignment step
+       - AllMoleculesFile: Pipeline entry from molecule-level metrics step
     
     Expected Outcomes: All tests should achieve ≥99% VCF precision when compared
     to validated reference outputs.
@@ -49,7 +50,7 @@ nextflow_pipeline {
     
     Input: Single FASTQ pair per sample
     Parameters: 
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -69,9 +70,9 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test.csv"
                 
                 // Output: Results stored in dedicated directory
-                outdir = "${projectDir}/tests_results_default"
+                outdir = "$outputDir"
                 
-                // Default parameters (splitted_original_sample=false, split_by_chrom=false)
+                // Default parameters (split_by_chrom=false)
                 // No explicit parameter overrides = standard processing mode
             }
         }
@@ -80,7 +81,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${outputDir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -116,7 +117,6 @@ nextflow_pipeline {
     Input: Same single FASTQ pair as Test 1
     Parameters: 
         - split_by_chrom = true (enables chromosome-based splitting)
-        - splitted_original_sample = false (default)
     
     Expected Behavior:
         - Splits processing by chromosome for parallelization
@@ -138,7 +138,7 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_new1.csv"
                 
                 // Output: Dedicated directory for chromosome splitting results
-                outdir = "${projectDir}/tests_results_splitChrom/"
+                outdir = "${outputDir}/tests_results_splitChrom/"
                 
                 // Enable chromosome-based parallelization for performance optimization
                 split_by_chrom = true
@@ -149,7 +149,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation and precision testing  
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -187,7 +187,6 @@ nextflow_pipeline {
            - Different sequencing lanes/runs
     
     Parameters: 
-        - splitted_original_sample = true (enables lane merging)
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -210,10 +209,8 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multi-file.csv"
                 
                 // Output: Results for merged technical replicates
-                outdir = "${projectDir}/tests_results_multi-file/"
+                outdir = "${outputDir}/tests_results_multi-file/"
                 
-                // Enable sample-level merging for technical replicates
-                splitted_original_sample = true
             }
         }
         then {
@@ -221,7 +218,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting merged sample-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -259,7 +256,6 @@ nextflow_pipeline {
            - Each sample processed independently first
     
     Parameters: 
-        - splitted_original_sample = false (default - no sample merging)
         - parent_dna column specified in input (enables patient-level merging)
     
     Expected Behavior:
@@ -282,10 +278,9 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multi-sample.csv"
                 
                 // Output: Results for both sample-level and patient-level analysis
-                outdir = "${projectDir}/tests_results_multi-sample"
+                outdir = "${outputDir}/tests_results_multi-sample"
                 
                 // Default parameters - parent_dna grouping handled by input CSV
-                // splitted_original_sample = false (samples processed individually first)
             }
         }
         then {
@@ -293,7 +288,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting both sample-level and patient-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -333,7 +328,6 @@ nextflow_pipeline {
            - Chromosome-based parallelization
     
     Parameters: 
-        - splitted_original_sample = true (merge technical replicates)
         - split_by_chrom = true (chromosome parallelization)
         - parent_dna specified (patient-level grouping)
     
@@ -361,11 +355,10 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_test_multiAll.csv"
                 
                 // Output: Results for comprehensive multi-level processing
-                outdir = "${projectDir}/tests_results_multiAll/"
+                outdir = "${outputDir}/tests_results_multiAll/"
                 
                 // Enable all optimization and merging features
                 split_by_chrom = true              // Chromosome-based parallelization
-                splitted_original_sample = true    // Technical replicate merging
                 // parent_dna grouping enabled via input CSV
             }
         }
@@ -374,7 +367,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting optimized multi-level results
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -413,7 +406,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "groupreadsbyumi" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -439,13 +432,13 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_groupreadsbyumi.csv"
                 
                 // Output: Results starting from groupreadsbyumi step
-                outdir = "${projectDir}/tests_results_groupreadsbyumi"
+                outdir = "${outputDir}/tests_results_groupreadsbyumi"
                 
                 // Pipeline entry point: skip mapping, start from UMI grouping
                 step = "groupreadsbyumi"
+                left_clip = 0
                 
                 // Default parameters for intermediate step validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -454,7 +447,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from groupreadsbyumi onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -493,7 +486,6 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "filterconsensus" (pipeline entry point)
-        - splitted_original_sample = false (default)
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -520,13 +512,13 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_filterconsensus.csv"
                 
                 // Output: Results starting from filterconsensus step
-                outdir = "${projectDir}/tests_results_filterconsensus"
+                outdir = "${outputDir}/tests_results_filterconsensus"
                 
                 // Pipeline entry point: skip mapping and grouping, start from consensus filtering
                 step = "filterconsensus"
+                left_clip = 0
                 
                 // Default parameters for consensus filtering validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -535,7 +527,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from filterconsensus onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -574,7 +566,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "calling" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -602,13 +594,12 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_calling.csv"
                 
                 // Output: Results starting from variant calling step only
-                outdir = "${projectDir}/tests_results_calling"
+                outdir = "${outputDir}/tests_results_calling"
                 
                 // Pipeline entry point: skip all preprocessing, start from variant calling
                 step = "calling"
                 
                 // Default parameters for variant calling validation
-                // splitted_original_sample = false (default)
                 // split_by_chrom = false (default)
             }
         }
@@ -617,7 +608,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from variant calling only
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -657,7 +648,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "unmapped_consensus" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -684,13 +675,14 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_unmapped_consensus.csv"
                 
                 // Output: Results starting from unmapped consensus alignment
-                outdir = "${projectDir}/tests_results_unmapped_consensus"
+                outdir = "${outputDir}/tests_results_unmapped_consensus"
                 
                 // Pipeline entry point: skip grouping, start from consensus alignment
                 step = "unmapped_consensus"
+                left_clip = 0
                 
                 // Default parameters for unmapped consensus validation
-                // splitted_original_sample = false (default)
+                
                 // split_by_chrom = false (default)
             }
         }
@@ -699,7 +691,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from unmapped consensus onward
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"
@@ -739,7 +731,7 @@ nextflow_pipeline {
     
     Parameters: 
         - step = "allmoleculesfile" (pipeline entry point)
-        - splitted_original_sample = false (default)
+        
         - split_by_chrom = false (default)
     
     Expected Behavior:
@@ -766,13 +758,14 @@ nextflow_pipeline {
                 input = "${projectDir}/tests/test_data/input/input_allmoleculesfile.csv"
                 
                 // Output: Results with all molecules file metrics and variant calls
-                outdir = "${projectDir}/tests_results_allmoleculesfile"
+                outdir = "${outputDir}/tests_results_allmoleculesfile"
                 
                 // Pipeline entry point: generate molecule-level metrics and call variants
                 step = "allmoleculesfile"
+                left_clip = 0
                 
                 // Default parameters for all molecules file validation
-                // splitted_original_sample = false (default)
+                
                 // split_by_chrom = false (default)
             }
         }
@@ -781,7 +774,7 @@ nextflow_pipeline {
             assert workflow.success : "Pipeline should complete without errors"
 
             // VCF output validation - expecting results from variant calling
-            def currentDir = file("${params.outdir}/callingvardictduplex")
+            def currentDir = file("${params.outdir}/processing_files/callingvardictduplex")
             def expectedDir = file("tests/test_data/expected_output")
             def currentVcfs = currentDir.listFiles().findAll { it.name.endsWith('.vcf') }
             assert currentVcfs.size() > 0 : "VALIDATION ERROR: No VCF files generated in output directory: ${currentDir}"

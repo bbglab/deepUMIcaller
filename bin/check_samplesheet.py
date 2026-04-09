@@ -130,6 +130,7 @@ class RowChecker:
         FASTQ file combination exists.
 
         """
+        splitted_sample = False
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
         # Count how many times each sample name appears in the input (e.g., for multi-lane samples)
         counts = Counter(row[self._sample_col] for row in self.modified)
@@ -142,12 +143,15 @@ class RowChecker:
             # This ensures that each part (lane/file) from the same sample gets a distinct id,
             # which is important for downstream grouping and processing.
             if counts[sample] > 1:
+                splitted_sample = True
                 row['id'] = f"{sample}_LPART{seen[sample]}"
                 logger.warning("Multiple parts detected for sample '%s'. Assigning unique IDs to each of them.", sample)
 
             else:
                 # If the sample is unique, use the sample name as the id.
                 row['id'] = sample
+        
+        return splitted_sample
 
 
 def read_head(handle, num_lines=10):
@@ -242,7 +246,7 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
             except AssertionError as error:
                 logger.critical(f"{str(error)} On line {i + 2}.")
                 sys.exit(1)
-        checker.validate_unique_samples()
+        splitted_input = checker.validate_unique_samples()
     # Remove 'original_sample' from the output header
     header = list(reader.fieldnames) + ['id']
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
@@ -251,6 +255,15 @@ def check_samplesheet(file_in, file_out, step = "mapping"):
         writer.writeheader()
         for row in checker.modified:
             writer.writerow(row)
+
+    if splitted_input:
+        logger.info("The input samplesheet contains samples with multiple FASTQ files (e.g., multi-lane samples). ")
+        with open("splitted", "w") as splitted_handle:
+            splitted_handle.write("true")
+    else:
+        logger.info("The input samplesheet does not contain any sample with multiple FASTQ files (e.g., multi-lane samples). ")
+        with open("splitted", "w") as splitted_handle:
+            splitted_handle.write("false")
 
 
 def parse_args(argv=None):
@@ -296,7 +309,8 @@ def main(argv=None):
         logger.error(f"The given input file {args.file_in} was not found!")
         sys.exit(2)
     args.file_out.parent.mkdir(parents=True, exist_ok=True)
-    check_samplesheet(args.file_in, args.file_out, args.step)
+    splitted_input = check_samplesheet(args.file_in, args.file_out, args.step)
+    
 
 
 if __name__ == "__main__":

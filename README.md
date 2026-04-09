@@ -61,6 +61,10 @@ Starting from the [nf-core/fastquorum](https://github.com/nf-core/fastquorum) pi
 
 ## Documentation
 
+For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
+
+For instructions on how to obtain the test data required to run the test suite, see the [test data setup documentation](docs/test_data.md).
+
 Find a detailed explanation of the deepUMIcaller pipeline and its use within the DeepClone protocol for the analysis of duplex sequencing data here:
 
 > **DeepClone, an end-to-end protocol to study somatic mutagenesis and selection at high resolution.**
@@ -68,8 +72,6 @@ Find a detailed explanation of the deepUMIcaller pipeline and its use within the
 > Ferriol Calvet, Morena Pinheiro-Santin, Erika Lopez-Arribillaga, Raquel Blanco Martinez-Illescas, Núria Samper, Miguel L. Grau, Ferran Muiños, Rocío Chamorro González, Maria Andrianova, Federica Brando, Stefano Pellegrini, Marta Huertas, Elisabet Figuerola-Bou, Coohleen Coombes, Brendan F. Kohrn, Jeanne Fredrickson, Rosa Ana Risques, Nuria Lopez-Bigas, Abel Gonzalez-Perez.
 >
 > protocols.io (2026) https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2
-
-For extensive documentation of the different running modes of the pipeline and more details on which are the requirements check the [usage section of the documentation](docs/usage.md).
 
 For information on the [read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet, check this link.
 
@@ -79,10 +81,25 @@ For information on the [read structures](https://github.com/fulcrumgenomics/fgbi
   <img src="docs/images/Fulcrum.svg" alt="Fulcrum Genomics" width="120">
 </a>
 
-
 <a href="http://nf-co.re">
   <img src="docs/images/nf-core-logo.png" alt="nf-core" width="120">
 </a>
+
+## Publications
+
+> **Sex and smoking bias in the selection of somatic mutations in human bladder**
+>
+> Ferriol Calvet*, Raquel Blanco Martinez-Illescas*, Ferran Muiños, Maria Tretiakova, Elena S. Latorre-Esteves, Jeanne Fredrickson, Maria Andrianova, Stefano Pellegrini, Axel Rosendahl Huber, Joan Enric Ramis-Zaldivar, Shuyi Charlotte An, Elana Thieme, Brendan F. Kohrn, Miguel L. Grau, Abel Gonzalez-Perez, Nuria Lopez-Bigas & Rosa Ana Risques
+>
+>_Nature_ (2025) doi:[10.1038/s41586-025-09521-x](https://doi.org/10.1038/s41586-025-09521-x)
+>
+> *these authors contributed equally and the order was decided randomly
+
+> **DeepClone, an end-to-end protocol to study somatic mutagenesis and selection at high resolution.**
+> 
+> Ferriol Calvet, Morena Pinheiro-Santin, Erika Lopez-Arribillaga, Raquel Blanco Martinez-Illescas, Núria Samper, Miguel L. Grau, Ferran Muiños, Rocío Chamorro González, Maria Andrianova, Federica Brando, Stefano Pellegrini, Marta Huertas, Elisabet Figuerola-Bou, Coohleen Coombes, Brendan F. Kohrn, Jeanne Fredrickson, Rosa Ana Risques, Nuria Lopez-Bigas, Abel Gonzalez-Perez.
+>
+> protocols.io (2026) https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2
 
 ## Citations
 
@@ -99,15 +116,27 @@ You can cite the `nf-core` publication as follows:
 [fgbio-best-practices-link]: https://github.com/fulcrumgenomics/fgbio/blob/main/docs/best-practice-consensus-pipeline.md
 [duplex-seq-link]: https://en.wikipedia.org/wiki/Duplex_sequencing
 
-## Downstream use via deepCSA
+## Downstream methods
 
-The output of deepUMIcaller that is generated with a targeted gene panel and with the goal of computing clonal selection metrics can be analyzed with [deepCSA](https://https://github.com/bbglab/deepCSA).
+### Clonal selection analysis via deepCSA
+
+If you are running deepUMIcaller with the goal of analyzing clonal selection in a given set of samples, then you can use [deepCSA](https://github.com/bbglab/deepCSA) as the next downstream step.
 
 The repo contains a detailed explanation of the usage and outputs that it will provide, but here we list which files from deepUMIcaller need to be used for then running deepCSA.
 
+Find a default template for running deepCSA inside the pipeline_info directory that is part of the output.
+
 ```csv
 sample,vcf,bam
-sample1,.../mutations_vcf/<sample1>.vcf,.../sortbamduplexconsmed/<sample1>.bam
-sample2,.../mutations_vcf/<sample2>.vcf,.../sortbamduplexconsmed/<sample2>.bam
-sample3,.../mutations_vcf/<sample3>.vcf,.../sortbamduplexconsmed/<sample3>.bam
+sample1,.../mutations_vcf/<sample1>.vcf,.../duplex_reads_bam/<sample1>.bam
+sample2,.../mutations_vcf/<sample2>.vcf,.../duplex_reads_bam/<sample2>.bam
+sample3,.../mutations_vcf/<sample3>.vcf,.../duplex_reads_bam/<sample3>.bam
 ```
+
+### Duplex sequencing metrics compilation & analysis
+
+deepUMIcaller generates a rich set of duplex sequencing metrics that allow the users to assess the performance of the duplex libraries that are being analyzed.
+
+This is useful for compiling the metrics and being able to compare across samples & experiments and identify any patterns of variable performance that could lead to actionable decisions.
+
+One of these decisions is to request for more sequencing output for some of the libraries, with the family size distribution curves the user can assess how appropriately sequenced was a given library and then decide if more Gbs are required. We provide an estimation of the optimal sequencing and the approximate amount of giga-bases/reads that would need to be sequenced.

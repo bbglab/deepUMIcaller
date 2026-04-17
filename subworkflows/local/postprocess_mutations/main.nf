@@ -10,7 +10,12 @@ include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/l
 
 include { QUERY_TABIX            as QUERYTABIX        } from '../../../modules/local/tabix_mpileup/main'
 include { PATCH_DEPTH            as PATCHDP           } from '../../../modules/local/patchdepth/main'
+include { PHASE_MUTATIONS        as PHASEMUTATIONS    } from '../../../modules/local/phase_mutations/main'
+include { ANALYZE_PHASE_OUTPUTS  as ANALYZEPHASED     } from '../../../modules/local/analyze_phase_outputs/main'
+
 include { PATCH_DEPTH            as PATCHDPALL        } from '../../../modules/local/patchdepth/main'
+include { PHASE_MUTATIONS        as PHASEMUTATIONSALL } from '../../../modules/local/phase_mutations/main'
+include { ANALYZE_PHASE_OUTPUTS  as ANALYZEPHASEDALL  } from '../../../modules/local/analyze_phase_outputs/main'
 
 include { FILTER_FROM_BED        as FILTERLOWMAPPABLE } from '../../../modules/local/filter/from_bed/main.nf'
 include { FILTER_FROM_BED        as FILTERLOWCOMPLEX  } from '../../../modules/local/filter/from_bed/main.nf'
@@ -93,13 +98,16 @@ workflow POSTPROCESS_MUTATIONS {
     // think well which is the best way to output this information, if a VCF or a TSV with only the updated depths or what.
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
-    
+    PHASEMUTATIONS(PATCHDP.out.mutated_reads)
+    ANALYZEPHASED(PHASEMUTATIONS.out.variant_chain_support)
 
     PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
     .join( PATCHDP.out.patched_vcf )
     .set{ ch_pileup_vcfpatched1 }
 
     PATCHDPALL(ch_pileup_vcfpatched1)
+    PHASEMUTATIONSALL(PATCHDPALL.out.mutated_reads)
+    ANALYZEPHASEDALL(PHASEMUTATIONSALL.out.variant_chain_support)
 
     // Warn if nanoseq filters are provided for non-human species
     if (params.vep_species != "homo_sapiens" && (params.nanoseq_snp_file || params.nanoseq_noise_file)) {

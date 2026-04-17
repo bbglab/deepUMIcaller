@@ -99,7 +99,6 @@ workflow POSTPROCESS_MUTATIONS {
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
     PHASEMUTATIONS(PATCHDP.out.mutated_reads)
-    ANALYZEPHASED(PHASEMUTATIONS.out.variant_chain_support)
 
     PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
     .join( PATCHDP.out.patched_vcf )
@@ -107,7 +106,6 @@ workflow POSTPROCESS_MUTATIONS {
 
     PATCHDPALL(ch_pileup_vcfpatched1)
     PHASEMUTATIONSALL(PATCHDPALL.out.mutated_reads)
-    ANALYZEPHASEDALL(PHASEMUTATIONSALL.out.variant_chain_support)
 
     // Warn if nanoseq filters are provided for non-human species
     if (params.vep_species != "homo_sapiens" && (params.nanoseq_snp_file || params.nanoseq_noise_file)) {

@@ -10,9 +10,8 @@ process PHASE_MUTATIONS {
     output:
     tuple val(meta), path("*.read_chains.tsv")                , emit: read_chains
     tuple val(meta), path("*.variant_chain_support.tsv")      , emit: variant_chain_support
-    tuple val(meta), path("*.major_chain_per_chromosome.tsv") , emit: major_chain_per_chromosome
-    tuple val(meta), path("*.phasing_contradictions.tsv")     , emit: phasing_contradictions
-    tuple val(meta), path("*.chain_proportions.png")          , optional: true, emit: chain_proportions_plot
+    tuple val(meta), path("*.outliers.tsv")                   , emit: outliers
+    tuple val(meta), path("*.pdf")          , optional: true  , emit: chain_proportions_plot
     path  "versions.yml"                                      , topic: versions
 
     script:
@@ -41,9 +40,8 @@ process PHASE_MUTATIONS {
     """
     touch ${output_prefix}.read_chains.tsv
     touch ${output_prefix}.variant_chain_support.tsv
-    touch ${output_prefix}.major_chain_per_chromosome.tsv
-    touch ${output_prefix}.phasing_contradictions.tsv
-    touch ${output_prefix}.chain_proportions.png
+    touch ${output_prefix}.outliers.tsv
+    touch ${output_prefix}.chain_proportions.pdf
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

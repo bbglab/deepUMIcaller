@@ -30,7 +30,7 @@ from typing import Dict, Iterable, List, Tuple, Set
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
+from matplotlib.backends.backend_pdf import PdfPages
 
 class Component:
 	"""Segment with coverage"""
@@ -110,25 +110,6 @@ def parse_read_list(raw_value: object) -> Set[str]:
 
 	return {str(x) for x in parsed if str(x).strip()}
 
-
-def add_same_constraints(uf: ParityUnionFind, reads: Iterable[str], contradictions: List[dict], variant_id: str) -> None:
-	reads = list(reads)
-	if len(reads) < 2:
-		return
-
-	pivot = reads[0]
-	for read in reads[1:]:
-		if not uf.union(pivot, read, 0):
-			contradictions.append(
-				{
-					"variant_id": variant_id,
-					"read_a": pivot,
-					"read_b": read,
-					"expected_relation": "same",
-				}
-			)
-
-
 def build_variant_constraints(df: pd.DataFrame ) -> pd.DataFrame:
 	
 	df["MUTATED_READS"] = df["MUTATED_READS"].apply(parse_read_list)
@@ -136,30 +117,6 @@ def build_variant_constraints(df: pd.DataFrame ) -> pd.DataFrame:
 
 	df = df[df.apply(lambda row: len(row["MUTATED_READS"]) > 0 or len(row["REFERENCE_READS"]) > 0, axis=1)]
 	return df
-
-
-def assign_read_chains(uf: ParityUnionFind) -> pd.DataFrame:
-	components: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
-	for read_id in uf.parent:
-		root, parity = uf.find(read_id)
-		components[root].append((read_id, parity))
-
-	records = []
-	for i, (root, read_infos) in enumerate(sorted(components.items(), key=lambda x: (-len(x[1]), x[0])), start=1):
-		component_id = f"component_{i}"
-		for read_id, parity in sorted(read_infos):
-			records.append(
-				{
-					"read_id": read_id,
-					"component_root": root,
-					"component_id": component_id,
-					"chain": f"chain_{parity}",
-					"chain_index": parity,
-				}
-			)
-
-	return pd.DataFrame(records)
-
 
 def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFrame, List[dict]]:
 	"""
@@ -291,149 +248,36 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 	return pd.DataFrame(continuity_rows)
 
 
-def summarize_variants(variants_df: pd.DataFrame, read_chains_df: pd.DataFrame) -> pd.DataFrame:
-	read2chain = dict(zip(read_chains_df["read_id"], read_chains_df["chain_index"]))
-	read2component = dict(zip(read_chains_df["read_id"], read_chains_df["component_id"]))
-
-	summary_rows = []
-	for _, row in variants_df.iterrows():
-		mut_counts = [0, 0]
-		ref_counts = [0, 0]
-		mut_components = set()
-		ref_components = set()
-		chain_0_components = set()
-		chain_1_components = set()
-
-		for read_id in row["mutated_reads"]:
-			if read_id in read2chain:
-				chain_idx = read2chain[read_id]
-				component_id = read2component[read_id]
-				mut_counts[chain_idx] += 1
-				mut_components.add(component_id)
-				if chain_idx == 0:
-					chain_0_components.add(component_id)
-				else:
-					chain_1_components.add(component_id)
-		for read_id in row["reference_reads"]:
-			if read_id in read2chain:
-				chain_idx = read2chain[read_id]
-				component_id = read2component[read_id]
-				ref_counts[chain_idx] += 1
-				ref_components.add(component_id)
-				if chain_idx == 0:
-					chain_0_components.add(component_id)
-				else:
-					chain_1_components.add(component_id)
-
-		all_components = sorted(mut_components | ref_components)
-		n_components = len(all_components)
-		if n_components == 0:
-			assigned_component = "undetermined"
-		elif n_components == 1:
-			assigned_component = all_components[0]
-		else:
-			assigned_component = "multiple_components"
-
-		n_mut = len(row["mutated_reads"])
-		n_ref = len(row["reference_reads"])
-		mut_prop_chain_0 = (mut_counts[0] / n_mut) if n_mut > 0 else float("nan")
-		mut_prop_chain_1 = (mut_counts[1] / n_mut) if n_mut > 0 else float("nan")
-		ref_prop_chain_0 = (ref_counts[0] / n_ref) if n_ref > 0 else float("nan")
-		ref_prop_chain_1 = (ref_counts[1] / n_ref) if n_ref > 0 else float("nan")
-
-		n_reads_chain_0 = mut_counts[0] + ref_counts[0]
-		n_reads_chain_1 = mut_counts[1] + ref_counts[1]
-		total_chain_reads = n_reads_chain_0 + n_reads_chain_1
-		proportion_chain_0 = (n_reads_chain_0 / total_chain_reads) if total_chain_reads > 0 else float("nan")
-		proportion_chain_1 = (n_reads_chain_1 / total_chain_reads) if total_chain_reads > 0 else float("nan")
-
-		# chain_0/chain_1 labels are arbitrary per connected component; major/minor is orientation-free.
-		mut_major = max(mut_counts)
-		mut_minor = min(mut_counts)
-		mut_prop_major = (mut_major / n_mut) if n_mut > 0 else float("nan")
-		mut_prop_minor = (mut_minor / n_mut) if n_mut > 0 else float("nan")
-
-		mutated_support = max(mut_counts)
-		if mutated_support == 0 or mut_counts[0] == mut_counts[1]:
-			mutated_chain = "undetermined"
-		else:
-			mutated_chain = f"chain_{0 if mut_counts[0] > mut_counts[1] else 1}"
-
-		summary_rows.append(
-			{
-				"variant_id": row["variant_id"],
-				"CHROM": row["CHROM"],
-				"POS": row["POS"],
-				"REF": row["REF"],
-				"ALT": row["ALT"],
-				"component_ids": all_components,
-				"n_components": n_components,
-				"assigned_component": assigned_component,
-				"mutated_component_ids": sorted(mut_components),
-				"reference_component_ids": sorted(ref_components),
-				"chain_0_component_ids": sorted(chain_0_components),
-				"chain_1_component_ids": sorted(chain_1_components),
-				"n_mut_reads": n_mut,
-				"n_ref_reads": n_ref,
-				"mut_chain_0": mut_counts[0],
-				"mut_chain_1": mut_counts[1],
-				"ref_chain_0": ref_counts[0],
-				"ref_chain_1": ref_counts[1],
-				"n_reads_chain_0": n_reads_chain_0,
-				"n_reads_chain_1": n_reads_chain_1,
-				"proportion_chain_0": proportion_chain_0,
-				"proportion_chain_1": proportion_chain_1,
-				"mut_prop_chain_0": mut_prop_chain_0,
-				"mut_prop_chain_1": mut_prop_chain_1,
-				"ref_prop_chain_0": ref_prop_chain_0,
-				"ref_prop_chain_1": ref_prop_chain_1,
-				"mut_prop_major_chain": mut_prop_major,
-				"mut_prop_minor_chain": mut_prop_minor,
-				"assigned_mutated_chain": mutated_chain,
-			}
-		)
-
-	return pd.DataFrame(summary_rows)
-
-
-def summarize_major_chain_by_chromosome(variant_summary_df: pd.DataFrame) -> pd.DataFrame:
+def summarize_major_chain_by_chromosome(variant_summary_df: pd.DataFrame, output_pdf: Path) -> pd.DataFrame:
 	"""Summarize major-chain mutated-read proportion per chromosome."""
 	# use this code below to explore the cases for possible copy number changes
-	import pandas as pd
-	import matplotlib.pyplot as plt
-	import numpy as np
-
-	data = pd.read_table("ID002_R_1_H_1.duplex.readjusted.mutated_readss.variant_chain_support.tsv")
-	data = data[(data["total_size"] > 800)
-				& (data['REF'].str.len() == 1) & (data['ALT'].str.len() == 1)
+	
+	data = variant_summary_df.copy()
+	het_positions = data[(data["proportion_chain_0"] > 0.1) & (data["proportion_chain_0"] < 0.9)].reset_index(drop=True)
+	het_positions = het_positions[(het_positions["total_size"] > 100)
+				& (het_positions['REF'].str.len() == 1) & (het_positions['ALT'].str.len() == 1)
 				].reset_index(drop=True)
-	data
-	data["major_proportion"] = data["proportion_chain_1"].copy()
-	data.loc[data["major_chain"] == 'chain_0', "major_proportion"] = data["proportion_chain_0"]
+	
+	with PdfPages(output_pdf) as pdf:
+		
+		for chromo in het_positions['CHROM'].unique():
+			chrom_positions = het_positions[het_positions['CHROM'] == chromo]
+			starting_intervals = chrom_positions.drop_duplicates(subset=["number"])
+			plt.scatter(chrom_positions.index,
+						chrom_positions["minor_proportion"])
+			plt.scatter(chrom_positions.index,
+						chrom_positions["major_proportion"])
+			plt.plot(chrom_positions.index,
+					(chrom_positions["total_size"] / chrom_positions["total_size"].max()) * 0.9,
+					)
+			for indexx in starting_intervals.index.to_list():
+				plt.axvline(x = indexx,
+							color='red', alpha=0.3, linestyle='--')
 
-	data["minor_proportion"] = data["proportion_chain_1"].copy()
-	data.loc[data["major_chain"] == 'chain_1', "minor_proportion"] = data["proportion_chain_0"]
-	het_positions = data[(data["proportion_chain_0"] > 0.1) & (data["proportion_chain_0"] < 0.9)].reset_index()
-	starting_intervals = het_positions.drop_duplicates(subset=["number"])
-	for chromo in het_positions['CHROM'].unique():
-		plt.scatter(het_positions[het_positions['CHROM'] == chromo].index,
-					het_positions[het_positions['CHROM'] == chromo]["minor_proportion"])
-		plt.scatter(het_positions[het_positions['CHROM'] == chromo].index,
-					het_positions[het_positions['CHROM'] == chromo]["major_proportion"])
-		plt.plot(het_positions[het_positions['CHROM'] == chromo].index,
-				(het_positions[het_positions['CHROM'] == chromo]["total_size"] / het_positions[het_positions['CHROM'] == chromo]["total_size"].max()) * 0.9,
-				)
-		# plt.scatter(starting_intervals[starting_intervals['CHROM'] == chromo].index,
-		#             (starting_intervals[starting_intervals['CHROM'] == chromo]["total_size"] / het_positions[het_positions['CHROM'] == chromo]["total_size"].max()) * 0.9,
-		#             color='red', s=50)
-		for indexx in starting_intervals[starting_intervals['CHROM'] == chromo].index.to_list():
-			plt.axvline(x = indexx,
-						color='red', alpha=0.3, linestyle='--')
-
-
-		plt.ylim(0, 1)
-		plt.title(chromo)
-		plt.show()
+			plt.ylim(0, 1)
+			plt.title(chromo)
+			pdf.savefig()
+			plt.close()
 
 
 def plot_major_chain_proportions(variant_summary_df: pd.DataFrame, output_png: Path) -> None:
@@ -468,6 +312,21 @@ def plot_major_chain_proportions(variant_summary_df: pd.DataFrame, output_png: P
 	output_png.parent.mkdir(parents=True, exist_ok=True)
 	fig.savefig(output_png, dpi=160)
 	plt.close(fig)
+
+def compute_continuity_metrics(df):
+	df["total_size"] = df["size_chain_0"] + df["size_chain_1"]
+	df["proportion_chain_0"] = df["size_chain_0"] / df["total_size"]
+	df["proportion_chain_1"] = df["size_chain_1"] / df["total_size"]
+	major_chain_proportions = df.groupby("number")["proportion_chain_0"].mean()
+	major_chain_0 = major_chain_proportions[major_chain_proportions > 0.5].index
+	df["major_chain"] = df["number"].isin(major_chain_0).map({True: "chain_0", False: "chain_1"})
+	df["major_proportion"] = df["proportion_chain_1"].copy()
+	df.loc[df["major_chain"] == 'chain_0', "major_proportion"] = df["proportion_chain_0"]
+	df["minor_proportion"] = df["proportion_chain_1"].copy()
+	df.loc[df["major_chain"] == 'chain_1', "minor_proportion"] = df["proportion_chain_0"]
+
+	return df
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -516,44 +375,30 @@ def main() -> None:
 	continuity_df_no_outliers = continuity_df.drop(columns=["outliers"])
 	outliers = continuity_df[continuity_df["outliers"].apply(len) > 0]["outliers"]
 	outliers_df = pd.DataFrame(outliers.to_list())
+	outliers_df = pd.DataFrame(outliers_df[0].to_dict().values())
 	continuity_df_expl = continuity_df_no_outliers.explode(["variant_id", "size_chain_1", "size_chain_0",
 		"chain_0_status", "chain_1_status"
-		])
-	continuity_df_expl["total_size"] = continuity_df_expl["size_chain_0"] + continuity_df_expl["size_chain_1"]
-	continuity_df_expl["proportion_chain_0"] = continuity_df_expl["size_chain_0"] / continuity_df_expl["total_size"]
-	continuity_df_expl["proportion_chain_1"] = continuity_df_expl["size_chain_1"] / continuity_df_expl["total_size"]
-	major_chain_proportions = continuity_df_expl.groupby("number")["proportion_chain_0"].mean()
-	major_chain_0 = major_chain_proportions[major_chain_proportions > 0.5].index
-	continuity_df_expl["major_chain"] = continuity_df_expl["number"].isin(major_chain_0).map({True: "chain_0", False: "chain_1"})
+		]).reset_index(drop=True)
 
-	variant_summary_df = df.merge(continuity_df_expl, on="variant_id", how="left")
-	# per_chrom_summary_df = summarize_major_chain_by_chromosome(variant_summary_df)
+	continuity_df_with_metrics = compute_continuity_metrics(continuity_df_expl)
+	
+	variant_summary_df = df.merge(continuity_df_with_metrics, on="variant_id", how="left")
+	try:
+		summarize_major_chain_by_chromosome(variant_summary_df, output_prefix.parent / f"{output_prefix.name}.chain_proportions_by_chromosome.pdf")
+	except Exception as e:
+		print(f"Error occurred while summarizing major chain by chromosome: {e}")
 
 	chains_out = output_prefix.parent / f"{output_prefix.name}.read_chains.tsv"
 	variants_out = output_prefix.parent / f"{output_prefix.name}.variant_chain_support.tsv"
 	outliers_out = output_prefix.parent / f"{output_prefix.name}.outliers.tsv"
-	contradictions_out = output_prefix.parent / f"{output_prefix.name}.phasing_contradictions.tsv"
-	plot_out = Path(args.plot) if args.plot else (output_prefix.parent / f"{output_prefix.name}.chain_proportions.png")
 
 	chains_out.parent.mkdir(parents=True, exist_ok=True)
 
 	continuity_df.to_csv(chains_out, sep="\t", index=False)
 	variant_summary_df.to_csv(variants_out, sep="\t", index=False)
 	outliers_df.to_csv(outliers_out, sep="\t", index=False)
-	# pd.DataFrame(contradictions).to_csv(contradictions_out, sep="\t", index=False)
-	# plot_major_chain_proportions(variant_summary_df, plot_out)
 
 	print(f"Input variants: {len(df)}")
-	# print(f"Phased reads: {len(read_chains_df)}")
-	# print(f"Connected components: {read_chains_df['component_id'].nunique() if not read_chains_df.empty else 0}")
-	# print(f"Contradictions: {len(contradictions)}")
-	# print(f"Wrote: {reads_out}")
-	# print(f"Wrote: {variants_out}")
-	# print(f"Wrote: {per_chrom_out}")
-	# print(f"Wrote: {contradictions_out}")
-	# if (variant_summary_df["n_mut_reads"] > 0).any():
-	# 	print(f"Wrote: {plot_out}")
-
 
 
 

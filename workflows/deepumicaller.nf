@@ -22,7 +22,7 @@ include { INPUT_CHECK                                                           
 
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
-include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
+include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgumi/fastqtobam/main'
 include { FGUMI_CORRECTUMIS                 as CORRECTUMIS                      } from '../modules/local/fgumi/correctumis/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
@@ -32,8 +32,8 @@ include { MERGEBAM                                                              
 include { MERGEBAM                          as MERGEBAMCHROM                    } from '../modules/local/mergebam/main'
 include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
-include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgumi/collectduplexseqmetrics/main'
+include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgumi/collectduplexseqmetrics/main'
 
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
@@ -42,11 +42,11 @@ include { UNMAP_BAM                         as UNMAPBAM                         
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXS                        } from '../modules/local/filter_reads/asminusxs/main'
 
-include { FGUMI_CLIPBAM                     as CLIPBAM                          } from '../modules/local/clipbam/main'
-include { FGUMI_CLIPBAM                     as CLIPBAMAM                        } from '../modules/local/clipbam/main'
+include { FGUMI_CLIPBAM                     as CLIPBAM                          } from '../modules/local/fgumi/clipbam/main'
+include { FGUMI_CLIPBAM                     as CLIPBAMAM                        } from '../modules/local/fgumi/clipbam/main'
 
-include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgumi/filterconsensusreads/main'
+include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgumi/filterconsensusreads/main'
 
 include { CREATEBED_FROM_TSV                as CREATEBED                        } from '../modules/local/createbed/main'
 
@@ -102,9 +102,9 @@ include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } fr
 
 // include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
-include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
+include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
-include { FGUMI_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
+include { FGUMI_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgumi/callduplexconsensusreads/main'
 // include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
 // include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
 
@@ -322,7 +322,7 @@ workflow DEEPUMICALLER {
             pre_consensus_bams = INPUT_CHECK.out.reads
         }
 
-        // MODULE: Run fgumi GroupReadsByUmi
+        // MODULE: Run fgumi group
         // requires input template coordinate sorted
         GROUPREADSBYUMI(pre_consensus_bams, "paired")
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it -> it[1]}.collect())

@@ -25,7 +25,7 @@ process ALIGN_BAM {
     prefix = "${meta.id}${prefix}"
     if (sort) {
         fgumi_zipper_bams_output = "/dev/stdout"
-        extra_command = " | fgumi sort --input /dev/stdin --order template-coordinate --output " + prefix + ".mapped.bam --threads " + task.cpus.toString()
+        extra_command = " | fgumi sort --input /dev/stdin --order template-coordinate --output ${prefix}.mapped.bam --threads ${task.cpus}"
     } else {
         fgumi_zipper_bams_output = prefix + ".mapped.bam"
         extra_command = ""

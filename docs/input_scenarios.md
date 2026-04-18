@@ -22,7 +22,7 @@ All input configurations use a CSV file with specific columns depending on the p
 
 | Entry Point | Required Columns | File Types |  
 |-------------|-----------------|------------|  
-| `groupreadsbyumi` | `sample`, `bam` | Coordinate-sorted aligned BAM files processed by fgbio GroupByUMI |  
+| `groupreadsbyumi` | `sample`, `bam` | Template-coordinate sorted aligned BAM files ready for fgumi UMI grouping |  
 | `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
 | `allmoleculesfile` | `sample`, `duplexbam`, `csi` | BAM with aligned consensus reads missing AS-XS filtering |  
 | `filterconsensus` | `sample`, `bam` | BAM with aligned consensus reads only missing a duplex quality filter and the calling |  

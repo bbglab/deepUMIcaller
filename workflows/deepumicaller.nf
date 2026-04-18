@@ -23,6 +23,7 @@ include { INPUT_CHECK                                                           
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
+include { FGUMI_CORRECTUMIS                 as CORRECTUMIS                      } from '../modules/local/fgumi/correctumis/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
@@ -205,13 +206,28 @@ workflow DEEPUMICALLER {
 
         FASTQTOBAM(split_fastqs_ch)
 
+        // Optional UMI correction when known UMI files are provided per sample
+        FASTQTOBAM.out.bam
+            .branch { meta, bam ->
+                correct: meta.umi_file
+                passthrough: true
+            }
+            .set { ch_fastqtobam }
+
+        CORRECTUMIS(
+            ch_fastqtobam.correct.map { meta, bam -> [meta, bam, file(meta.umi_file)] },
+            params.correct_umis_max_mismatches,
+            params.correct_umis_min_distance
+        )
+
+        bam_after_umi_correction = CORRECTUMIS.out.bam.mix(ch_fastqtobam.passthrough)
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
         if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)            
+            TRIMBAM(bam_after_umi_correction, params.left_clip, params.right_clip)            
             bam_to_align = TRIMBAM.out.bam
         } else {
-            bam_to_align = FASTQTOBAM.out.bam
+            bam_to_align = bam_after_umi_correction
         }
 
 
@@ -308,7 +324,7 @@ workflow DEEPUMICALLER {
 
         // MODULE: Run fgbio GroupReadsByUmi
         // requires input template coordinate sorted
-        GROUPREADSBYUMI(pre_consensus_bams, "Paired")
+        GROUPREADSBYUMI(pre_consensus_bams, "paired")
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it -> it[1]}.collect())
 
         // MODULE: Run fgbio CollecDuplexSeqMetrics

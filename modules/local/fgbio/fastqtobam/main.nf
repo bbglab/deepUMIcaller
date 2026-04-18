@@ -2,10 +2,10 @@ process FGBIO_FASTQTOBAM {
     tag "$meta.id"
     label 'fastq_processing'
 
-    conda "bioconda::fgbio=2.1.0"
+    conda "bioconda::fgumi"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
-        'biocontainers/fgbio:2.1.0--hdfd78af_0' }"
+        'docker://quay.io/biocontainers/fgumi:0.3.0--h4327870_0' :
+        'quay.io/biocontainers/fgumi:0.3.0--h4327870_0' }"
 
     input:
     tuple val(meta), path(fastqs)
@@ -19,31 +19,22 @@ process FGBIO_FASTQTOBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def mem_gb = 1
     def read_structure = "${meta.read_structure}"
-    if (!task.memory) {
-        log.info '[fgbio FastqToBam] Available memory not known - defaulting to 1GB. Specify process memory requirements to change this.'
-    } else {
-        mem_gb = task.memory.giga
-    }
+    def inputs = fastqs.collect { it.toString() }.join(' ')
     """
 
-    fgbio \\
-        -Xmx${mem_gb}g \\
-        --tmp-dir=. \\
-        --async-io=true \\
-        --compression=1 \\
-        FastqToBam \\
-        --input ${fastqs} \\
-        --output "${prefix}.unmapped.bam" \\
-        --read-structures ${read_structure} \\
-        --sample ${meta.sample} \\
-        --library ${meta.sample} \\
+    fgumi extract \
+        --inputs ${inputs} \
+        --output "${prefix}.unmapped.bam" \
+        --read-structures ${read_structure} \
+        --sample ${meta.sample} \
+        --library ${meta.sample} \
+        --threads ${task.cpus} \
         $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 }

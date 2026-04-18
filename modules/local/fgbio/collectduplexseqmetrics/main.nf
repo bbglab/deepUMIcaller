@@ -1,11 +1,11 @@
 process FGBIO_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
     label 'collect_duplex_metrics'
-    
-    conda "bioconda::fgbio=2.1.0"
+
+    conda "bioconda::fgumi"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
-        'biocontainers/fgbio:2.1.0--hdfd78af_0' }"
+        'docker://quay.io/biocontainers/fgumi:0.3.0--h4327870_0' :
+        'quay.io/biocontainers/fgumi:0.3.0--h4327870_0' }"
 
     input:
     tuple val(meta), path(grouped_bam)
@@ -22,27 +22,17 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def coords_file = intervals_file ? "--intervals ${intervals_file}" : ""
-    def mem_gb = 8
-    if (!task.memory) {
-        log.info '[fgbio CollectDuplexSeqMetrics] Available memory not known - defaulting to 8GB. Specify process memory requirements to change this.'
-    } else {
-        mem_gb = task.memory.giga
-    }
+
     """
-    fgbio \\
-        -Xmx${mem_gb}g \\
-        --tmp-dir=. \\
-        --async-io=true \\
-        --compression=1 \\
-        CollectDuplexSeqMetrics \\
-        --input $grouped_bam \\
-        --output ${prefix}.duplex_seq_metrics \\
-        ${coords_file} \\
-        $args;
+    fgumi duplex-metrics \
+        --input $grouped_bam \
+        --output ${prefix}.duplex_seq_metrics \
+        ${coords_file} \
+        $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 
@@ -57,7 +47,7 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     touch $prefix.duplex_seq_metrics.family_sizes.txt
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        qualimap: \$(echo \$(qualimap 2>&1) | sed 's/^.*QualiMap v.//; s/Built.*\$//')
+        fgumi: 0.0.0
     END_VERSIONS
     """
 

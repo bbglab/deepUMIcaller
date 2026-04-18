@@ -16,7 +16,7 @@
 
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
-- [FGBio](https://github.com/fulcrumgenomics/fgbio)
+- [FGUMI](https://github.com/fulcrumgenomics/fgumi)
 
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 

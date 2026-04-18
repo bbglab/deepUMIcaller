@@ -20,12 +20,12 @@ process ALIGN_BAM {
     script:
     def samtools_sort_args = task.ext.samtools_sort_args ?: ''
     def bwa_args = task.ext.bwa_args ?: ''
-    def fgumi_args = task.ext.fgbio_args ?: ''
+    def fgumi_args = task.ext.fgumi_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     if (sort) {
         fgumi_zipper_bams_output = "/dev/stdout"
-        extra_command = " | fgumi sort --input /dev/stdin --order template-coordinate --output " + prefix + ".mapped.bam --threads " + task.cpus
+        extra_command = " | fgumi sort --input /dev/stdin --order template-coordinate --output " + prefix + ".mapped.bam --threads " + task.cpus.toString()
     } else {
         fgumi_zipper_bams_output = prefix + ".mapped.bam"
         extra_command = ""
@@ -64,7 +64,7 @@ process ALIGN_BAM {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
-        fgumi: 0.0.0
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 

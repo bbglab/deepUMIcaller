@@ -47,7 +47,7 @@ process FGUMI_COLLECTDUPLEXSEQMETRICS {
     touch $prefix.duplex_seq_metrics.family_sizes.txt
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fgumi: 0.0.0
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 

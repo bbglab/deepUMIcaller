@@ -16,7 +16,7 @@ process FGUMI_FILTERCONSENSUSREADS {
     path "versions.yml"                      , topic: versions
 
     script:
-    def fgumi_args = task.ext.fgbio_args ?: ''
+    def fgumi_args = task.ext.fgumi_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
 

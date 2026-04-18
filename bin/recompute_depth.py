@@ -85,6 +85,18 @@ def count_freq_in_row(elements_in_row, searching_elems):
         dp += elements_in_row.get(search, 0)
     return dp
 
+def remove_pstd_if_single(x):
+    if x["VD"] != "1":
+        return x["FILTER"]
+    
+    filters = x["FILTER"].split(";")
+    if "pSTD" in filters:
+        filters.remove("pSTD")
+        if len(filters) == 0:
+            return 'PASS'
+        return ";".join(filters)
+    return x["FILTER"]
+
 
 def update_vcf_fields(row, suffix = ''):
     # update the formats
@@ -100,7 +112,10 @@ def update_vcf_fields(row, suffix = ''):
         info_dict = dict(item.split("=", 1) for item in row["INFO"].split(";") if "=" in item)
         formats_values["PMN"] = info_dict.get("PMEAN", "")
         formats_values["PST"] = info_dict.get("PSTD", "")
-    
+        
+        # remove pSTD if variant supported by a single read
+        row["FILTER"] = remove_pstd_if_single(row)
+
     if row["NEW_FILTER"] != "":
         if row["FILTER"] == "PASS":
             filt = row["NEW_FILTER"]

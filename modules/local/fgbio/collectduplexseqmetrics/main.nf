@@ -1,4 +1,4 @@
-process FGBIO_COLLECTDUPLEXSEQMETRICS {
+process FGUMI_COLLECTDUPLEXSEQMETRICS {
     tag "$meta.id"
     label 'collect_duplex_metrics'
 

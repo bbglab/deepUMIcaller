@@ -1,4 +1,4 @@
-process FGBIO_CALLDUPLEXCONSENSUSREADS {
+process FGUMI_CALLDUPLEXCONSENSUSREADS {
     tag "$meta.id"
     cache 'lenient'
     label 'consensus_calling'

@@ -1,4 +1,4 @@
-process FGBIO_GROUPREADSBYUMI {
+process FGUMI_GROUPREADSBYUMI {
     tag "$meta.id"
     cache 'lenient'
     label 'groupreads_io'

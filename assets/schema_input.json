@@ -52,7 +52,7 @@
             "read_structure": {
                 "type": "string",
                 "pattern": "^.*$",
-                "errorMessage": "Read structure must follow fgbio format (e.g., '8M1S+T 8M1S+T'). See: https://github.com/fulcrumgenomics/fgumi/blob/main/docs/src/guide/read-structures.md"
+                "errorMessage": "Read structure must follow fgumi format (e.g., '8M1S+T 8M1S+T'). See: https://github.com/fulcrumgenomics/fgumi/blob/main/docs/src/guide/read-structures.md"
             },
             "parent_dna": {
                 "type": "string",

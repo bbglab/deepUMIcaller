@@ -1,4 +1,4 @@
-process FGBIO_FILTERCONSENSUSREADS {
+process FGUMI_FILTERCONSENSUSREADS {
     tag "$meta.id"
     label 'consensus_filter'
 

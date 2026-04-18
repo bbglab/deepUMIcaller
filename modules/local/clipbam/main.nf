@@ -1,4 +1,4 @@
-process FGBIO_CLIPBAM {
+process FGUMI_CLIPBAM {
     tag "$meta.id"
     label 'bam_processing_heavy'
 

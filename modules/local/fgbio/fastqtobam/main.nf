@@ -1,4 +1,4 @@
-process FGBIO_FASTQTOBAM {
+process FGUMI_FASTQTOBAM {
     tag "$meta.id"
     label 'fastq_processing'
 

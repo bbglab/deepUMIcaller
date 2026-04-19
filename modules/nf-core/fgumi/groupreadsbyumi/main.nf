@@ -4,9 +4,7 @@ process FGUMI_GROUPREADSBYUMI {
     label 'groupreads_io'
 
     conda "bioconda::fgumi"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://quay.io/biocontainers/fgumi:0.3.0--h4327870_0' :
-        'quay.io/biocontainers/fgumi:0.3.0--h4327870_0' }"
+    container  'quay.io/biocontainers/fgumi:0.1.3--h54198d6_0' 
 
     input:
     tuple val(meta), path(taggedbam)

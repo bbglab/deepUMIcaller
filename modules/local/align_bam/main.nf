@@ -8,7 +8,6 @@ process ALIGN_BAM {
     input:
     tuple val(meta), path(unmapped_bam)
     path index_dir
-    val sort
 
     output:
     tuple val(meta), path("*.mapped.bam"), emit: bam

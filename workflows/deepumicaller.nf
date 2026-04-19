@@ -232,12 +232,7 @@ workflow DEEPUMICALLER {
 
 
         // MODULE: Align with bwa mem
-        // TODO
-        // test with real samples whether we could change the "false" here into "true"
-        // this would activate sorting the files
-        // and would reduce the size of the files stored in the work directory.
-        // it works with the test samples
-        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
+        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
 
         SORTBAMRAW(ALIGNRAWBAM.out.bam)
         if (params.perform_qcs) {
@@ -400,7 +395,7 @@ workflow DEEPUMICALLER {
         }
 
         // MODULE: Align with bwa mem
-        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, false)
+        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir)
 
         SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
 
@@ -516,7 +511,6 @@ workflow DEEPUMICALLER {
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
         CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
-        
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONS(CLIPBAM.out.bam)

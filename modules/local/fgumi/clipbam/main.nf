@@ -3,10 +3,7 @@ process FGUMI_CLIPBAM {
     label 'bam_processing_heavy'
 
     conda "bioconda::fgumi bioconda::samtools=1.16.1"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-            'docker://quay.io/biocontainers/fgumi:0.1.3--h54198d6_0' :
-            'quay.io/biocontainers/fgumi:0.1.3--h54198d6_0' }"
-
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:910c3ff2dc301fbf'
 
     input:
     tuple val(meta), path(bam)

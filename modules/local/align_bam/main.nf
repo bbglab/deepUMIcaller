@@ -3,7 +3,7 @@ process ALIGN_BAM {
     label 'alignment_intensive'
 
     conda "bioconda::fgumi bioconda::bwa=0.7.17"
-    container 'biocontainers/fgumi:0.1.3--h54198d6_0'
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:910c3ff2dc301fbf'
 
     input:
     tuple val(meta), path(unmapped_bam)
@@ -16,19 +16,9 @@ process ALIGN_BAM {
 
 
     script:
-    def samtools_sort_args = task.ext.samtools_sort_args ?: ''
     def bwa_args = task.ext.bwa_args ?: ''
-    def fgumi_args = task.ext.fgumi_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    if (sort) {
-        fgumi_zipper_bams_output = "/dev/stdout"
-        extra_command = " | fgumi sort --input /dev/stdin --order template-coordinate --output ${prefix}.mapped.bam --threads ${task.cpus}"
-    } else {
-        fgumi_zipper_bams_output = prefix + ".mapped.bam"
-        extra_command = ""
-    }
-
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
@@ -39,12 +29,9 @@ process ALIGN_BAM {
             --input /dev/stdin \
             --unmapped ${unmapped_bam} \
             --reference \$FASTA \
-            --output ${fgumi_zipper_bams_output} \
             --threads ${task.cpus} \
-            --tags-to-reverse Consensus \
-            --tags-to-revcomp Consensus \
-            ${fgumi_args} \
-            ${extra_command}
+        | fgumi sort --input /dev/stdin \\
+            --output ${prefix}.mapped.bam --order template-coordinate
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

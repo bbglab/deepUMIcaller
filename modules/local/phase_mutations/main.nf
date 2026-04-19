@@ -8,11 +8,11 @@ process PHASE_MUTATIONS {
     tuple val(meta), path(mutated_reads_tsv)
 
     output:
-    tuple val(meta), path("*.read_chains.tsv")                , emit: read_chains
-    tuple val(meta), path("*.variant_chain_support.tsv")      , emit: variant_chain_support
-    tuple val(meta), path("*.outliers.tsv")                   , emit: outliers
-    tuple val(meta), path("*.pdf")          , optional: true  , emit: chain_proportions_plot
-    path  "versions.yml"                                      , topic: versions
+    tuple val(meta), path("*.read_chains.tsv.gz")               , emit: read_chains
+    tuple val(meta), path("*.variant_chain_support.tsv.gz")     , emit: variant_chain_support
+    tuple val(meta), path("*.outliers.tsv.gz")                  , emit: outliers
+    tuple val(meta), path("*.pdf")            , optional: true  , emit: chain_proportions_plot
+    path  "versions.yml"                                        , topic: versions
 
     script:
     def suffix = task.ext.suffix ?: ''

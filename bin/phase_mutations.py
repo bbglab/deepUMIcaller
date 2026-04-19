@@ -248,15 +248,20 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 	return pd.DataFrame(continuity_rows)
 
 
-def summarize_major_chain_by_chromosome(variant_summary_df: pd.DataFrame, output_pdf: Path) -> pd.DataFrame:
+def summarize_major_chain_by_chromosome(variant_summary_df: pd.DataFrame, output_pdf: Path) -> None:
 	"""Summarize major-chain mutated-read proportion per chromosome."""
 	# use this code below to explore the cases for possible copy number changes
 	
 	data = variant_summary_df.copy()
 	het_positions = data[(data["proportion_chain_0"] > 0.1) & (data["proportion_chain_0"] < 0.9)].reset_index(drop=True)
 	het_positions = het_positions[(het_positions["total_size"] > 100)
-				& (het_positions['REF'].str.len() == 1) & (het_positions['ALT'].str.len() == 1)
+				& (het_positions['REF'].str.len() == 1)
+				& (het_positions['ALT'].str.len() == 1)
 				].reset_index(drop=True)
+
+	if het_positions.empty:
+		print("No heterozygous positions with sufficient coverage found for major chain analysis.")
+		return 
 	
 	with PdfPages(output_pdf) as pdf:
 		
@@ -375,7 +380,9 @@ def main() -> None:
 	continuity_df_no_outliers = continuity_df.drop(columns=["outliers"])
 	outliers = continuity_df[continuity_df["outliers"].apply(len) > 0]["outliers"]
 	outliers_df = pd.DataFrame(outliers.to_list())
-	outliers_df = pd.DataFrame(outliers_df[0].to_dict().values())
+	if not outliers_df.empty:
+		outliers_df = pd.DataFrame(outliers_df[0].to_dict().values())
+
 	continuity_df_expl = continuity_df_no_outliers.explode(["variant_id", "size_chain_1", "size_chain_0",
 		"chain_0_status", "chain_1_status"
 		]).reset_index(drop=True)
@@ -388,9 +395,9 @@ def main() -> None:
 	except Exception as e:
 		print(f"Error occurred while summarizing major chain by chromosome: {e}")
 
-	chains_out = output_prefix.parent / f"{output_prefix.name}.read_chains.tsv"
-	variants_out = output_prefix.parent / f"{output_prefix.name}.variant_chain_support.tsv"
-	outliers_out = output_prefix.parent / f"{output_prefix.name}.outliers.tsv"
+	chains_out = output_prefix.parent / f"{output_prefix.name}.read_chains.tsv.gz"
+	variants_out = output_prefix.parent / f"{output_prefix.name}.variant_chain_support.tsv.gz"
+	outliers_out = output_prefix.parent / f"{output_prefix.name}.outliers.tsv.gz"
 
 	chains_out.parent.mkdir(parents=True, exist_ok=True)
 

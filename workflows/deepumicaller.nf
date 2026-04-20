@@ -146,8 +146,9 @@ workflow DEEPUMICALLER {
    
 
     // Create value channels for targets and global exons files (if provided)
+    original_targetsfile = file(params.targetsfile, checkIfExists: true)
     EXPAND_PANEL(
-        channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], params.targetsfile ])
+        channel.of([ [ id:"${original_targetsfile.getSimpleName()}" ], original_targetsfile ])
     )
     ch_targetsfile = EXPAND_PANEL.out.expanded_bed.first().map{it -> it[1]}
     ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : ch_targetsfile.first()
@@ -436,7 +437,7 @@ workflow DEEPUMICALLER {
             .map { meta, bam -> "sample,bam,parent_dna\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name},${meta.parent_dna}\n" }
             .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
-        ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXS.out.discarded_bam.map{it -> [it[0], original_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
         ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
@@ -491,7 +492,7 @@ workflow DEEPUMICALLER {
 
         if (params.perform_qcs){
             // requires input coordinate sorted
-            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, ch_targetsfile)
+            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, original_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it -> it[1]}.collect())
         }
 
@@ -516,13 +517,13 @@ workflow DEEPUMICALLER {
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, original_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it -> it[1]}.collect())
 
             SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_globalbed }
             COVERAGEGLOBAL(duplex_filt_bam_n_globalbed, [])
 
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], params.targetsfile, it[1]]}.set { duplex_filt_bam_n_targetedbed }
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], original_targetsfile, it[1]]}.set { duplex_filt_bam_n_targetedbed }
             COVERAGETARGETED(duplex_filt_bam_n_targetedbed, [])
 
             // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)

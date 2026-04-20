@@ -371,7 +371,7 @@ def main() -> None:
 	if missing:
 		raise ValueError(f"Missing required columns: {', '.join(missing)}")
 
-	df["variant_id"] = df.apply(lambda row: f"{row['CHROM']}:{row['POS']}:{row['REF']}:{row['ALT']}", axis=1)
+	df["variant_id"] = df.apply(lambda row: f"{row['CHROM']}:{row['POS']}_{row['REF']}>{row['ALT']}", axis=1)
 
 	detected_variants_df = build_variant_constraints(df)
 	# read_chains_df = assign_read_chains(uf)

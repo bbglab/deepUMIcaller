@@ -52,12 +52,31 @@ class Component:
 		self.chain_0_status: List[str] = [chain_0_name]
 		self.chain_1_status: List[str] = ["reference" if chain_0_name == "mutated" else "mutated"]
 
+		self.segment_first_mutation_pos: int | None = None
+		self.segment_last_mutation_pos: int | None = None
+		self.segment_mutation_span: int | None = None
+		self._register_position(starting_pos)
+
 		self.outliers: List[str] = []
 
+	def _register_position(self, pos: object) -> None:
+		if pd.isna(pos):
+			return
+
+		pos_value = int(pos)
+		if self.segment_first_mutation_pos is None or pos_value < self.segment_first_mutation_pos:
+			self.segment_first_mutation_pos = pos_value
+		if self.segment_last_mutation_pos is None or pos_value > self.segment_last_mutation_pos:
+			self.segment_last_mutation_pos = pos_value
+
+		if self.segment_first_mutation_pos is not None and self.segment_last_mutation_pos is not None:
+			self.segment_mutation_span = self.segment_last_mutation_pos - self.segment_first_mutation_pos
+
 		
-	def increase_chains_0_n_1(self, variant_id: str, status_0 :str, status_1 :str, reads_0: Set[str], reads_1: Set[str]) -> None:
+	def increase_chains_0_n_1(self, variant_id: str, status_0 :str, status_1 :str, reads_0: Set[str], reads_1: Set[str], pos: object) -> None:
 		self.variant_id.append(variant_id)
 		self.size += 1
+		self._register_position(pos)
 
 		self.chain_0.update(reads_0)
 		self.chain_1.update(reads_1)
@@ -181,7 +200,7 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 				print(len(overlap_1_vs_mut), len(overlap_1_vs_ref),
 		 				len(overlap_0_vs_mut), len(overlap_0_vs_ref))
 				print(f"Continuity: {variant_id} mutated group tracks both chains of previous component")
-				current_component.increase_chains_0_n_1(variant_id, "mutated", "mutated", set(), set())
+				current_component.increase_chains_0_n_1(variant_id, "mutated", "mutated", set(), set(), pos)
 				if overlap_1_vs_ref:
 					print(f"  - {len(overlap_1_vs_ref)} reads in previous chain 1 are not mutated when they should be: {sorted(overlap_1_vs_ref)}")
 					current_component.add_missing_mutation(variant_id, "chain_1", overlap_1_vs_ref)
@@ -197,7 +216,7 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 				print(len(overlap_1_vs_mut), len(overlap_1_vs_ref),
 		 				len(overlap_0_vs_mut), len(overlap_0_vs_ref))
 				print(f"Continuity: {variant_id} reference group tracks both chains of previous component")
-				current_component.increase_chains_0_n_1(variant_id, "reference", "reference", set(), set())
+				current_component.increase_chains_0_n_1(variant_id, "reference", "reference", set(), set(), pos)
 				if overlap_1_vs_mut:
 					print(f"  - {len(overlap_1_vs_mut)} reads in previous chain 1 are mutated when they should not be: {sorted(overlap_1_vs_mut)}")
 					# TODO: add it as an outlier and document in which variant is this conflicting read observed
@@ -213,7 +232,7 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 				print(len(overlap_1_vs_mut), len(overlap_1_vs_ref),
 		 			len(overlap_0_vs_mut), len(overlap_0_vs_ref))
 				print(f"Continuity: {variant_id} mutated group tracks previous chain 1 (overlap {overlap_1_mut_0_ref} vs {overlap_1_ref_0_mut})")
-				current_component.increase_chains_0_n_1(variant_id, "reference", "mutated", ref_reads, mut_reads)
+				current_component.increase_chains_0_n_1(variant_id, "reference", "mutated", ref_reads, mut_reads, pos)
 
 				if overlap_1_vs_ref:
 					print(f"  - {len(overlap_1_vs_ref)} reads in previous chain 1 overlap current reference group: {sorted(overlap_1_vs_ref)}")
@@ -228,7 +247,7 @@ def compute_continuity_assignments(variants_df: pd.DataFrame) -> Tuple[pd.DataFr
 				print(len(overlap_1_vs_mut), len(overlap_1_vs_ref),
 		 			len(overlap_0_vs_mut), len(overlap_0_vs_ref))
 				print(f"Continuity: {variant_id} mutated group tracks previous chain 0 (overlap {overlap_1_mut_0_ref} vs {overlap_1_ref_0_mut})")
-				current_component.increase_chains_0_n_1(variant_id, "mutated", "reference", mut_reads, ref_reads)
+				current_component.increase_chains_0_n_1(variant_id, "mutated", "reference", mut_reads, ref_reads, pos)
 				if overlap_1_vs_mut:
 					print(f"  - {len(overlap_1_vs_mut)} reads in previous chain 1 overlap current mutated group: {sorted(overlap_1_vs_mut)}")
 					current_component.add_extra_mutation(variant_id, "chain_1", overlap_1_vs_mut)
@@ -319,6 +338,13 @@ def plot_major_chain_proportions(variant_summary_df: pd.DataFrame, output_png: P
 	plt.close(fig)
 
 def compute_continuity_metrics(df):
+	df = df.copy()
+
+	# Keep integer-like coverage columns as nullable integers even when values are missing.
+	for col in ["number", "starting_pos", "size", "size_chain_0", "size_chain_1"]:
+		if col in df.columns:
+			df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+
 	df["total_size"] = df["size_chain_0"] + df["size_chain_1"]
 	df["proportion_chain_0"] = df["size_chain_0"] / df["total_size"]
 	df["proportion_chain_1"] = df["size_chain_1"] / df["total_size"]
@@ -330,7 +356,18 @@ def compute_continuity_metrics(df):
 	df["minor_proportion"] = df["proportion_chain_1"].copy()
 	df.loc[df["major_chain"] == 'chain_1', "minor_proportion"] = df["proportion_chain_0"]
 
+	df["total_size"] = df["total_size"].astype("Int64")
+
 	return df
+
+
+def fill_missing_numeric_with_minus_one(df: pd.DataFrame) -> pd.DataFrame:
+	"""Replace missing values in numeric columns with -1 for TSV-friendly exports."""
+	out = df.copy()
+	numeric_cols = out.select_dtypes(include=["number"]).columns
+	if len(numeric_cols) > 0:
+		out.loc[:, numeric_cols] = out.loc[:, numeric_cols].fillna(-1)
+	return out
 
 
 
@@ -371,6 +408,8 @@ def main() -> None:
 	if missing:
 		raise ValueError(f"Missing required columns: {', '.join(missing)}")
 
+	df["POS"] = pd.to_numeric(df["POS"], errors="coerce").astype("Int64")
+
 	df["variant_id"] = df.apply(lambda row: f"{row['CHROM']}:{row['POS']}_{row['REF']}>{row['ALT']}", axis=1)
 
 	detected_variants_df = build_variant_constraints(df)
@@ -388,8 +427,32 @@ def main() -> None:
 		]).reset_index(drop=True)
 
 	continuity_df_with_metrics = compute_continuity_metrics(continuity_df_expl)
+	span_cols = [
+		"segment_first_mutation_pos",
+		"segment_last_mutation_pos",
+		"segment_mutation_span"
+	]
+
+	for col in ["number", *span_cols]:
+		if col in continuity_df.columns:
+			continuity_df[col] = pd.to_numeric(continuity_df[col], errors="coerce").astype("Int64")
 	
 	variant_summary_df = df.merge(continuity_df_with_metrics, on="variant_id", how="left")
+
+	# Ensure merged integer columns keep integer semantics with missing values as <NA>.
+	for col in [
+		"number",
+		"starting_pos",
+		"size",
+		"size_chain_0",
+		"size_chain_1",
+		"total_size",
+		*span_cols,
+	]:
+		if col in variant_summary_df.columns:
+			variant_summary_df[col] = pd.to_numeric(variant_summary_df[col], errors="coerce").astype("Int64")
+
+	variant_summary_df["has_chain_assignment"] = variant_summary_df["number"].notna().astype("boolean")
 	try:
 		summarize_major_chain_by_chromosome(variant_summary_df, output_prefix.parent / f"{output_prefix.name}.chain_proportions_by_chromosome.pdf")
 	except Exception as e:
@@ -401,9 +464,13 @@ def main() -> None:
 
 	chains_out.parent.mkdir(parents=True, exist_ok=True)
 
-	continuity_df.to_csv(chains_out, sep="\t", index=False)
-	variant_summary_df.to_csv(variants_out, sep="\t", index=False)
-	outliers_df.to_csv(outliers_out, sep="\t", index=False)
+	continuity_export_df = fill_missing_numeric_with_minus_one(continuity_df)
+	variant_export_df = fill_missing_numeric_with_minus_one(variant_summary_df)
+	outliers_export_df = fill_missing_numeric_with_minus_one(outliers_df)
+
+	continuity_export_df.to_csv(chains_out, sep="\t", index=False)
+	variant_export_df.to_csv(variants_out, sep="\t", index=False)
+	outliers_export_df.to_csv(outliers_out, sep="\t", index=False)
 
 	print(f"Input variants: {len(df)}")
 

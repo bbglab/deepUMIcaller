@@ -80,6 +80,7 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 include { QUALIMAP_BAMQC                    as QUALIMAPQCRAW               } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCALLMOLECULES      } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCFINAL             } from '../modules/nf-core/qualimap/bamqc/main'
 
 
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                 } from '../modules/nf-core/samtools/depth/main'
@@ -492,7 +493,7 @@ workflow DEEPUMICALLER {
 
         if (params.perform_qcs){
             // requires input coordinate sorted
-            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, original_targetsfile)
+            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it -> it[1]}.collect())
         }
 
@@ -517,8 +518,11 @@ workflow DEEPUMICALLER {
 
         // Quality check
         if (params.perform_qcs){
-            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, original_targetsfile)
+            QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it -> it[1]}.collect())
+
+            QUALIMAPQCFINAL(SORTBAMDUPLEXCONS.out.bam, original_targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCFINAL.out.results.map{it -> it[1]}.collect())
 
             SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_globalbed }
             COVERAGEGLOBAL(duplex_filt_bam_n_globalbed, [])

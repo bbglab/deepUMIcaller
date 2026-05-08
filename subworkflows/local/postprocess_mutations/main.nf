@@ -101,7 +101,6 @@ workflow POSTPROCESS_MUTATIONS {
     // think well which is the best way to output this information, if a VCF or a TSV with only the updated depths or what.
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
-    
 
     PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
     .join( PATCHDP.out.patched_vcf )

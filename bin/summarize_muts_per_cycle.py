@@ -145,7 +145,7 @@ def main(initial):
     number_of_initial_positions = initial
 
     # Recursively find all *MutsPerCycle.dat.csv files
-    csv_files = glob.glob(os.path.join('./', '**', '*MutsPerCycle.dat.csv'), recursive=True)
+    csv_files = glob.glob(os.path.join('./', '**', '*MutsPerCycle_mqc.csv'), recursive=True)
 
     ratios_per_file = {}
 
@@ -169,15 +169,15 @@ def main(initial):
     ratios_df.index.name = 'Sample'
     if 'all' in ratios_df.columns:
         ratios_df = ratios_df.sort_values(by='all', ascending=False)
-    ratios_df.to_csv('ratios_per_sample.tsv', sep='\t')
-    print("\nSaved ratios table to ratios_per_sample.tsv (sorted by 'all' ratio descending)")
+    ratios_df.to_csv('ratios_per_sample_mqc.tsv', sep='\t')
+    print("\nSaved ratios table to ratios_per_sample_mqc.tsv (sorted by 'all' ratio descending)")
 
-    with PdfPages('mutation_ratios_summary.pdf') as pdf:
+    with PdfPages('mutation_ratios_summary_mqc.pdf') as pdf:
         plot_ratios_heatmap(ratios_df, number_of_initial_positions, pdf)
         plot_logfc_heatmap(ratios_df, number_of_initial_positions, pdf)
         plot_ratios_lines(ratios_df, number_of_initial_positions, pdf)
         plot_samples_lines(ratios_df, number_of_initial_positions, pdf)
-    print("Saved all plots to mutation_ratios_summary.pdf")
+    print("Saved all plots to mutation_ratios_summary_mqc.pdf")
 
     print(f"Ratio of mean(first {number_of_initial_positions} positions) / mean(rest):")
     print(ratios_df)
@@ -194,8 +194,8 @@ def main(initial):
     # Write summary of samples passing the threshold to a file
     if passing_samples:
         passing_df = pd.DataFrame(passing_samples)
-        passing_df.to_csv('samples_passing_ratio_threshold.tsv', sep='\t', index=False)
-        print("\nSaved summary of samples passing the threshold to samples_passing_ratio_threshold.tsv")
+        passing_df.to_csv('samples_passing_ratio_threshold_mqc.tsv', sep='\t', index=False)
+        print("\nSaved summary of samples passing the threshold to samples_passing_ratio_threshold_mqc.tsv")
     else:
         print("\nNo samples passed the ratio > 2 threshold.")
 

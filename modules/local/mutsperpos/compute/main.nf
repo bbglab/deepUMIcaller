@@ -12,10 +12,11 @@ process MUTS_PER_POS {
     tuple val(meta), path(bam), path(bam_index), path(vcf)
 
     output:
-    tuple val(meta), path("**.png")                 , emit: plots
-    tuple val(meta), path("**MutsPerCycle.dat.csv") , emit: positions_csv
-    tuple val(meta), path("**")                     , emit: others
-    path  "versions.yml"                            , topic: versions
+    tuple val(meta), path("**.png")                         , emit: all_plots
+    tuple val(meta), path("**_BasePerPosWithoutNs_mqc.png") , emit: plots
+    tuple val(meta), path("**_MutsPerCycle_mqc.csv")     , emit: positions_csv
+    tuple val(meta), path("**")                          , emit: others
+    path  "versions.yml"                                 , topic: versions
 
 
     script:
@@ -29,6 +30,11 @@ process MUTS_PER_POS {
                 --inVCF ${prefix}.no_header.vcf \\
                 -o ${prefix} \\
                 ${args}
+    
+    # Rename files for MultiQC recognition
+    mv ${prefix}_MutsPerCycle.dat.csv ${prefix}_MutsPerCycle_mqc.csv
+    mv ${prefix}_BasePerPosWithoutNs.png ${prefix}_BasePerPosWithoutNs_mqc.png
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -39,10 +45,10 @@ process MUTS_PER_POS {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     """
-    touch ${prefix}_BasePerPosInclNs.png
-    touch ${prefix}_BasePerPosWithoutNs.png
-    touch ${prefix}_MutsPerCycle.dat.csv
-    touch ${prefix}.mutsPerRead.png
+    touch ${prefix}_BasePerPosInclNs_mqc.png
+    touch ${prefix}_BasePerPosWithoutNs_mqc.png
+    touch ${prefix}_MutsPerCycle_mqc.csv
+    touch ${prefix}_mutsPerRead_mqc.png
     touch ${prefix}.no_header.vcf
 
     cat <<-END_VERSIONS > versions.yml

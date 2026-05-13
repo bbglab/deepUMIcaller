@@ -11,6 +11,7 @@ extra_fn_clean_exts:
   - ".duplex"
   - ".raw"
   - ".all_molecules"
+  - ".final"
   - "_umi_histogram"
 
 export_plots: true
@@ -25,6 +26,7 @@ top_modules:
       path_filters_exclude:
         - "*.duplex/**"
         - "*.all_molecules/**"
+        - "*.final/**"
 
   - qualimap:
       name: "QualiMAP (all molecules)"
@@ -35,6 +37,7 @@ top_modules:
       path_filters_exclude:
         - "*.raw/**"
         - "*.duplex/**"
+        - "*.final/**"
 
   - qualimap:
       name: "QualiMAP (duplex)"
@@ -45,3 +48,15 @@ top_modules:
       path_filters_exclude:
         - "*.raw/**"
         - "*.all_molecules/**"
+        - "*.final/**"
+
+  - qualimap:
+      name: "QualiMAP (duplex on target only)"
+      info: "This section of the report shows QualiMAP results of the aligned set of duplex reads."
+      anchor: "qualimap_final"
+      path_filters:
+        - "*.final/**"
+      path_filters_exclude:
+        - "*.raw/**"
+        - "*.all_molecules/**"
+        - "*.duplex/**"

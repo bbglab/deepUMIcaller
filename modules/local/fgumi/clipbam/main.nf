@@ -5,7 +5,6 @@ process FGUMI_CLIPBAM {
     conda "bioconda::fgumi bioconda::samtools=1.16.1"
     container 'community.wave.seqera.io/library/bwa_fgumi_samtools:910c3ff2dc301fbf'
 
-
     input:
     tuple val(meta), path(bam)
     path(fasta)

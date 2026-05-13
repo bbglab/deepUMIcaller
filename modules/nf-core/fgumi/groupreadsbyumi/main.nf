@@ -11,9 +11,11 @@ process FGUMI_GROUPREADSBYUMI {
     val(strategy)
 
     output:
-    tuple val(meta), path("*_umi-grouped.bam")  , emit: bam
-    tuple val(meta), path("*_umi_histogram.txt"), emit: histogram
-    path "versions.yml"                         , topic: versions
+    tuple val(meta), path("*_umi-grouped.bam")          , emit: bam
+    tuple val(meta), path("*.family_sizes.txt")         , emit: histogram
+    tuple val(meta), path("*.grouping_metrics.txt")     , emit: grouping_stats
+    tuple val(meta), path("*.position_group_sizes.txt") , emit: position_group_info
+    path "versions.yml"                                 , topic: versions
 
 
     script:
@@ -29,7 +31,7 @@ process FGUMI_GROUPREADSBYUMI {
         --strategy ${strategy_lc} \
         --input $taggedbam \
         --output ${prefix}_umi-grouped.bam \
-        --family-size-histogram ${prefix}_umi_histogram.txt \
+        --metrics ${prefix}_umi-grouped \
         --threads ${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml

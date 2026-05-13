@@ -1,11 +1,9 @@
-process FGBIO_FASTQTOBAM {
+process FGUMI_FASTQTOBAM {
     tag "$meta.id"
     label 'fastq_processing'
-    
-    conda "bioconda::fgbio=2.1.0"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/fgbio:2.1.0--hdfd78af_0' :
-        'biocontainers/fgbio:2.1.0--hdfd78af_0' }"
+
+    conda "bioconda::fgumi"
+    container  'quay.io/biocontainers/fgumi:0.1.3--h54198d6_0' 
 
     input:
     tuple val(meta), path(reads)
@@ -23,20 +21,21 @@ process FGBIO_FASTQTOBAM {
     def sample_name = args.contains("--sample") ? "" : "--sample ${prefix}"
     def library_name = args.contains("--library") ? "" : "--library ${prefix}"
     def output = prefix =~ /\.(bam|cram)$/ ? prefix : "${prefix}.bam"
+    def inputs = reads.collect { it.toString() }.join(' ')
+    def read_structures = meta.read_structure ?: "+T +T"
     """
 
-    fgbio \\
-        --tmp-dir=. \\
-        FastqToBam \\
-        ${args} \\
-        --input ${reads} \\
-        --output ${output} \\
-        ${sample_name} \\
+    fgumi extract \
+        ${args} \
+        --inputs ${inputs} \
+        --output ${output} \
+        --read-structures ${read_structures} \
+        ${sample_name} \
         ${library_name}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 }

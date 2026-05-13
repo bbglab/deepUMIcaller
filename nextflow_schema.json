@@ -170,13 +170,27 @@
                     "type": "integer",
                     "description": "Maximum number of edits",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Maximum number of allowable edits for fgbio's GroupReadsByUmi."
+                    "help_text": "Maximum number of allowable edits for fgumi group."
                 },
                 "groupreadsbyumi_min_map_q": {
                     "type": "integer",
                     "description": "Minimum mapping quality of reads to be grouped.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Minimum mapping quality of reads to be grouped."
+                },
+                "correct_umis_max_mismatches": {
+                    "type": "integer",
+                    "description": "Maximum mismatches for optional UMI correction.",
+                    "default": 2,
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Used by optional fgumi correct step when `umi_file` is provided in the samplesheet."
+                },
+                "correct_umis_min_distance": {
+                    "type": "integer",
+                    "description": "Minimum distance between best and second UMI matches.",
+                    "default": 1,
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Used by optional fgumi correct step when `umi_file` is provided in the samplesheet."
                 }
             }
         },
@@ -196,7 +210,7 @@
                     "type": "string",
                     "description": "Minimum reads to build a consensus read",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to build a consensus read for fgbio CallDuplexConsensusReads."
+                    "help_text": "The minimum reads to build a consensus read for fgumi duplex."
                 }
             }
         },
@@ -210,7 +224,7 @@
                     "type": "number",
                     "description": "The maximum proportion of Ns in a consensus read",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
+                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgumi filter."
                 },
                 "filter_strand_agreement": {
                     "type": "boolean",
@@ -230,19 +244,19 @@
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The minimum reads to keep a consensus for fgumi filter."
                 },
                 "filter_min_baseq_am": {
                     "type": "integer",
                     "description": "Minimum consensus base quality",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgumi filter."
                 },
                 "filter_max_base_error_rate_am": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgumi filter."
                 }
             }
         },
@@ -289,19 +303,19 @@
                     "type": "string",
                     "description": "Minimum reads to keep a consensus",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum reads to keep a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The minimum reads to keep a consensus for fgumi filter."
                 },
                 "filter_min_baseq_duplex": {
                     "type": "integer",
                     "description": "Minimum consensus base quality",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The minimum consensus base quality to keep when calling a consensus for fgumi filter."
                 },
                 "filter_max_base_error_rate_duplex": {
                     "type": "string",
                     "description": "The maximum error rate for a single consensus base",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgbio's FilterConsensusReads."
+                    "help_text": "The maximum error rate for a single consensus base when filtering a consensus for fgumi filter."
                 }
             }
         },

@@ -29,6 +29,11 @@
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
+            "umi_file": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "UMI whitelist file path cannot contain spaces"
+            },
             "bam": {
                 "type": "string",
                 "pattern": "^\\S+\\.bam$",
@@ -47,7 +52,7 @@
             "read_structure": {
                 "type": "string",
                 "pattern": "^.*$",
-                "errorMessage": "Read structure must follow fgbio format (e.g., '8M1S+T 8M1S+T'). See: https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures"
+                "errorMessage": "Read structure must follow fgumi format (e.g., '8M1S+T 8M1S+T'). See: https://github.com/fulcrumgenomics/fgumi/blob/main/docs/src/guide/read-structures.md"
             },
             "parent_dna": {
                 "type": "string",

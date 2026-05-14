@@ -17,6 +17,8 @@ This document describes the output produced by the pipeline.
 
 ```{console}
 {outdir}
+├── annotation                          # only if annotate_mutations=true
+│   └── <sample>.duplex.filtered.vep.vcf.gz
 ├── duplex_reads_bam
 │   ├── <sample>.sorted.bam
 │   └── <sample>.sorted.bam.csi
@@ -71,11 +73,19 @@ Mutations VCF
 ### Key role
 
 - Provides a single-sample VCF with all the mutations detected in duplex reads.
-- Format contains information on non-duplex reads in addition to the duplex BAM information. Also the mean position in read and the standard deviation of this value.
+- Filter flags (`low_mappability`, `low_complex_repetitive`, `nanoseq_snp`, `nanoseq_noise`, `n_rich`, `no_pileup_support`, ...) are annotated in the FILTER column of every record; no variant is discarded from the VCF, leaving filter decisions to the user (or to deepCSA downstream).
+- For each mutation, four variant allele frequency (VAF) values are reported:
+  - **VAF_vd** — VAF as computed by VarDict at calling time.
+  - **VAF** — duplex VAF: ALT duplex consensus reads / all duplex consensus reads at the position (recomputed from `samtools mpileup` over the duplex BAM).
+  - **VAF_AM** — all-molecules VAF: ALT consensus reads (duplex + single-strand) / all consensus reads (recomputed from `samtools mpileup` over the all-molecules BAM).
+  - **VAF_ND** — no-duplex VAF: ALT non-duplex reads / all non-duplex reads covering the position.
+- Each record also carries the mean position in read and the standard deviation of this value.
+- When `annotate_mutations=true`, an Ensembl VEP-annotated VCF is published under `annotation/`.
 
 ### Outputs
 
 - mutations_vcf
+- annotation (only when `annotate_mutations=true`)
 
 ## BAM files
 

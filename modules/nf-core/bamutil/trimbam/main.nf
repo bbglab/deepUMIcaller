@@ -19,8 +19,8 @@ process BAMUTIL_TRIMBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def trim_left = task.ext.trim_left != null ? task.ext.trim_left : 0
-    def trim_right = task.ext.trim_right != null ? task.ext.trim_right : 0
+    def trim_left = task.ext.trim_left ?: 0
+    def trim_right = task.ext.trim_right ?: 0
     """
     bam \\
         trimBam \\

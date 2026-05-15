@@ -213,7 +213,7 @@ workflow DEEPUMICALLER {
 
         // Decide whether we clip the beginning and/or end of the reads or nothing
         if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)            
+            TRIMBAM(FASTQTOBAM.out.bam)
             bam_to_align = TRIMBAM.out.bam
         } else {
             bam_to_align = FASTQTOBAM.out.bam

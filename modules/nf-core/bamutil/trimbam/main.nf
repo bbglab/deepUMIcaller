@@ -9,11 +9,6 @@ process BAMUTIL_TRIMBAM {
 
     input:
     tuple val(meta), path(bam)
-    
-    // TODO
-    // define these values in the modules.config file
-    val(trim_left)
-    val(trim_right)
 
     output:
     tuple val(meta), path("*.bam"), emit: bam
@@ -24,6 +19,8 @@ process BAMUTIL_TRIMBAM {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    def trim_left = task.ext.trim_left ?: 0
+    def trim_right = task.ext.trim_right ?: 0
     """
     bam \\
         trimBam \\

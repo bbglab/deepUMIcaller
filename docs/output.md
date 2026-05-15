@@ -74,12 +74,12 @@ Mutations VCF
 
 - Provides a single-sample VCF with all the mutations detected in duplex reads.
 - Filter flags (`low_mappability`, `low_complex_repetitive`, `nanoseq_snp`, `nanoseq_noise`, `n_rich`, `no_pileup_support`, ...) are annotated in the FILTER column of every record; no variant is discarded from the VCF, leaving filter decisions to the user (or to deepCSA downstream).
-- For each mutation, four variant allele frequency (VAF) values are reported:
+- For each mutation, four variant allele frequency (VAF) values can be computed:
   - **VAF_vd** — VAF as computed by VarDict at calling time.
   - **VAF** — duplex VAF: ALT duplex consensus reads / all duplex consensus reads at the position (recomputed from `samtools mpileup` over the duplex BAM).
   - **VAF_AM** — all-molecules VAF: ALT consensus reads (duplex + single-strand) / all consensus reads (recomputed from `samtools mpileup` over the all-molecules BAM).
   - **VAF_ND** — no-duplex VAF: ALT non-duplex reads / all non-duplex reads covering the position.
-- Each record also carries the mean position in read and the standard deviation of this value.
+- Each record also carries the mean position in read and the standard deviation of this value. These values can be used to identify potential issues with the calling of certain variants.
 - When `annotate_mutations=true`, an Ensembl VEP-annotated VCF is published under `annotation/`.
 
 ### Outputs

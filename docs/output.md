@@ -24,8 +24,8 @@ This document describes the output produced by the pipeline.
 │   └── <sample>.sorted.bam.csi
 ├── metrics
 │   ├── duplex
-│   │   ├── collectseqmetrics
-│   │   ├── collectseqmetricsontarget
+│   │   ├── fgbio_seqmetrics
+│   │   ├── fgbio_seqmetricsontarget
 │   │   ├── familymetrics
 │   │   └── familymetricsontarget
 │   │       ├── <sample>.duplex.pdf
@@ -46,7 +46,7 @@ This document describes the output produced by the pipeline.
 │   └── mutations
 │       ├── mutated_reads
 │       ├── mutsperpos
-│       ├── cohortmutsperpos
+│       ├── mutsperpos_cohort_summary
 │       └── sigprofiler
 │           ├── all
 │           ├── purine
@@ -92,12 +92,12 @@ Mutations VCF
 ### Key role
 
 - BAM files are essential for the downstream analysis to compute the sequencing depth at each position.
-- Having the `amfiltered` BAM file allows you to merge sequencing data from the same sample coming from different libraries and doing the calling together.
+- Having the `amfiltered` BAM file in `processing_files/sortbamamfiltered/` allows you to merge sequencing data from the same sample coming from different libraries and do the calling together.
 
 ### Outputs
 
-- sortbamduplexcons
-- sortbamamfiltered
+- duplex_reads_bam
+- processing_files/sortbamamfiltered
 
 ## Duplex QC metrics
 
@@ -115,8 +115,8 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
-- collectseqmetrics
-- collectseqmetricsontarget
+- fgbio_seqmetrics
+- fgbio_seqmetricsontarget
 
 - discardedcoverageglobal
 - discardedcoveragetargeted
@@ -158,15 +158,15 @@ a).
 
 - Quickly assess the quality of the variants called in the duplex reads. Via simple checks such as the plot of position of the variant in th reads and the mutation frequencies per trinucleotide, you can quickly tell if the variants are occurring based on the expected mutational processes or it is enriched in artifacts. You can also compare the variant calls in purine vs pyrimidine sites and see if there is any obvious differences. No apparent differences a this point does not mean that mutations are all clean.
 
-- cohortmutsperpos includes a representation of the enrichment of mutations at the beginning of the reads for each of the samples in the cohort and for each of the single base substitution types. It also includes a couple of tsv files showing which samples failed the QCs and what are the values of the ratio of mean number of mutations per position found in the first 5 (by default) positions of the read vs the rest of the read.
+- mutsperpos_cohort_summary includes a representation of the enrichment of mutations at the beginning of the reads for each of the samples in the cohort and for each of the single base substitution types. It also includes a couple of tsv files showing which samples failed the QCs and what are the values of the ratio of mean number of mutations per position found in the first 5 (by default) positions of the read vs the rest of the read.
 
 ### Outputs
 
-- cohortmutsperpos
+- mutsperpos_cohort_summary
 - mutsperpos
-- sigprofplot
-- sigprofplotpur
-- sigprofplotpyr
+- sigprofiler/all
+- sigprofiler/purine
+- sigprofiler/pyrimidine
 
 ### Examples
 

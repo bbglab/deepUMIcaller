@@ -15,6 +15,10 @@ VarDict is not calling any variants in the first and last 5 bps of a read.
 
 This should be taken into account when setting the clipping parameters, but also note that since we do the pileup for redefining the frequency of each mutation (ALT_DEPTH) the mutations present in these first positions would still be taken into account.
 
+## Read-end clipping (TrimBam)
+
+When `left_clip` and/or `right_clip` are set, deepUMIcaller trims read ends using [`bamutil trimBam`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam) with the `--clip` option. This clips the ends (soft-clipping) instead of replacing trimmed bases with `N`, so the clipped positions are removed from downstream read content and do not inflate the `N` fraction used by `fgbio FilterConsensusReads`.
+
 ## Internal panel expansion (EXPAND_PANEL)
 
 The first process executed in every run pads the user-supplied `--targetsfile` BED by ±250 bp on each side. The expanded BED is then used for downstream coverage/capture/calling steps, including the on-target version of `fgbio CollectDuplexSeqMetrics`. Users should provide their raw targeted regions; pre-extending the BED is not necessary and would result in double-padding.

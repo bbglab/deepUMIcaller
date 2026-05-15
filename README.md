@@ -33,7 +33,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Fastq to BAM, extracting UMIs ([`fgbio FastqToBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FastqToBam.html))
-3. Clip read ends to remove low-quality bases without converting them to Ns ([`bamutil trimBam --clip`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam); defaults: 10 bp from the 5' end, 0 bp from the 3' end)
+3. Clip a fixed number of bases from read ends without converting them to Ns ([`bamutil trimBam --clip`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam); defaults: 10 bp from the 5' end, 0 bp from the 3' end)
 4. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgbio ZipperBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/ZipperBam.html)), and template-coordinate sort ([`samtools sort`](http://www.htslib.org/doc/samtools.html))
 5. Group reads by UMI ([`fgbio GroupReadsByUmi`](http://fulcrumgenomics.github.io/fgbio/tools/latest/GroupReadsByUmi.html))
 6. Call [duplex consensus][duplex-seq-link] reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))

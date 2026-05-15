@@ -190,7 +190,7 @@ samtools faidx mm39.fa
 
 It should be a BED file in BED4-5-6 format with a single row per exon or continuous genomic region that was targeted.
 
-To get more accurate metrics for on target proportion and possibly other downstream sequencing metrics we recommend providing a BED file with the targeted regions with an extension of 250 bp on each boundary. This will include reads that partially overlap with the target region but not fully.
+**Provide your raw targeted regions — do not pre-extend.** The very first process of every run (`EXPAND_PANEL`) automatically pads the user-supplied `--targetsfile` by ±250 bp on each side, and the expanded BED is what flows through the rest of the pipeline (coverage QC, on-target `fgbio CollectDuplexSeqMetrics`, etc.). As a consequence, "on-target" metrics are computed against `targets ± 250 bp`, not against the literal BED you provide.
 
 ## Optional parameters
 

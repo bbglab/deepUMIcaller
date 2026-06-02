@@ -12,8 +12,8 @@ process SAMTOOLS_MPILEUP {
     path fasta
 
     output:
-    tuple val(meta), path("*.mpileup.gz"), path("*.mpileup.gz.tbi") , emit: mpileup
-    path  "versions.yml"                                            , topic: versions
+    tuple val(meta), path("*.mpileup.tsv.gz"), path("*.mpileup.tsv.gz.tbi") , emit: mpileup
+    path  "versions.yml"                                                    , topic: versions
 
 
     script:
@@ -24,12 +24,12 @@ process SAMTOOLS_MPILEUP {
     """
     samtools mpileup \\
         --fasta-ref ${fasta} \\
-        --output ${prefix}.mpileup \\
+        --output ${prefix}.mpileup.tsv \\
         ${args} \\
         ${intervals_var} \\
         ${bam}
-    bgzip -@${task.cpus} ${prefix}.mpileup
-    tabix -s 1 -b 2 -e 2 ${prefix}.mpileup.gz
+    bgzip -@${task.cpus} ${prefix}.mpileup.tsv
+    tabix -s 1 -b 2 -e 2 ${prefix}.mpileup.tsv.gz
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')

@@ -24,7 +24,7 @@ All input configurations use a CSV file with specific columns depending on the p
 |-------------|-----------------|------------|  
 | `groupreadsbyumi` | `sample`, `bam` | Template-coordinate sorted aligned BAM files ready for fgumi UMI grouping |  
 | `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
-| `allmoleculesfile` | `sample`, `duplexbam`, `csi` | BAM with aligned consensus reads missing AS-XS filtering |  
+| `allmoleculesfile` | `sample`, `duplexbam`, `bai` | BAM with aligned consensus reads missing AS-XS filtering |  
 | `filterconsensus` | `sample`, `bam` | BAM with aligned consensus reads only missing a duplex quality filter and the calling |  
 | `calling` | `sample`, `duplexbam`, `csi` | Final consensus BAM files + index |
 
@@ -38,7 +38,7 @@ You can restart the pipeline from intermediate steps using files produced intern
 | `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
 | `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/processing_files/sortbamamfiltered/` |
 | `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/duplex_reads_bam/` |
-| `allmoleculesfile` | `ALIGNCONSENSUSBAM` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
+| `allmoleculesfile` | `ALIGNCONSENSUSBAM` (coordinate-sorted all-molecules BAM + .bai) | No (only in work/) |
 
 Notes:
 
@@ -222,8 +222,8 @@ nextflow run main.nf \
 
 **Requirements:**
 
-- BAM files must be coordinate-sorted
-- BAM files must contain UMI information in read names/tags
+- BAM files must be **template-coordinate sorted** (`samtools sort --template-coordinate`); this is the sort order required by `fgbio GroupReadsByUmi`
+- BAM files must contain UMI information stored in the `RX` BAM tag (as produced by `fgbio FastqToBam`)
 - Files must be accessible from compute nodes
 
 **Expected Output:**
@@ -306,7 +306,7 @@ nextflow run main.nf \
 
 **Requirements:**
 
-- BAM files must contain fully processed duplex consensus reads
+- BAM files must contain coordinate-sorted aligned duplex consensus reads **before** the AS-XS mappability filter has been applied (i.e. equivalent to deepUMIcaller's `SORTBAMALLMOLECULES` output)
 - CSI index files must be provided for each BAM
 - Files must be ready for all-molecules analysis
 

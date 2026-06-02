@@ -33,7 +33,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Fastq to BAM, extracting UMIs ([`fgumi extract`](https://github.com/fulcrumgenomics/fgumi))
-3. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgumi zipper`](https://github.com/fulcrumgenomics/fgumi)), and template-coordinate sort ([`fgumi sort`](https://github.com/fulcrumgenomics/fgumi))
+3. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgumi zipper`](https://github.com/fulcrumgenomics/fgumi)), and coordinate sort ([`fgumi sort`](https://github.com/fulcrumgenomics/fgumi))
 4. Group reads by UMI ([`fgumi group`](https://github.com/fulcrumgenomics/fgumi))
 5. Call [duplex consensus][duplex-seq-link] reads ([`fgumi duplex`](https://github.com/fulcrumgenomics/fgumi))
       1. Collect duplex sequencing specific metrics ([`fgumi duplex-metrics`](https://github.com/fulcrumgenomics/fgumi))

@@ -92,15 +92,11 @@ include { PICARD_MERGESAMFILES              as MERGEBAMS                    } fr
 
 
 // Sorting
-include { SAMTOOLS_SORT                     as SORTBAMRAW                   } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMRAWTEMPCOORDINATE     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES          } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED            } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMMERGED                } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMAMHQ                  } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } from '../modules/nf-core/samtools/sort/main'
-
-// include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
 
 include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
@@ -234,14 +230,13 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
 
-        SORTBAMRAW(ALIGNRAWBAM.out.bam)
         if (params.perform_qcs) {
-            QUALIMAPQCRAW(SORTBAMRAW.out.bam, ch_targetsfile)
+            QUALIMAPQCRAW(ALIGNRAWBAM.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
         // Combine sorted BAMs with the flag and branch
-        SORTBAMRAW.out.bam
+        ALIGNRAWBAM.out.bam
             .combine(INPUT_CHECK.out.splitted_input)
             .branch { meta, bam, flag ->
                 split: flag == true
@@ -253,7 +248,7 @@ workflow DEEPUMICALLER {
 
         // Handle normal mode (no splitting)
         aligned_raw_bam_normal = branched_bams.normal
-            .join(SORTBAMRAW.out.csi)
+            .join(ALIGNRAWBAM.out.bai)
 
         // Handle split mode (with merging)
         branched_bams.split
@@ -296,7 +291,7 @@ workflow DEEPUMICALLER {
                         }
                 )
                 .map { meta, bam -> [meta, bam] } // Ensure correct structure
-        }else {
+        } else {
             // The BAI index is dropped here because downstream processes only require the BAM file and its metadata.  
             def drop_bai_index = { meta, bam, _bai -> tuple(meta, bam) }  
             aligned_raw_bam = aligned_raw_bam.map(drop_bai_index)  
@@ -397,12 +392,10 @@ workflow DEEPUMICALLER {
         // MODULE: Align with bwa mem
         ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir)
 
-        SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
-
         if (params.split_by_chrom) {
 
             // Group BAMs by original sample name
-            SORTBAMALLMOLECULES.out.bam
+            ALIGNCONSENSUSBAM.out.bam
             .map { meta, bam -> 
                 def sample = meta.sample
                 tuple(sample, meta, bam)
@@ -421,8 +414,8 @@ workflow DEEPUMICALLER {
             MERGEBAMCHROM(bam_n_index_all_molecules)
             all_molecules_bam_complete_n_index = MERGEBAMCHROM.out.bam_bai
         } else {
-            SORTBAMALLMOLECULES.out.bam
-            .join( SORTBAMALLMOLECULES.out.csi )
+            ALIGNCONSENSUSBAM.out.bam
+            .join( ALIGNCONSENSUSBAM.out.bai )
             .set { all_molecules_bam_complete_n_index }
         }
     }

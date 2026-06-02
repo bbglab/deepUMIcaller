@@ -38,7 +38,7 @@ You can restart the pipeline from intermediate steps using files produced intern
 | `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
 | `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/processing_files/sortbamamfiltered/` |
 | `calling` | `SORTBAMDUPLEXCONS` (coordinate-sorted duplex BAM + .csi) | Yes → `{outdir}/duplex_reads_bam/` |
-| `allmoleculesfile` | `SORTBAMALLMOLECULES` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
+| `allmoleculesfile` | `ALIGNCONSENSUSBAM` (coordinate-sorted all-molecules BAM + .csi) | No (only in work/) |
 
 Notes:
 

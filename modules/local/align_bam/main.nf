@@ -10,8 +10,9 @@ process ALIGN_BAM {
     path index_dir
 
     output:
-    tuple val(meta), path("*.mapped.bam"), emit: bam
-    path "versions.yml"                  , topic: versions
+    tuple val(meta), path("*.mapped.bam")       , emit: bam
+    tuple val(meta), path("*.mapped.bam.bai")   , emit: bai
+    path "versions.yml"                         , topic: versions
 
 
     script:
@@ -28,9 +29,13 @@ process ALIGN_BAM {
             --input /dev/stdin \
             --unmapped ${unmapped_bam} \
             --reference \$FASTA \
+            --threads ${task.cpus} \\
+        | fgumi sort --input /dev/stdin \
+            --output ${prefix}.mapped.bam \
+            --memory-reserve 2GiB \
+            --order coordinate \
+            --write-index true \
             --threads ${task.cpus} \
-        | fgumi sort --input /dev/stdin \\
-            --output ${prefix}.mapped.bam --order template-coordinate
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

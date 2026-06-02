@@ -3,7 +3,7 @@ process FGUMI_FASTQTOBAM {
     label 'fastq_processing'
 
     conda "bioconda::fgumi"
-    container  'quay.io/biocontainers/fgumi:0.1.3--h54198d6_0' 
+    container  'quay.io/biocontainers/fgumi:0.2.0--h54198d6_0' 
 
     input:
     tuple val(meta), path(fastqs)

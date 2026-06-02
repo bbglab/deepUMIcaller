@@ -3,7 +3,7 @@ process ALIGN_BAM {
     label 'alignment_intensive'
 
     conda "bioconda::fgumi bioconda::bwa=0.7.17"
-    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:910c3ff2dc301fbf'
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:ce116bbcff4b958c'
 
     input:
     tuple val(meta), path(unmapped_bam)

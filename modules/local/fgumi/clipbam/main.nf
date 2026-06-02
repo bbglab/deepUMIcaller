@@ -3,7 +3,7 @@ process FGUMI_CLIPBAM {
     label 'bam_processing_heavy'
 
     conda "bioconda::fgumi bioconda::samtools=1.16.1"
-    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:910c3ff2dc301fbf'
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:ce116bbcff4b958c'
 
     input:
     tuple val(meta), path(bam)

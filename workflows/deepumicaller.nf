@@ -20,6 +20,8 @@ include { process_bams              } from '../modules/local/utils'
 //
 include { INPUT_CHECK                                                           } from '../subworkflows/local/input_check'
 
+include { EXPAND_PANEL                                                          } from '../modules/local/expand_regions/main'
+
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
 include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
@@ -78,6 +80,7 @@ include { PICARD_BEDTOINTERVALLIST          as BEDTOINTERVAL               } fro
 include { QUALIMAP_BAMQC                    as QUALIMAPQCRAW               } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCALLMOLECULES      } from '../modules/nf-core/qualimap/bamqc/main'
 include { QUALIMAP_BAMQC                    as QUALIMAPQCDUPLEX            } from '../modules/nf-core/qualimap/bamqc/main'
+include { QUALIMAP_BAMQC                    as QUALIMAPQCFINAL             } from '../modules/nf-core/qualimap/bamqc/main'
 
 
 include { SAMTOOLS_DEPTH                    as COMPUTEDEPTH                 } from '../modules/nf-core/samtools/depth/main'
@@ -144,12 +147,14 @@ workflow DEEPUMICALLER {
    
 
     // Create value channels for targets and global exons files (if provided)
-    ch_targetsfile = params.targetsfile ? file(params.targetsfile, checkIfExists: true) : channel.empty()
-    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : file(params.targetsfile, checkIfExists: true)
+    original_targetsfile = file(params.targetsfile, checkIfExists: true)
+    EXPAND_PANEL(
+        channel.of([ [ id:"${original_targetsfile.getSimpleName()}" ], original_targetsfile ])
+    )
+    ch_targetsfile = EXPAND_PANEL.out.expanded_bed.first().map{it -> it[1]}
+    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : ch_targetsfile.first()
 
-
-    targets_bed = channel.of([ [ id:"${file(params.targetsfile).getSimpleName()}" ], ch_targetsfile ])
-    BEDTOINTERVAL(targets_bed, ch_ref_fasta_dict, [])
+    BEDTOINTERVAL(EXPAND_PANEL.out.expanded_bed, ch_ref_fasta_dict, [])
 
 
     
@@ -433,7 +438,7 @@ workflow DEEPUMICALLER {
             .map { meta, bam -> "sample,bam,parent_dna\n${meta.id},${params.outdir}/processing_files/all_molecules_reads_bam/${bam.name},${meta.parent_dna}\n" }
             .collectFile(name: 'samplesheet_bam_filtered_inputs.csv', storeDir: "${params.outdir}/pipeline_info", skip: 1, keepHeader: true)
 
-        ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { discarded_bam_targeted }
+        ASMINUSXS.out.discarded_bam.map{it -> [it[0], original_targetsfile, it[1]]}.set { discarded_bam_targeted }
         DISCARDEDCOVERAGETARGETED(discarded_bam_targeted, [])
 
         ASMINUSXS.out.discarded_bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { discarded_bam }
@@ -488,7 +493,7 @@ workflow DEEPUMICALLER {
 
         if (params.perform_qcs){
             // requires input coordinate sorted
-            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, params.targetsfile)
+            QUALIMAPQCALLMOLECULES(SORTBAMAMHQ.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCALLMOLECULES.out.results.map{it -> it[1]}.collect())
         }
 
@@ -516,10 +521,13 @@ workflow DEEPUMICALLER {
             QUALIMAPQCDUPLEX(SORTBAMDUPLEXCONS.out.bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCDUPLEX.out.results.map{it -> it[1]}.collect())
 
+            QUALIMAPQCFINAL(SORTBAMDUPLEXCONS.out.bam, original_targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCFINAL.out.results.map{it -> it[1]}.collect())
+
             SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_global_exons_file, it[1]]}.set { duplex_filt_bam_n_globalbed }
             COVERAGEGLOBAL(duplex_filt_bam_n_globalbed, [])
-            
-            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], ch_targetsfile, it[1]]}.set { duplex_filt_bam_n_targetedbed }
+
+            SORTBAMDUPLEXCONS.out.bam.map{it -> [it[0], original_targetsfile, it[1]]}.set { duplex_filt_bam_n_targetedbed }
             COVERAGETARGETED(duplex_filt_bam_n_targetedbed, [])
 
             // MULTIQCDUPLEX: Early report with accumulated QC files (no software versions yet)

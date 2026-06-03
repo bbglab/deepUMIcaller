@@ -5,6 +5,7 @@ include { BEDTOOLS_MERGE         as READJUSTREGIONS_NOAMP   } from '../../../mod
 
 include { SAMTOOLS_MPILEUP       as PILEUPBAM         } from '../../../modules/nf-core/samtools/mpileup/main'
 include { SAMTOOLS_MPILEUP       as PILEUPBAMALL      } from '../../../modules/nf-core/samtools/mpileup/main'
+include { SAMTOOLS_MPILEUP       as PILEUPBAMALLCOMP  } from '../../../modules/nf-core/samtools/mpileup/main'
 
 include { NS_X_POSITION          as NSXPOSITION       } from '../../../modules/local/count_ns/main'
 
@@ -80,6 +81,13 @@ workflow POSTPROCESS_MUTATIONS {
     .set { ch_bamall_bai_bed }
 
     PILEUPBAMALL(ch_bamall_bai_bed, reference_fasta)
+
+    if (params.report_full_pileup) {
+        bam_n_index_all_mol
+        .join( readjust_amp_out.regions_plus_variants_bed )
+        .set { ch_bamam_bai_bed }
+        PILEUPBAMALLCOMP(ch_bamam_bai_bed, reference_fasta)
+    }
     
     QUERYTABIX(ch_pileup_vcfbed)
 
@@ -93,7 +101,6 @@ workflow POSTPROCESS_MUTATIONS {
     // think well which is the best way to output this information, if a VCF or a TSV with only the updated depths or what.
     // also think whether it makes sense to remove strand bias flags from the VCF file
     //   maybe it makes 
-    
 
     PILEUPBAMALL.out.mpileup.map{ it -> [it[0], it[1]] }
     .join( PATCHDP.out.patched_vcf )

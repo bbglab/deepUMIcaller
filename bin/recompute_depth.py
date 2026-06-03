@@ -85,6 +85,18 @@ def count_freq_in_row(elements_in_row, searching_elems):
         dp += elements_in_row.get(search, 0)
     return dp
 
+def remove_pstd_if_single(filter, variant_depth):
+    if variant_depth != "1":
+        return filter
+
+    filters = filter.split(";")
+    if "pSTD" in filters:
+        filters.remove("pSTD")
+        if len(filters) == 0:
+            return 'PASS'
+        return ";".join(filters)
+    return filter
+
 
 def update_vcf_fields(row, suffix = ''):
     # update the formats
@@ -100,7 +112,10 @@ def update_vcf_fields(row, suffix = ''):
         info_dict = dict(item.split("=", 1) for item in row["INFO"].split(";") if "=" in item)
         formats_values["PMN"] = info_dict.get("PMEAN", "")
         formats_values["PST"] = info_dict.get("PSTD", "")
-    
+        
+        # remove pSTD if variant supported by a single read
+        row["FILTER"] = remove_pstd_if_single(row["FILTER"], formats_values["VD"])
+
     if row["NEW_FILTER"] != "":
         if row["FILTER"] == "PASS":
             filt = row["NEW_FILTER"]
@@ -114,23 +129,36 @@ def update_vcf_fields(row, suffix = ''):
     return (updfilt, ":".join(formats_values.keys()), ":".join(formats_values.values()) )
 
 
-def find_mutated_reads(bases_list, reads_list, alt, alt_dp):
+def find_mutated_reads(bases_list, reads_list, alt, alt_dp, report_non_mutated = False, ref = None):
     """
-    Docstring for find_mutated_reads
-    
-    :param bases_list: Description
-    :param reads_list: Description
-    :param alt: Description
-    :param alt_dp: Description
+    Find reads supporting the alternate allele(s) and optionally the reference allele(s).
+
+    :param bases_list: List of bases at a position from mpileup.
+    :param reads_list: List of read names corresponding to bases_list.
+    :param alt: Single alternate allele string or a list of alternate allele strings.
+    :param alt_dp: Expected alternate allele depth (number of occurrences to find).
+    :param report_non_mutated: Whether to also collect reads supporting the reference allele.
+    :param ref: Single reference allele string or a list of reference allele strings.
     """
+    if isinstance(alt, str):
+        alt = [alt]
+    if isinstance(ref, str):
+        ref = [ref]
+    elif ref is None:
+        ref = []
+
     mutated_reads = []
+    ref_reads = []
     for i, base in enumerate(bases_list):
-        if base == alt:
+        if base in alt:
             mutated_reads.append(reads_list[i])
             alt_dp -= 1
-            if alt_dp == 0:
+            if alt_dp == 0 and not report_non_mutated:
                 break
-    return mutated_reads
+        elif report_non_mutated and base in ref:
+            ref_reads.append(reads_list[i])
+
+    return mutated_reads, ref_reads
 
 
 def recompute_depth(vcf,
@@ -166,12 +194,12 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
                 info_vcf.append(
-                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}", [])
+                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}", [], [])
                         )
                 # print(info_vcf[-1])
             else:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}", [])
+                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}", [], [])
                         )
 
         elif var_tp == "COMPLEX":
@@ -184,12 +212,12 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
                 
                 info_vcf.append(
-                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}", [])
+                            (total_dp, ref_dp, 0, count_ns, f"{not_searched_filter}{var_tp};{not_supported_filter}", [], [])
                         )
                 # print(info_vcf[-1])
             else:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}", [])
+                            (0, 0, 0, 0, f"{not_searched_filter}{var_tp};{not_supported_filter}", [], [])
                         )
 
         elif var_tp == "MNV":
@@ -245,13 +273,14 @@ def recompute_depth(vcf,
                          alt_dp_count,
                          round(ns_dp_count / pos_count),
                          f"",
-                         [] # FIXME implement mutated reads for MNVs
+                         [], # FIXME implement mutated reads for MNVs
+                         []
                          )
                     )
 
             elif pos_count == 0:
                 info_vcf.append(
-                            (0, 0, 0, 0, f"{not_supported_filter}", [])
+                            (0, 0, 0, 0, f"{not_supported_filter}", [], [])
                         )
 
             else:
@@ -261,7 +290,7 @@ def recompute_depth(vcf,
                      0,
                      round(ns_dp_count / pos_count),
                      f"{not_supported_filter}",
-                     [])
+                     [], [])
                 )
 
         elif var_tp == "DELETION":
@@ -285,13 +314,11 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs                
 
             if alt_dp > 0:
-                mutated_reads_1 = find_mutated_reads(mpileup_row["SPLIT_bases"],
-                                                   mpileup_row["SPLIT_reads"],
-                                                   f".{search}", alt_dp)
-                mutated_reads_2 = find_mutated_reads(mpileup_row["SPLIT_bases"],
-                                                   mpileup_row["SPLIT_reads"],
-                                                   f",{search}", alt_dp)
-                mutated_reads = mutated_reads_1 + mutated_reads_2
+                mutated_reads, non_mutated_reads = find_mutated_reads(mpileup_row["SPLIT_bases"],
+                                                                            mpileup_row["SPLIT_reads"],
+                                                                            [f".{search}", f",{search}"], alt_dp,
+                                                                            True, ['.', ',']
+                                                                            )
 
                 info_vcf.append(
                         (total_dp,
@@ -299,7 +326,8 @@ def recompute_depth(vcf,
                             alt_dp,
                             count_ns,
                             f"",
-                            mutated_reads)
+                            mutated_reads,
+                            non_mutated_reads)
                     )
             else:
                 info_vcf.append(
@@ -308,6 +336,7 @@ def recompute_depth(vcf,
                             0,
                             count_ns,
                             f"{not_supported_filter}",
+                            [],
                             [])
                     )
 
@@ -336,13 +365,11 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
             if alt_dp > 0:
-                mutated_reads_1 = find_mutated_reads(mpileup_row["SPLIT_bases"],
-                                                   mpileup_row["SPLIT_reads"],
-                                                   f".{search}", alt_dp)
-                mutated_reads_2 = find_mutated_reads(mpileup_row["SPLIT_bases"],
-                                                   mpileup_row["SPLIT_reads"],
-                                                   f",{search}", alt_dp)
-                mutated_reads = mutated_reads_1 + mutated_reads_2
+                mutated_reads, non_mutated_reads = find_mutated_reads(mpileup_row["SPLIT_bases"],
+                                                                            mpileup_row["SPLIT_reads"],
+                                                                            [f".{search}", f",{search}"], alt_dp,
+                                                                            True, ['.', ',']
+                                                                            )
 
                 info_vcf.append(
                         (total_dp,
@@ -350,7 +377,8 @@ def recompute_depth(vcf,
                             alt_dp,
                             count_ns,
                             f"",
-                            mutated_reads)
+                            mutated_reads,
+                            non_mutated_reads)
                     )
             else:
                 info_vcf.append(
@@ -359,6 +387,7 @@ def recompute_depth(vcf,
                             0,
                             count_ns,
                             f"{not_supported_filter}",
+                            [],
                             [])
                     )
             # print(info_vcf[-1])
@@ -383,16 +412,18 @@ def recompute_depth(vcf,
                 total_dp = mpileup_row["DEPTH"] - count_ns - deleted_nucs
 
             if alt_dp > 0:
-                mutated_reads = find_mutated_reads(mpileup_row["SPLIT_bases"],
+                mutated_reads, non_mutated_reads = find_mutated_reads(mpileup_row["SPLIT_bases"],
                                                    mpileup_row["SPLIT_reads"],
-                                                   row["ALT"], alt_dp)
+                                                   row["ALT"], alt_dp,
+                                                   True, ['.', ','])
                 info_vcf.append(
                         (total_dp,
                             ref_dp,
                             alt_dp,
                             count_ns,
                             f"",
-                            mutated_reads)
+                            mutated_reads,
+                            non_mutated_reads)
                     )
             else:
                 info_vcf.append(
@@ -401,6 +432,7 @@ def recompute_depth(vcf,
                             0,
                             count_ns,
                             f"{not_supported_filter}",
+                            [],
                             []
                             )
                     )
@@ -417,7 +449,8 @@ def recompute_depth(vcf,
     alt_dp,
     ns_dp,
     new_filter,
-    mutated_reads
+    mutated_reads_all,
+    non_mutated_reads_all,
     ) = zip(*info_vcf)
 
     vcf["TOT_DP"] = tot_dp
@@ -425,13 +458,14 @@ def recompute_depth(vcf,
     vcf["ALT_DP"] = alt_dp
     vcf["Ns_DP"] = ns_dp
     vcf["NEW_FILTER"] = new_filter
-    vcf["MUTATED_READS"] = mutated_reads
+    vcf["MUTATED_READS"] = mutated_reads_all
+    vcf["REFERENCE_READS"] = non_mutated_reads_all
 
     print("Done\nUpdating VCF columns...", end = "")
     vcf[["FILTER", "FORMAT", "SAMPLE"]] = vcf.apply(lambda x: pd.Series(update_vcf_fields(x, suffix = suffix_label)), axis = 1)
     print("\nDONE")
     
-    return vcf[["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]], vcf[["CHROM", "POS", "REF", "ALT", "MUTATED_READS"]]
+    return vcf[["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "SAMPLE"]], vcf[["CHROM", "POS", "REF", "ALT", "MUTATED_READS", "REFERENCE_READS"]]
 
 
 
@@ -521,7 +555,7 @@ def main(mpileup_file, vcf_file, output_filename, suffix = ''):
     # Initialize the mutated reads file with a header
     vcf_out = f"{output_filename}.vcf"
     mut_reads_out = f"{output_filename}.mutated_reads.tsv"
-    pd.DataFrame(columns=["CHROM", "POS", "REF", "ALT", "MUTATED_READS"]).to_csv(
+    pd.DataFrame(columns=["CHROM", "POS", "REF", "ALT", "MUTATED_READS", "REFERENCE_READS"]).to_csv(
         mut_reads_out, sep='\t', index=False
     )
 

@@ -3,7 +3,7 @@ process FGUMI_CLIPBAM {
     label 'bam_processing_heavy'
 
     conda "bioconda::fgumi bioconda::samtools=1.16.1"
-    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:ce116bbcff4b958c'
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:86e1d6ef7afef498'
 
     input:
     tuple val(meta), path(bam)
@@ -21,7 +21,7 @@ process FGUMI_CLIPBAM {
     prefix = "${meta.id}${prefix}"
     def manual_clipping = task.ext.extra_clipping ?: ""
     """
-    samtools sort -n -@ ${task.cpus} -u $bam \
+    samtools sort -n -@ ${task.cpus} -u $bam \\
         | fgumi clip \
             --input /dev/stdin \
             --reference ${fasta} \

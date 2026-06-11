@@ -4,7 +4,7 @@ process FGUMI_GROUPREADSBYUMI {
     label 'groupreads_io'
 
     conda "bioconda::fgumi"
-    container  'quay.io/biocontainers/fgumi:0.2.0--h54198d6_0' 
+    container  'quay.io/biocontainers/fgumi:0.3.0--h54198d6_0' 
 
     input:
     tuple val(meta), path(taggedbam)

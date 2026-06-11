@@ -3,7 +3,7 @@ process ALIGN_BAM {
     label 'alignment_intensive'
 
     conda "bioconda::fgumi bioconda::bwa=0.7.17"
-    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:ce116bbcff4b958c'
+    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:86e1d6ef7afef498'
 
     input:
     tuple val(meta), path(unmapped_bam)
@@ -23,8 +23,8 @@ process ALIGN_BAM {
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
 
-    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} \
-        | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \
+    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} \\
+        | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgumi zipper \
             --input /dev/stdin \
             --unmapped ${unmapped_bam} \
@@ -32,6 +32,7 @@ process ALIGN_BAM {
             --threads ${task.cpus} \\
         | fgumi sort --input /dev/stdin \
             --output ${prefix}.mapped.bam \
+            --max-memory auto \
             --memory-reserve 2GiB \
             --order coordinate \
             --write-index true \

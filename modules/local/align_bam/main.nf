@@ -19,7 +19,7 @@ process ALIGN_BAM {
     def bwa_args = task.ext.bwa_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def memory_gb = task.memory.toGiga()
+    def memory_gb = task.memory.toGiga() / 2
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`

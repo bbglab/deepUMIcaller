@@ -19,6 +19,7 @@ process ALIGN_BAM {
     def bwa_args = task.ext.bwa_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
+    def memory_gb = task.memory.toGiga()
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
@@ -32,7 +33,8 @@ process ALIGN_BAM {
             --threads ${task.cpus} \\
         | fgumi sort --input /dev/stdin \
             --output ${prefix}.mapped.bam \
-            --max-memory auto \
+            --max-memory ${memory_gb}GiB \
+            --memory-per-thread false \
             --memory-reserve 2GiB \
             --order coordinate \
             --write-index true \

@@ -147,7 +147,12 @@ def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence 
     # compute family size distributions from duplex stats data
     if isinstance(duplex_metrics_files, list):
         # Read and aggregate multiple files
-        dfs = [pd.read_table(f) for f in duplex_metrics_files]
+        dfs = []
+        for file in duplex_metrics_files:
+            try:
+                dfs.append(pd.read_table(file))
+            except:
+                print(f"File {file} could not be read.")
         data_duplex_families = pd.concat(dfs, ignore_index=True)[['ab_size', 'ba_size', 'count']]
         data_duplex_families = data_duplex_families.groupby(['ab_size', 'ba_size'], as_index=False)['count'].sum()
     else:

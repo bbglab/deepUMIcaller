@@ -27,9 +27,10 @@ This document describes the output produced by the pipeline.
 │   │   ├── fgbio_seqmetrics
 │   │   ├── fgbio_seqmetricsontarget
 │   │   ├── familymetrics
-│   │   └── familymetricsontarget
-│   │       ├── <sample>.duplex.pdf
-│   │       └── metrics_summary.tsv
+│   │   ├── familymetricsontarget
+│   │   │   ├── <sample>.duplex.pdf
+│   │   │   └── metrics_summary.tsv
+│   │   └── groupreadsbyumi
 │   ├── coverage_n_depth
 │   │   ├── duplex
 │   │   │   ├── computedepth

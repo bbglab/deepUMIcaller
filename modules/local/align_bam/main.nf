@@ -43,6 +43,8 @@ process ALIGN_BAM {
             --threads ${task.cpus} \
             --tmp-dir temp_sort_directory/
 
+    rm -rf temp_sort_directory
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')

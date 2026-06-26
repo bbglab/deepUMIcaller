@@ -24,6 +24,8 @@ process ALIGN_BAM {
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
 
+    mkdir temp_sort_directory
+
     fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} \\
         | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgumi zipper \
@@ -39,6 +41,7 @@ process ALIGN_BAM {
             --order coordinate \
             --write-index true \
             --threads ${task.cpus} \
+            --tmp-dir temp_sort_directory/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

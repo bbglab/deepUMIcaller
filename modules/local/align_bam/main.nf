@@ -2,8 +2,8 @@ process ALIGN_BAM {
     tag "$meta.id"
     label 'alignment_intensive'
 
-    conda "bioconda::fgumi bioconda::bwa=0.7.17"
-    container 'community.wave.seqera.io/library/bwa_fgumi_samtools:86e1d6ef7afef498'
+    conda "bioconda::fgumi bioconda::bwa-mem3 bioconda::samtools"
+    container 'wave.seqera.io/wt/4fd912ccf535/wave/build:fgumi_bwa-mem3_samtools--aefea4ff0576cc36'
 
     input:
     tuple val(meta), path(unmapped_bam)
@@ -27,7 +27,7 @@ process ALIGN_BAM {
     mkdir temp_sort_directory
 
     fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} \\
-        | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
+        | bwa-mem3 mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgumi zipper \
             --input /dev/stdin \
             --unmapped ${unmapped_bam} \
@@ -47,7 +47,7 @@ process ALIGN_BAM {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
+        bwa-mem3: \$(bwa-mem3 version 2>&1 | head -1)
         fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
@@ -60,7 +60,7 @@ process ALIGN_BAM {
     touch ${prefix}.mapped.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
+        bwa-mem3: \$(bwa-mem3 version 2>&1 | head -1)
         fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """

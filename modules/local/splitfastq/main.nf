@@ -21,8 +21,7 @@ process SPLITFASTQ {
     def read1 = fastqs[0]
     def read2 = fastqs[1]  // assume second read exists
 
-    // Only check workflow parameter, default to 10
-    def split_parts = params.splitfastq_parts ?: 10
+    def split_parts = params.splitfastq_parts
 
     """
     mkdir -p split_fastq

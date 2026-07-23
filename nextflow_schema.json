@@ -78,15 +78,13 @@
                 "run_splitfastq": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable splitting of FASTQ files.",
-                    "hidden": true
+                    "description": "Enable splitting of FASTQ files into parts for parallelisation."
                 },
                 "splitfastq_parts": {
                     "type": "integer",
                     "fa_icon": "fas fa-dna",
                     "description": "Number of parts to split FASTQ files into.",
-                    "default": 5,
-                    "hidden": true
+                    "default": 5
                 },
                 "split_by_chrom": {
                     "type": "boolean",

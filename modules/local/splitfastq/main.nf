@@ -25,7 +25,7 @@ process SPLITFASTQ {
 
     """
     mkdir -p split_fastq
-    seqkit split2 -p ${split_parts} -O split_fastq $args -1 ${read1} -2 ${read2}
+    seqkit split2 -p ${split_parts} -j ${task.cpus} -O split_fastq $args -1 ${read1} -2 ${read2}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -3,7 +3,7 @@ process FGUMI_COLLECTDUPLEXSEQMETRICS {
     label 'collect_duplex_metrics'
 
     conda "bioconda::fgumi"
-    container  'quay.io/biocontainers/fgumi:0.3.0--h54198d6_0' 
+    label 'fgumi_tools' 
 
     input:
     tuple val(meta), path(grouped_bam)

@@ -17,16 +17,18 @@ process ALIGN_BAM {
 
     script:
     def bwa_args = task.ext.bwa_args ?: ''
+    def fgumi_fastq_args = task.ext.fgumi_fastq_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def memory_gb = task.memory.toGiga() / 2
+    def sort_cpus = task.cpus / 2
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
 
     mkdir temp_sort_directory
 
-    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} \\
+    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} ${fgumi_fastq_args} \\
         | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgumi zipper \
             --input /dev/stdin \
@@ -40,7 +42,8 @@ process ALIGN_BAM {
             --memory-reserve 2GiB \
             --order coordinate \
             --write-index true \
-            --threads ${task.cpus} \
+            --sort-threads ${sort_cpus} \
+            --merge-threads ${task.cpus} \
             --tmp-dir temp_sort_directory/
 
     rm -rf temp_sort_directory

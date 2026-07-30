@@ -13,9 +13,6 @@ process SPLITFASTQ {
     tuple val(meta),  path("**/*.gz"), emit: split_fastqs
     path "versions.yml", emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def read1 = fastqs[0]

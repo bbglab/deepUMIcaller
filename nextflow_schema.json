@@ -78,15 +78,15 @@
                 "run_splitfastq": {
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
-                    "description": "Enable splitting of FASTQ files.",
-                    "hidden": true
+                    "description": "Enable splitting of FASTQ files into parts for parallelisation.",
+                    "help_text": "Recommended when an individual FASTQ pair (R1/R2) is larger than ~20GB (~320M reads), as this can lead to long runtimes and high memory usage in the early read preprocessing steps. Split parts are automatically merged back before UMI grouping, so final results are unaffected."
                 },
                 "splitfastq_parts": {
                     "type": "integer",
                     "fa_icon": "fas fa-dna",
                     "description": "Number of parts to split FASTQ files into.",
                     "default": 5,
-                    "hidden": true
+                    "help_text": "Choose a number of parts so that each resulting split FASTQ file (R1/R2) is around 20GB (~320M reads), which keeps per-chunk runtime and memory usage manageable. For example, for a 100GB FASTQ pair use splitfastq_parts: 5."
                 },
                 "split_by_chrom": {
                     "type": "boolean",

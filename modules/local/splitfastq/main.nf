@@ -13,20 +13,16 @@ process SPLITFASTQ {
     tuple val(meta),  path("**/*.gz"), emit: split_fastqs
     path "versions.yml", emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def read1 = fastqs[0]
     def read2 = fastqs[1]  // assume second read exists
 
-    // Only check workflow parameter, default to 20
-    def split_parts = params.splitfastq_parts ?: 20
+    def split_parts = params.splitfastq_parts
 
     """
     mkdir -p split_fastq
-    seqkit split2 -p ${split_parts} -O split_fastq $args -1 ${read1} -2 ${read2}
+    seqkit split2 -p ${split_parts} -j ${task.cpus} -O split_fastq $args -1 ${read1} -2 ${read2}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

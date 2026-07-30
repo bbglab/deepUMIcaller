@@ -184,9 +184,28 @@ Here we list two possibilities for speeding up the processing of the duplex read
 
 ### Split input FASTQs
 
-If the input FASTQs are very big, this will result in long execution times of the first read preprocessing steps. Having the input split across multiple FASTQ files for the same sample will speed up the execution of this steps, or help solve resource-related issues.
+If the input FASTQs are very big, this will result in long execution times of the first read preprocessing steps. Having the input split across multiple FASTQ files for the same sample will speed up the execution of these steps, or help solve resource-related issues.
 
-We are working to allow the user split the FASTQs within deepUMIcaller, but as of now this is not an option.
+**Use Case**: An individual FASTQ pair (R1/R2) is larger than ~20GB (~320M reads).
+
+**Any Input Structure** + Performance Parameters:
+
+```bash
+  --run_splitfastq true \
+  --splitfastq_parts 5
+```
+
+**Guideline**: aim to split so that each resulting FASTQ chunk is around 20GB (~320M reads) — e.g. a 100GB FASTQ pair should use `splitfastq_parts: 5`. FASTQ pairs already at or below this size don't need to be split.
+
+**Note**: this is independent from, and composable with, having [multiple FASTQ rows for the same sample](#2-multiple-fastqs-for-the-same-sample-same-duplex-sequencing-library) (e.g. multiple lanes) — internal splitting is applied per input row, and all resulting parts are automatically merged back before UMI grouping regardless of whether the split happened at the sequencer/upstream or internally in deepUMIcaller.
+
+**Benefits:**
+
+- Parallel processing of large FASTQ inputs
+- Reduced per-chunk runtime and memory requirements
+- Same final results as non-split processing
+
+**Compatible with all input scenarios above.**
 
 ## Intermediate Step Entry Points
 

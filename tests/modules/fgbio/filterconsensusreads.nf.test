@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process FGBIO_FILTERCONSENSUSREADS"
+    script "../../../modules/local/fgbio/filterconsensusreads/main.nf"
+    config "../nextflow.config"
+    process "FGBIO_FILTERCONSENSUSREADS"
+    topics "versions"
+
+    tag "modules"
+    tag "fgbio"
+    tag "filterconsensusreads"
+
+    test("stub run emits filtered BAM") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.consensus.bam', checkIfExists: true)]
+                input[1] = file(params.module_testdata_base + '/reference.fa', checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bam.size() == 1 },
+                { assert process.out.bam[0][0].id == 'B5' },
+                { assert process.out.bam[0][1].name == 'B5.filtered.bam' },
+                { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+}

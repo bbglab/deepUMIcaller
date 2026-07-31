@@ -1,0 +1,38 @@
+nextflow_process {
+
+    name "Test Process FGBIO_GROUPREADSBYUMI"
+    script "../../../modules/nf-core/fgbio/groupreadsbyumi/main.nf"
+    config "../nextflow.config"
+    process "FGBIO_GROUPREADSBYUMI"
+    topics "versions"
+
+    tag "modules"
+    tag "fgbio"
+    tag "groupreadsbyumi"
+
+    test("stub run emits grouped BAM and histogram") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.tagged.bam', checkIfExists: true)]
+                input[1] = 'paired'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bam.size() == 1 },
+                { assert process.out.histogram.size() == 1 },
+                { assert process.out.bam[0][0].id == 'B5' },
+                { assert process.out.bam[0][1].name == 'B5_umi-grouped.bam' },
+                { assert process.out.histogram[0][1].name == 'B5_umi_histogram.txt' },
+                { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+}

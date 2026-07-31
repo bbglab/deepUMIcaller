@@ -9,8 +9,12 @@ This directory contains a comprehensive test suite for the deepUMIcaller pipelin
 ```
 tests/
 ├── main.nf.test           # Main test suite (nf-test format)
+├── modules/               # Process-level nf-test unit tests
+│   ├── nextflow.config    # Local executor config for module tests
+│   └── fgbio/             # fgbio module test cases
 ├── test_data/
 │   ├── input/             # Test input CSV files and FASTQ data
+│   ├── modules/fgbio/     # Lightweight fixtures for process-level unit tests
 │   └── expected_output/   # Reference VCF files for validation
 ├── nextflow.config        # Test-specific configuration
 └── README.md             # This documentation
@@ -42,6 +46,12 @@ nf-test test --tag "filterconsensus"
 nf-test test --tag "calling"
 nf-test test --tag "unmapped_consensus"
 nf-test test --tag "allmoleculesfile"
+
+# Run process-level unit tests
+nf-test test tests/modules/fgbio/groupreadsbyumi.nf.test
+nf-test test tests/modules/fgbio/callduplexconsensusreads.nf.test
+nf-test test tests/modules/fgbio/filterconsensusreads.nf.test
+nf-test test tests/modules/fgbio/collectduplexseqmetrics.nf.test
 
 # Run with verbose output
 nf-test test --verbose

@@ -1,0 +1,34 @@
+nextflow_process {
+
+    name "Test Process UNMAP_BAM"
+    script "../../../modules/local/unmap/main.nf"
+    config "../nextflow.config"
+    process "UNMAP_BAM"
+    topics "versions"
+    tag "modules"
+    tag "local"
+    tag "unmap_bam"
+
+    test("stub run emits noPG BAM") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.input1.bam', checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bam.size() == 1 },
+                { assert process.out.bam[0][0].id == 'B5' },
+                { assert process.out.bam[0][1].name == 'B5.queryname.noPG.bam' },
+                { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+}

@@ -1,0 +1,34 @@
+nextflow_process {
+
+    name "Test Process EXPAND_PANEL"
+    script "../../../modules/local/expand_regions/main.nf"
+    config "../nextflow.config"
+    process "EXPAND_PANEL"
+    topics "versions"
+    tag "modules"
+    tag "local"
+    tag "expand_panel"
+
+    test("stub run emits expanded BED") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.targets.bed', checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.expanded_bed.size() == 1 },
+                { assert process.out.expanded_bed[0][0].id == 'B5' },
+                { assert process.out.expanded_bed[0][1].name == 'B5.expanded250.bed' },
+                { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+}

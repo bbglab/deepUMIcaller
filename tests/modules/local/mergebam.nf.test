@@ -1,0 +1,37 @@
+nextflow_process {
+
+    name "Test Process MERGEBAM"
+    script "../../../modules/local/mergebam/main.nf"
+    config "../nextflow.config"
+    process "MERGEBAM"
+    tag "modules"
+    tag "local"
+    tag "mergebam"
+
+    test("stub run emits merged BAM and BAI") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], [
+                    file(params.module_testdata_base + '/B5.input1.bam', checkIfExists: true),
+                    file(params.module_testdata_base + '/B5.input2.bam', checkIfExists: true)
+                ]]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bam_bai.size() == 1 },
+                { assert process.out.bam_bai[0][0].id == 'B5' },
+                { assert process.out.bam_bai[0][1].name == 'B5.merged.bam' },
+                { assert process.out.bam_bai[0][2].name == 'B5.merged.bam.bai' },
+                { assert process.out.versions.size() == 1 }
+            )
+        }
+    }
+}

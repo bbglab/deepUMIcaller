@@ -52,6 +52,10 @@ nf-test test tests/modules/fgbio/groupreadsbyumi.nf.test
 nf-test test tests/modules/fgbio/callduplexconsensusreads.nf.test
 nf-test test tests/modules/fgbio/filterconsensusreads.nf.test
 nf-test test tests/modules/fgbio/collectduplexseqmetrics.nf.test
+nf-test test tests/modules/local/mergebam.nf.test
+nf-test test tests/modules/local/unmap_bam.nf.test
+nf-test test tests/modules/local/expand_panel.nf.test
+nf-test test tests/modules/local/samtools_filter.nf.test
 
 # Run with verbose output
 nf-test test --verbose

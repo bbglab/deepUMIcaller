@@ -17,7 +17,8 @@ process FGBIO_FILTERCONSENSUSREADS {
 
     script:
     def fgbio_args = task.ext.fgbio_args ?: ''
-    // def samtools_args = task.ext.samtools_args ?: ''
+    def Ns_per_read = (params.maxN_per_read + params.left_clip + params.right_clip) / params.read_length_minus_tag
+    def max_no_call_fraction = Ns_per_read ? "--max-no-call-fraction ${Ns_per_read}" : "--max-no-call-fraction 0.2"
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def mem_gb = 8
@@ -26,22 +27,8 @@ process FGBIO_FILTERCONSENSUSREADS {
     } else {
         mem_gb = task.memory.giga
     }
-    // sort = false
-    // if (sort) {
-    //     fgbio_zipper_bams_output = "/dev/stdout"
-    //     fgbio_zipper_bams_compression = 0 // do not compress if samtools is consuming it
-    //     extra_command = " | samtools sort "
-    //     extra_command += samtools_sort_args
-    //     extra_command += " --template-coordinate"
-    //     extra_command += " --threads "+ task.cpus
-    //     extra_command += " -o " + prefix + ".filtered.bam##idx##"+ prefix + ".filtered.bam.bai"
-    //     extra_command += " --write-index"
-    //     extra_command += samtools_args
-    // } else {
     fgbio_zipper_bams_output = prefix + ".filtered.bam"
     fgbio_zipper_bams_compression = 1
-    // extra_command = ""
-    // }
     """
     fgbio \\
         -Xmx${mem_gb}g \\
@@ -51,7 +38,8 @@ process FGBIO_FILTERCONSENSUSREADS {
         --input $grouped_bam \\
         --ref ${fasta} \\
         --output ${fgbio_zipper_bams_output} \\
-        $fgbio_args;
+        ${max_no_call_fraction} \\
+        ${fgbio_args};
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -59,34 +47,3 @@ process FGBIO_FILTERCONSENSUSREADS {
     END_VERSIONS
     """
 }
-
-// --max-base-error-rate ${max_base_error_rate} \\
-
-// min-reads	M	Int	The minimum number of reads supporting a consensus base/read.	Required	3	 
-// min-base-quality	N	PhredScore	Mask (make N) consensus bases with quality less than this threshold.	Required	1	 
-// max-base-error-rate	e	Double	The maximum error rate for a single consensus base.	Required	3	0.1
-
-// min-reads 3 1 1 
-// min-base-quality 10
-// max-base-error-rate 0.1
-
-// min-reads	M	Int	The minimum number of reads supporting a consensus base/read.	Required	3	 
-// min-base-quality	N	PhredScore	Mask (make N) consensus bases with quality less than this threshold.	Required	1	 
-// max-read-error-rate	E	Double	The maximum raw-read error rate across the entire consensus read.	Required	3	0.025
-// max-base-error-rate	e	Double	The maximum error rate for a single consensus base.	Required	3	0.1
-// max-no-call-fraction	n	Double	Maximum fraction of no-calls in the read after filtering.	Optional	1	0.2
-// min-mean-base-quality	q	PhredScore	The minimum mean base quality across the consensus read.	Optional	1	 
-// require-single-strand-agreement	s	Boolean	Mask (make N) consensus bases where the AB and BA consensus reads disagree (for duplex-sequencing only).	Optional	1	false
-
-// min-reads                3 1 1
-// min-base-quality         10
-// max-read-error-rate      0.025
-// max-base-error-rate      0.1 0.3 0.3
-// max-no-call-fraction     0.2
-// min-mean-base-quality    20 // 
-// require-single-strand-agreement	true
-
-
-// --min-reads ${min_reads} \\
-// --min-base-quality ${min_baseq} \\
-// --max-base-error-rate 0.2 0.05 0.4 \\

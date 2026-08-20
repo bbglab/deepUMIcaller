@@ -1,15 +1,16 @@
 nextflow_process {
 
-    name "Test Process UNMAP_BAM"
-    script "../../../modules/local/unmap/main.nf"
+    name "Test Process ASMINUSXS"
+    script "../../../modules/local/filter_reads/asminusxs/main.nf"
     config "../nextflow.config"
-    process "UNMAP_BAM"
+    process "ASMINUSXS"
     topics "versions"
+
     tag "modules"
     tag "local"
-    tag "unmap_bam"
+    tag "asminusxs"
 
-    test("stub run emits noPG BAM") {
+    test("stub run emits kept and discarded BAMs") {
         tag "stub"
 
         options "-stub"
@@ -17,7 +18,11 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.input1.bam', checkIfExists: true)]
+                input[0] = [
+                    [id: 'B5'],
+                    file(params.module_testdata_base + '/B5.input1.bam', checkIfExists: true),
+                    file(params.module_testdata_base + '/B5.input1.bam.bai', checkIfExists: true)
+                ]
                 """
             }
         }
@@ -26,8 +31,9 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert process.out.bam.size() == 1 },
+                { assert process.out.discarded_bam.size() == 1 },
                 { assert process.out.bam[0][0].id == 'B5' },
-                { assert file(process.out.bam[0][1]).name == 'B5.queryname.noPG.bam' },
+                { assert file(process.out.bam[0][1]).name == 'B5.filtered.AS-XS_10.bam' },
                 { assert topics.versions.size() == 1 }
             )
         }
@@ -44,7 +50,11 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = [[id: 'B5'], file(params.real_testdata_base + '/B5.consensus.bam', checkIfExists: true)]
+                input[0] = [
+                    [id: 'B5'],
+                    file(params.real_testdata_base + '/B5.allmolecules.bam', checkIfExists: true),
+                    file(params.real_testdata_base + '/B5.allmolecules.bam.csi', checkIfExists: true)
+                ]
                 """
             }
         }

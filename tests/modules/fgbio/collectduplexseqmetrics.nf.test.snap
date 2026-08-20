@@ -1,0 +1,74 @@
+{
+    "real run on B5 subset matches snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.duplex_seq_metrics.duplex_family_sizes.txt:md5,0d9eaa12b9aa12b90f173365faa822e0"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        [
+                            "B5.duplex_seq_metrics.duplex_family_sizes.txt:md5,0d9eaa12b9aa12b90f173365faa822e0",
+                            "B5.duplex_seq_metrics.duplex_yield_metrics.txt:md5,f61403b9999ed51daf674260aecea9d7",
+                            "B5.duplex_seq_metrics.family_sizes.txt:md5,21cf2eb5ecbe0ef4cb65c28611d633ad",
+                            "B5.duplex_seq_metrics.umi_counts.txt:md5,f874f69b9045a93dd9fdc504938661d7"
+                        ]
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,4f73859f0a44518190a0be70992654fd"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,897a89789b90d45a68f7d9bcee440036"
+                ],
+                "family_sizes": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.duplex_seq_metrics.duplex_family_sizes.txt:md5,0d9eaa12b9aa12b90f173365faa822e0"
+                    ]
+                ],
+                "metrics": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        [
+                            "B5.duplex_seq_metrics.duplex_family_sizes.txt:md5,0d9eaa12b9aa12b90f173365faa822e0",
+                            "B5.duplex_seq_metrics.duplex_yield_metrics.txt:md5,f61403b9999ed51daf674260aecea9d7",
+                            "B5.duplex_seq_metrics.family_sizes.txt:md5,21cf2eb5ecbe0ef4cb65c28611d633ad",
+                            "B5.duplex_seq_metrics.umi_counts.txt:md5,f874f69b9045a93dd9fdc504938661d7"
+                        ]
+                    ]
+                ],
+                "report": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,4f73859f0a44518190a0be70992654fd"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-08-14T18:36:04.736675389",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

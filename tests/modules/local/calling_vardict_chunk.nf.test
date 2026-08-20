@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test Process CALLING_VARDICT_CHUNK"
+    script "../../../modules/local/calling_vardict/calling_vardict_chunk/main.nf"
+    config "../nextflow.config"
+    process "CALLING_VARDICT_CHUNK"
+
+    tag "modules"
+    tag "local"
+    tag "vardict"
+    tag "calling_vardict_chunk"
+
+    test("stub run emits VCF and raw TSV for a chunk") {
+        tag "stub"
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [id: 'B5_chunk_1'],
+                    file(params.module_testdata_base + '/B5_chunk_1', checkIfExists: true),
+                    file(params.module_testdata_base + '/B5.calling.bam', checkIfExists: true),
+                    file(params.module_testdata_base + '/B5.calling.bam.bai', checkIfExists: true)
+                ]
+                input[1] = file(params.module_testdata_base + '/reference.fa', checkIfExists: true)
+                input[2] = file(params.module_testdata_base, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.vcf.size() == 1 },
+                { assert process.out.raw.size() == 1 },
+                { assert file(process.out.vcf[0][1]).name == 'B5_chunk_1.genome.vcf' },
+                { assert file(process.out.raw[0][1]).name == 'B5_chunk_1.raw.tsv' },
+                { assert process.out.versions.size() == 1 }
+            )
+        }
+    }
+}

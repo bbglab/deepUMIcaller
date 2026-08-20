@@ -8,16 +8,51 @@ This directory contains a comprehensive test suite for the deepUMIcaller pipelin
 
 ```
 tests/
-├── main.nf.test           # Main test suite (nf-test format)
-├── modules/               # Process-level nf-test unit tests
-│   ├── nextflow.config    # Local executor config for module tests
-│   └── fgbio/             # fgbio module test cases
+├── main.nf.test              # Main end-to-end test suite (nf-test format)
+├── modules/                  # Process-level nf-test unit tests
+│   ├── nextflow.config       # Local executor config for -stub module tests
+│   ├── nextflow_real.config  # Local executor config for real-execution module tests
+│   ├── fgbio/                # fgbio module test cases
+│   └── local/                # local module test cases (incl. VarDict calling chain)
 ├── test_data/
-│   ├── input/             # Test input CSV files and FASTQ data
-│   ├── modules/fgbio/     # Lightweight fixtures for process-level unit tests
-│   └── expected_output/   # Reference VCF files for validation
+│   ├── input/                 # Test input CSV files and FASTQ data
+│   ├── modules/
+│   │   ├── fgbio/              # Lightweight placeholder fixtures, used only with -stub
+│   │   ├── generate_real_fixtures.sh  # Generates small REAL fixtures from sample B5
+│   │   └── real/               # Small real fixtures (git-ignored/generated, not placeholders)
+│   └── expected_output/       # Reference VCF files for validation
 ├── nextflow.config        # Test-specific configuration
 └── README.md             # This documentation
+```
+
+### Two flavours of module-level unit test
+
+Each process listed below has one `nextflow_process` block in its `.nf.test`
+file, with two `test()` cases inside it:
+
+- **`stub`-tagged test** (`options "-stub"`): uses the tiny placeholder
+  fixtures in `test_data/modules/fgbio/`. Doesn't execute the real tool - only
+  verifies that the process wiring (inputs/outputs, channel names, emitted
+  file names) is correct. Fast, no containers required.
+- **`real_data`-tagged test**: overrides the config for just that test case
+  (`config "../nextflow_real.config"`) and executes the real tool
+  (fgbio/samtools/pysam via container) against a small *real* slice of sample
+  B5, comparing the result against a stored `nf-test` snapshot. This is what
+  can actually catch a regression in tool behaviour - e.g. divergence
+  introduced by swapping fgbio for fgumi. Requires fixtures generated with
+  `tests/test_data/modules/generate_real_fixtures.sh` (see below) - **run that
+  script first**, on a host with access to the source data, or this test
+  will fail with a "file not found" error.
+
+```bash
+# One-time setup, on a host with access to the source data (e.g. the IRB/bbg HPC):
+./tests/test_data/modules/generate_real_fixtures.sh
+
+# First run establishes the snapshot baseline for the fixtures just generated:
+nf-test test --tag real_data --update-snapshot
+
+# Subsequent runs compare against that baseline and fail on any regression:
+nf-test test --tag real_data
 ```
 
 ## Running Tests
@@ -47,7 +82,7 @@ nf-test test --tag "calling"
 nf-test test --tag "unmapped_consensus"
 nf-test test --tag "allmoleculesfile"
 
-# Run process-level unit tests
+# Run process-level unit tests (fast, -stub only, no real data needed)
 nf-test test tests/modules/fgbio/groupreadsbyumi.nf.test
 nf-test test tests/modules/fgbio/callduplexconsensusreads.nf.test
 nf-test test tests/modules/fgbio/filterconsensusreads.nf.test
@@ -56,6 +91,17 @@ nf-test test tests/modules/local/mergebam.nf.test
 nf-test test tests/modules/local/unmap_bam.nf.test
 nf-test test tests/modules/local/expand_panel.nf.test
 nf-test test tests/modules/local/samtools_filter.nf.test
+nf-test test tests/modules/local/asminusxs.nf.test
+nf-test test tests/modules/local/split_bed.nf.test
+nf-test test tests/modules/local/calling_vardict_chunk.nf.test
+nf-test test tests/modules/local/merge_vardict_results.nf.test
+
+# Run ALL fast -stub module tests at once (nf-test 0.9.5 has no --exclude-tag,
+# so "stub" is a positive tag on every -stub test block for this purpose)
+nf-test test tests/modules/fgbio/*.nf.test tests/modules/local/*.nf.test --tag stub
+
+# Run the real-execution variants (requires generate_real_fixtures.sh - see above)
+nf-test test --tag real_data
 
 # Run with verbose output
 nf-test test --verbose

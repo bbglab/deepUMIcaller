@@ -10,6 +10,7 @@ nextflow_process {
     tag "expand_panel"
 
     test("stub run emits expanded BED") {
+        tag "stub"
 
         options "-stub"
 
@@ -26,7 +27,7 @@ nextflow_process {
                 { assert process.success },
                 { assert process.out.expanded_bed.size() == 1 },
                 { assert process.out.expanded_bed[0][0].id == 'B5' },
-                { assert process.out.expanded_bed[0][1].name == 'B5.expanded250.bed' },
+                { assert file(process.out.expanded_bed[0][1]).name == 'B5.expanded250.bed' },
                 { assert topics.versions.size() == 1 }
             )
         }

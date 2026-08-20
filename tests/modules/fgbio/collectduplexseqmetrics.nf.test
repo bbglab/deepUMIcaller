@@ -11,6 +11,7 @@ nextflow_process {
     tag "collectduplexseqmetrics"
 
     test("stub run emits duplex metrics files") {
+        tag "stub"
 
         options "-stub"
 
@@ -29,8 +30,34 @@ nextflow_process {
                 { assert process.out.family_sizes.size() == 1 },
                 { assert process.out.metrics.size() == 1 },
                 { assert process.out.family_sizes[0][0].id == 'B5' },
-                { assert process.out.family_sizes[0][1].name.endsWith('duplex_family_sizes.txt') },
+                { assert file(process.out.family_sizes[0][1]).name.endsWith('duplex_family_sizes.txt') },
                 { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+
+    // Real (non-stub) execution - see tests/test_data/modules/generate_real_fixtures.sh
+    // (needs fgbio on PATH there to derive B5.grouped.bam)
+    test("real run on B5 subset matches snapshot") {
+        tag "real_data"
+        config "../nextflow_real.config"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.real_testdata_base + '/B5.grouped.bam', checkIfExists: true)]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
             )
         }
     }

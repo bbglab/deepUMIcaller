@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process SPLIT_BED"
+    script "../../../modules/local/calling_vardict/split_bed/main.nf"
+    config "../nextflow.config"
+    process "SPLIT_BED"
+
+    tag "modules"
+    tag "local"
+    tag "vardict"
+    tag "split_bed"
+
+    test("stub run emits BED chunks") {
+        tag "stub"
+
+        options "-stub"
+
+        when {
+            params {
+                vardict_chunks = 2
+            }
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.targets.bed', checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.chunks.size() == 1 },
+                { assert process.out.chunks[0][0].id == 'B5' },
+                { assert process.out.chunks[0][1].size() == 2 },
+                { assert process.out.versions.size() == 1 }
+            )
+        }
+    }
+}

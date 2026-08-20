@@ -1,0 +1,37 @@
+{
+    "real run on B5 subset parts matches snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.merged.bam:md5,336c76f50a19a8759c5dcf842909c7d0",
+                        "B5.merged.bam.bai:md5,daea30c515c35efee7cabd68f3032010"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,1f68d9dc7cb9d7820dcf609848310fc5"
+                ],
+                "bam_bai": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.merged.bam:md5,336c76f50a19a8759c5dcf842909c7d0",
+                        "B5.merged.bam.bai:md5,daea30c515c35efee7cabd68f3032010"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,1f68d9dc7cb9d7820dcf609848310fc5"
+                ]
+            }
+        ],
+        "timestamp": "2026-08-14T18:37:01.542964427",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

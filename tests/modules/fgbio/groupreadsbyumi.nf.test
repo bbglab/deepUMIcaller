@@ -1,0 +1,72 @@
+nextflow_process {
+
+    name "Test Process FGBIO_GROUPREADSBYUMI"
+    script "../../../modules/nf-core/fgbio/groupreadsbyumi/main.nf"
+    config "../nextflow.config"
+    process "FGBIO_GROUPREADSBYUMI"
+    topics "versions"
+
+    tag "modules"
+    tag "fgbio"
+    tag "groupreadsbyumi"
+
+    test("stub run emits grouped BAM and histogram") {
+        tag "stub"
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.module_testdata_base + '/B5.tagged.bam', checkIfExists: true)]
+                input[1] = 'paired'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bam.size() == 1 },
+                { assert process.out.histogram.size() == 1 },
+                { assert process.out.bam[0][0].id == 'B5' },
+                { assert file(process.out.bam[0][1]).name == 'B5_umi-grouped.bam' },
+                { assert file(process.out.histogram[0][1]).name == 'B5_umi_histogram.txt' },
+                { assert topics.versions.size() == 1 }
+            )
+        }
+    }
+
+    // Real (non-stub) execution against a small real B5 subset - catches actual
+    // tool-behaviour regressions (e.g. fgbio -> fgumi divergence), not just
+    // wiring. Requires fixtures from tests/test_data/modules/generate_real_fixtures.sh
+    test("real run on B5 subset matches snapshot") {
+        tag "real_data"
+        config "../nextflow_real.config"
+
+        when {
+            params {
+                // tests/nextflow.config (always loaded) references
+                // "${params.outdir}/..." in trace/timeline/report/dag file
+                // paths; on some Nextflow versions that GString is evaluated
+                // before our later config files can even disable those
+                // blocks, so outdir must be defined here (highest-precedence,
+                // resolved before config-file evaluation) regardless.
+                outdir = "$outputDir"
+            }
+            process {
+                """
+                input[0] = [[id: 'B5'], file(params.real_testdata_base + '/B5.sortbamclean.bam', checkIfExists: true)]
+                input[1] = 'paired'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

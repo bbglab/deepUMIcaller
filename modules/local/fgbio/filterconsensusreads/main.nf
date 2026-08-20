@@ -58,6 +58,18 @@ process FGBIO_FILTERCONSENSUSREADS {
         fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
     END_VERSIONS
     """
+
+    stub:
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
+    """
+    touch ${prefix}.filtered.bam
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: "2.1.0"
+    END_VERSIONS
+    """
 }
 
 // --max-base-error-rate ${max_base_error_rate} \\

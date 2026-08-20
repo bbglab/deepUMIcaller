@@ -50,4 +50,17 @@ process FGBIO_GROUPREADSBYUMI {
         fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
     END_VERSIONS
     """
+
+    stub:
+    prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
+    """
+    touch ${prefix}_umi-grouped.bam
+    touch ${prefix}_umi_histogram.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fgbio: "2.1.0"
+    END_VERSIONS
+    """
 }

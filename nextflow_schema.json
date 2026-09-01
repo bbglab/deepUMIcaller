@@ -207,7 +207,8 @@
             "description": "Options for when filtering consensus reads",
             "properties": {
                 "maxN_per_read": {
-                    "type": "number",
+                    "type": "integer",
+                    "minimum": 0,
                     "description": "The maximum number of Ns in a consensus read",
                     "fa_icon": "fas fa-book",
                     "help_text": "The maximum number of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
@@ -399,6 +400,7 @@
                     "type": "integer",
                     "description": "Parameter to define the maximum read size.",
                     "default": 150,
+                    "minimum": 1,
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the maximum read size."
                 },
@@ -406,6 +408,7 @@
                     "type": "integer",
                     "description": "Size of the reads after removing UMI.",
                     "default": 142,
+                    "minimum": 1,
                     "fa_icon": "fas fa-book",
                     "help_text": "Size of the reads after removing UMI."
                 }

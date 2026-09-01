@@ -206,11 +206,12 @@
             "fa_icon": "fas fa-dna",
             "description": "Options for when filtering consensus reads",
             "properties": {
-                "maxN_prop_per_read": {
-                    "type": "number",
-                    "description": "The maximum proportion of Ns in a consensus read",
+                "maxN_per_read": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "The maximum number of Ns in a consensus read",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
+                    "help_text": "The maximum number of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
                 },
                 "filter_strand_agreement": {
                     "type": "boolean",
@@ -399,8 +400,17 @@
                     "type": "integer",
                     "description": "Parameter to define the maximum read size.",
                     "default": 150,
+                    "minimum": 1,
                     "fa_icon": "fas fa-book",
                     "help_text": "Parameter to define the maximum read size."
+                },
+                "read_length_minus_tag": {
+                    "type": "integer",
+                    "description": "Size of the reads after removing UMI.",
+                    "default": 142,
+                    "minimum": 1,
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Size of the reads after removing UMI."
                 }
             }
         },

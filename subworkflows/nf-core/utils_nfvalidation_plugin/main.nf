@@ -56,6 +56,4 @@ workflow UTILS_NFVALIDATION_PLUGIN {
         validateParameters(parameters_schema: schema_filename)
     }
 
-    emit:
-    dummy_emit = true
 }

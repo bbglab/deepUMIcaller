@@ -44,10 +44,20 @@
                 "pattern": "^\\S+\\.bam$",
                 "errorMessage": "BAM file of duplex reads ready for the 'calling' step."
             },
+            "preprocessed_cram": {
+                "type": "string",
+                "pattern": "^\\S+\\.cram$",
+                "errorMessage": "CRAM file with aligned reads and rb/mb tags ready for the 'preprocessed_crams' step."
+            },
             "csi": {
                 "type": "string",
                 "pattern": "^\\S+\\.bam.csi$",
                 "errorMessage": "BAM index file of duplex reads ready for the 'calling' step."
+            },
+            "crai": {
+                "type": "string",
+                "pattern": "^\\S+\\.cram.crai$",
+                "errorMessage": "CRAM index file required for the 'preprocessed_crams' step."
             },
             "read_structure": {
                 "type": "string",
@@ -63,7 +73,8 @@
         "required": ["sample"],
         "dependentRequired": {
             "fastq_1" : ["fastq_2", "read_structure"],
-            "duplexbam" : ["csi"]
+            "duplexbam" : ["csi"],
+            "preprocessed_cram" : ["crai"]
         }
     }
 }

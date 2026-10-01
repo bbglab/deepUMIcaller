@@ -22,6 +22,7 @@ All input configurations use a CSV file with specific columns depending on the p
 
 | Entry Point | Required Columns | File Types |  
 |-------------|-----------------|------------|  
+| `preprocessed_crams` | `sample`, `preprocessed_cram`, `crai` | Aligned CRAM files with `rb`/`mb` tags + CRAI index for fgumi retag |  
 | `groupreadsbyumi` | `sample`, `bam` | Template-coordinate sorted aligned BAM files ready for fgumi UMI grouping |  
 | `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
 | `allmoleculesfile` | `sample`, `duplexbam`, `bai` | BAM with aligned consensus reads missing AS-XS filtering |  
@@ -34,6 +35,7 @@ You can restart the pipeline from intermediate steps using files produced intern
 
 | Entry Point | Use deepUMIcaller internal output of | Published to results? |
 |-------------|--------------------------------------|------------------------|
+| `preprocessed_crams` | External aligned CRAM + `.crai` with `rb`/`mb` tags | Input only |
 | `groupreadsbyumi` | `SORTBAMRAWTEMPCOORDINATE` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
 | `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
 | `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/processing_files/sortbamamfiltered/` |
@@ -420,7 +422,7 @@ nextflow run main.nf \
 
 | Parameter | Default | Effect |
 |-----------|---------|--------|
-| `step` | `"mapping"` | Pipeline entry point (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile) |
+| `step` | `"mapping"` | Pipeline entry point (mapping, preprocessed_crams, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile) |
 | `split_by_chrom` | `false` | Enables chromosome-based parallelization |
 | `parent_dna` column | - | Enables biological replicate grouping |
 
@@ -433,6 +435,7 @@ nextflow run main.nf \
 | mapping | ❌ | ✅ | ❌ | 3 |
 | mapping | ✅ | ✅ | ❌ | 4 |
 | mapping | ✅/❌ | ✅/❌ | ✅ | Parallelized processing of information per chromosome |
+| preprocessed_crams | ❌ | ❌ | ✅/❌ | Start from aligned CRAMs (retag + downstream duplex processing) |
 | groupreadsbyumi | ❌ | ❌ | ❌ | UMI grouping restart |
 | unmapped_consensus | ❌ | ❌ | ❌ | Unmapped consensus processing |
 | filterconsensus | ❌ | ❌ | ❌ | Consensus filtering restart |
@@ -488,7 +491,7 @@ The pipeline automatically validates:
 
 1. **Duplicate sample names**: Ensure unique sample identifiers
 2. **Memory issues**: Consider chromosome splitting for large datasets
-3. **Invalid step parameter**: Use valid step names (mapping, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile)
+3. **Invalid step parameter**: Use valid step names (mapping, preprocessed_crams, groupreadsbyumi, unmapped_consensus, filterconsensus, calling, allmoleculesfile)
 4. **Incorrect file format**: Ensure BAM files match the expected processing stage
 
 For additional support or questions about input configurations, consult the main deepUMIcaller documentation or contact the development team.

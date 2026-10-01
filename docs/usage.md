@@ -54,7 +54,28 @@ Otherwise when the pipeline is run with a small number of samples less resources
 
 Additionally to the end to end mode. deepUMIcaller allows to start the pipeline from other specific steps among the following options:
 
-`groupreadsbyumi`, `allmoleculesfile`, `filterconsensus`, `calling`
+`preprocessed_crams`, `groupreadsbyumi`, `allmoleculesfile`, `filterconsensus`, `calling`
+
+### Start with preprocessed CRAM files (`preprocessed_crams`)
+
+Use this mode when you already have aligned CRAM files with `rb`/`mb` tags and want to start from fgumi retagging and continue with grouping, duplex consensus calling, filtering and variant calling.
+
+```console
+nextflow run bbglab/deepUMIcaller \
+  -profile singularity \
+  --input input.csv \
+  --ref_fasta hs38DH.fa \
+  --targetsfile file.bed \
+  --outdir results/ \
+  --step preprocessed_crams
+```
+
+In this case, the input.csv samplesheet must contain the following columns:
+
+```csv
+sample,preprocessed_cram,crai
+sample1,sample1.cram,sample1.cram.crai
+```
 
 ### Start with GroupByUMI (`groupreadsbyumi`)
 

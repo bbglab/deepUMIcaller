@@ -24,7 +24,7 @@ process FGUMI_RETAGFROMCRAM {
         -@ ${task.cpus} \\
         ${cram} | \\
         fgumi retag \\
-            --input ${prefix}.aligned.bam \\
+            --input - \\
             --output ${prefix}.retagged.bam \\
             rb,mb::pair::RX \
             rb::delete \

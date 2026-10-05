@@ -73,8 +73,7 @@
         "required": ["sample"],
         "dependentRequired": {
             "fastq_1" : ["fastq_2", "read_structure"],
-            "duplexbam" : ["csi"],
-            "preprocessed_cram" : ["crai"]
+            "duplexbam" : ["csi"]
         }
     }
 }

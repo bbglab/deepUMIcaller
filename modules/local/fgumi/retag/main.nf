@@ -3,7 +3,8 @@ process FGUMI_RETAGFROMCRAM {
     label 'groupreads_io'
 
     conda "bioconda::fgumi bioconda::samtools=1.24"
-    container 'fgumi:v0.8.0'
+    container 'docker.io/ferriolcalvet/fgumi:v-retag'
+
 
     input:
     tuple val(meta), path(cram)
@@ -30,7 +31,7 @@ process FGUMI_RETAGFROMCRAM {
             mb::delete \\
             --threads ${task.cpus} \
             ${args} | \\
-            fgumi sort -i - -o ${prefix}.retagged.bam --threads 8 
+            fgumi sort -i - -o ${prefix}.retagged.bam --threads ${task.cpus}
 
     samtools index -@ ${task.cpus} ${prefix}.retagged.bam
 
@@ -41,4 +42,3 @@ process FGUMI_RETAGFROMCRAM {
     END_VERSIONS
     """
 }
-// | fgumi sort -i - -o - --order template-coordinate --threads 8 

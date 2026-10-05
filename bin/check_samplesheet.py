@@ -18,7 +18,7 @@ logger = logging.getLogger()
 
 requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
                     "groupreadsbyumi": ["bam"],
-                    "preprocessed_crams": ["preprocessed_cram", "crai"],
+                    "preprocessed_crams": ["preprocessed_cram"],
                     "unmapped_consensus": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],

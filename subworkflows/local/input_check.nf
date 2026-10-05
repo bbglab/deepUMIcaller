@@ -69,10 +69,7 @@ def create_input_channel(LinkedHashMap row, step) {
         if (!file(row.preprocessed_cram).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Preprocessed CRAM file does not exist!\n${row.preprocessed_cram}"
         }
-        if (!file(row.crai).exists()) {
-            exit 1, "ERROR: Please check input samplesheet -> CRAI file does not exist!\n${row.crai}"
-        }
-        input_meta = [ meta, [ file(row.preprocessed_cram) ], [ file(row.crai) ] ]
+        input_meta = [ meta, [ file(row.preprocessed_cram) ] ]
     }
 
     // Only the bam is required to the meta map for the other steps (e.g. filterconsensus)

@@ -237,16 +237,11 @@ workflow DEEPUMICALLER {
             // MODULE: Align with bwa mem
             ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
 
-            if (params.perform_qcs) {
-                QUALIMAPQCRAW(ALIGNRAWBAM.out.bam, ch_targetsfile)
-                ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
-            }
-
             aligned_preconsensus_bam = ALIGNRAWBAM.out.bam
             aligned_preconsensus_bai = ALIGNRAWBAM.out.bai
         } else {
             RETAGFROMCRAM(
-                INPUT_CHECK.out.reads.map { meta, cram, crai -> [meta, cram[0], crai[0]] },
+                INPUT_CHECK.out.reads,
                 ch_ref_fasta
             )
 
@@ -254,6 +249,11 @@ workflow DEEPUMICALLER {
             aligned_preconsensus_bai = RETAGFROMCRAM.out.bai
         }
 
+        if (params.perform_qcs) {
+            QUALIMAPQCRAW(aligned_preconsensus_bam, ch_targetsfile)
+            ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
+        }
+        
         // Combine sorted BAMs with the flag and branch
         aligned_preconsensus_bam
             .combine(INPUT_CHECK.out.splitted_input)

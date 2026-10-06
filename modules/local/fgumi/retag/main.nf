@@ -25,7 +25,7 @@ process FGUMI_RETAGFROMCRAM {
         ${cram} | \\
         fgumi retag \\
             --input - \\
-            --output ${prefix}.retagged.bam \\
+            --output - \\
             rb,mb::pair::RX \
             rb::delete \
             mb::delete \\

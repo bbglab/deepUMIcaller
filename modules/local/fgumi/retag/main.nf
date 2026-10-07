@@ -31,9 +31,7 @@ process FGUMI_RETAGFROMCRAM {
             mb::delete \\
             --threads ${task.cpus} \
             ${args} | \\
-            fgumi sort -i - -o ${prefix}.retagged.bam --threads ${task.cpus} --order coordinate
-
-    samtools index -@ ${task.cpus} ${prefix}.retagged.bam
+            fgumi sort -i - -o ${prefix}.retagged.bam --threads ${task.cpus} --order coordinate --write-index true
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

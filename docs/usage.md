@@ -73,8 +73,8 @@ nextflow run bbglab/deepUMIcaller \
 In this case, the input.csv samplesheet must contain the following columns:
 
 ```csv
-sample,preprocessed_cram,crai
-sample1,sample1.cram,sample1.cram.crai
+sample,preprocessed_cram
+sample1,sample1.cram
 ```
 
 ### Start with GroupByUMI (`groupreadsbyumi`)

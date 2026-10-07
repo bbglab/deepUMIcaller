@@ -1,3 +1,5 @@
+// this is not being used right now
+
 process FGUMI_CORRECTUMIS {
     tag "$meta.id"
     label 'groupreads_io'

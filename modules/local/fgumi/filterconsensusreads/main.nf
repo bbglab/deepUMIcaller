@@ -17,14 +17,16 @@ process FGUMI_FILTERCONSENSUSREADS {
     def fgumi_args = task.ext.fgumi_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-
+    def Ns_per_read = (params.maxN_per_read + params.left_clip + params.right_clip) / params.read_length_minus_tag
+    def max_no_call_fraction = Ns_per_read ? "--max-no-call-fraction ${Ns_per_read}" : "--max-no-call-fraction 0.2"
     """
-    fgumi filter \
-        --input $grouped_bam \
-        --ref ${fasta} \
-        --output ${prefix}.filtered.bam \
-        --threads ${task.cpus} \
-        $fgumi_args
+    fgumi filter \\
+        --input $grouped_bam \\
+        --ref ${fasta} \\
+        --output ${prefix}.filtered.bam \\
+        --threads ${task.cpus} \\
+        ${max_no_call_fraction} \
+        ${fgumi_args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

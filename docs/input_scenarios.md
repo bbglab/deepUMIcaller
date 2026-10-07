@@ -22,7 +22,7 @@ All input configurations use a CSV file with specific columns depending on the p
 
 | Entry Point | Required Columns | File Types |  
 |-------------|-----------------|------------|  
-| `preprocessed_crams` | `sample`, `preprocessed_cram`, `crai` | Aligned CRAM files with `rb`/`mb` tags + CRAI index for fgumi retag |  
+| `preprocessed_crams` | `sample`, `preprocessed_cram` | Aligned CRAM files with `rb`/`mb` tags for fgumi retag |  
 | `groupreadsbyumi` | `sample`, `bam` | Template-coordinate sorted aligned BAM files ready for fgumi UMI grouping |  
 | `unmapped_consensus` | `sample`, `bam` | BAM files with consensus reads that will be realigned |  
 | `allmoleculesfile` | `sample`, `duplexbam`, `bai` | BAM with aligned consensus reads missing AS-XS filtering |  
@@ -35,7 +35,7 @@ You can restart the pipeline from intermediate steps using files produced intern
 
 | Entry Point | Use deepUMIcaller internal output of | Published to results? |
 |-------------|--------------------------------------|------------------------|
-| `preprocessed_crams` | External aligned CRAM + `.crai` with `rb`/`mb` tags | Input only |
+| `preprocessed_crams` | External aligned CRAM  with `rb`/`mb` tags | Input only |
 | `groupreadsbyumi` | `SORTBAMRAWTEMPCOORDINATE` (coordinate-sorted BAM before UMI grouping) | No (only in work/) |
 | `unmapped_consensus` | `CALLCONSENSUSREADS` (consensus BAM prior to alignment/realignment) | No (only in work/) |
 | `filterconsensus` | `SORTBAMAMFILTERED` (name-sorted AM-filtered BAM) | Yes → `{outdir}/processing_files/sortbamamfiltered/` |

@@ -190,7 +190,7 @@ def sniff_format(handle):
         # Manual header validation for common cases
         first_line = peek.split('\n')[0] if peek else ""
         # Check if first line looks like a header (contains expected column names)
-        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'umi_file', 'duplexbam', 'csi', 'preprocessed_cram', 'crai']
+        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'umi_file', 'duplexbam', 'csi', 'preprocessed_cram']
         if any(header in first_line.lower() for header in expected_headers):
             logger.warning("CSV sniffer failed to detect header, but header appears valid based on column names.")
         else:

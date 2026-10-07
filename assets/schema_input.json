@@ -54,11 +54,6 @@
                 "pattern": "^\\S+\\.bam.csi$",
                 "errorMessage": "BAM index file of duplex reads ready for the 'calling' step."
             },
-            "crai": {
-                "type": "string",
-                "pattern": "^\\S+\\.cram.crai$",
-                "errorMessage": "CRAM index file required for the 'preprocessed_crams' step."
-            },
             "read_structure": {
                 "type": "string",
                 "pattern": "^.*$",

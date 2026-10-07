@@ -65,6 +65,12 @@ def create_input_channel(LinkedHashMap row, step) {
         }
         input_meta = [ meta, [ file(row.duplexbam) ], [ file(row.csi) ] ]
     }
+    else if (step=='preprocessed_crams'){
+        if (!file(row.preprocessed_cram).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Preprocessed CRAM file does not exist!\n${row.preprocessed_cram}"
+        }
+        input_meta = [ meta, [ file(row.preprocessed_cram) ] ]
+    }
 
     // Only the bam is required to the meta map for the other steps (e.g. filterconsensus)
     else{

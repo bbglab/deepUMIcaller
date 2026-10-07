@@ -26,6 +26,7 @@ include { SPLITFASTQ                                                            
 
 include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgumi/fastqtobam/main'
 include { FGUMI_CORRECTUMIS                 as CORRECTUMIS                      } from '../modules/local/fgumi/correctumis/main'
+include { FGUMI_RETAGFROMCRAM               as RETAGFROMCRAM                    } from '../modules/local/fgumi/retag/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
@@ -93,13 +94,11 @@ include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL               } fr
 
 include { PICARD_MERGESAMFILES              as MERGEBAMS                    } from '../modules/nf-core/picard/mergesamfiles/main'
 
-
-// Sorting
-include { SAMTOOLS_SORT                     as SORTBAMRAWTEMPCOORDINATE     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED            } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMMERGED                } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMHQ                  } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } from '../modules/nf-core/samtools/sort/main'
+include { FGUMI_SORT                        as SORTBAMRAWTEMPCOORDINATE     } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMFILTERED            } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMMERGED                } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMHQ                  } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMDUPLEXCONS            } from '../modules/local/fgumi/sort/main'
 
 include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
@@ -161,87 +160,100 @@ workflow DEEPUMICALLER {
         params.step
     )
 
-    if (params.step == 'mapping') {
+    if (params.step in ['mapping', 'preprocessed_crams']) {
 
-        // READ PREPROCESSING
-        if (params.trim_adapters){
-            PRETRIMFASTQC(
-                INPUT_CHECK.out.reads
-            )
-            // MODULE: Run TRIMREADS
-            TRIMREADS(INPUT_CHECK.out.reads,
-                            [], // we are not using any adapter fastas at the moment
-                            false,
-                            false)
-            
-            reads_to_qc = TRIMREADS.out.reads
-        } else {
-            reads_to_qc = INPUT_CHECK.out.reads
-        }
-
-        // MODULE: Run FastQC
-        FASTQC (
-            reads_to_qc
-        )
-        
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
-
-        // // Optional: Include fastqs split
-        // if (params.run_splitfastq) {
-        //     SPLITFASTQ ( reads_to_qc )
-        //     SPLITFASTQ.out.split_fastqs
-        //     .transpose()
-        //     .map { meta, fastqs -> 
-        //         def new_meta = meta.clone()
-        //         // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
-        //         def match = fastqs[0].name =~ /^([^. _-]+)/
-        //         def part_id = match ? match[0][1] : "unknown"
-        //         new_meta.id = "${meta.id}_${part_id}"
-        //         [new_meta, fastqs]
-        //     }
-        //     .set { split_fastqs_ch }
-        // } else {
-        //     split_fastqs_ch = reads_to_qc
-        // }
-        split_fastqs_ch = reads_to_qc
-
-        FASTQTOBAM(split_fastqs_ch)
-
-        // Optional UMI correction when known UMI files are provided per sample
-        FASTQTOBAM.out.bam
-            .branch { meta, bam ->
-                correct: meta.umi_file
-                passthrough: true
+        if (params.step == 'mapping') {
+            // READ PREPROCESSING
+            if (params.trim_adapters){
+                PRETRIMFASTQC(
+                    INPUT_CHECK.out.reads
+                )
+                // MODULE: Run TRIMREADS
+                TRIMREADS(INPUT_CHECK.out.reads,
+                                [], // we are not using any adapter fastas at the moment
+                                false,
+                                false)
+                
+                reads_to_qc = TRIMREADS.out.reads
+            } else {
+                reads_to_qc = INPUT_CHECK.out.reads
             }
-            .set { ch_fastqtobam }
 
-        CORRECTUMIS(
-            ch_fastqtobam.correct.map { meta, bam -> [meta, bam, file(meta.umi_file)] },
-            params.correct_umis_max_mismatches,
-            params.correct_umis_min_distance
-        )
+            // MODULE: Run FastQC
+            FASTQC (
+                reads_to_qc
+            )
+            
+            ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
-        bam_after_umi_correction = CORRECTUMIS.out.bam.mix(ch_fastqtobam.passthrough)
+            // // Optional: Include fastqs split
+            // if (params.run_splitfastq) {
+            //     SPLITFASTQ ( reads_to_qc )
+            //     SPLITFASTQ.out.split_fastqs
+            //     .transpose()
+            //     .map { meta, fastqs -> 
+            //         def new_meta = meta.clone()
+            //         // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
+            //         def match = fastqs[0].name =~ /^([^. _-]+)/
+            //         def part_id = match ? match[0][1] : "unknown"
+            //         new_meta.id = "${meta.id}_${part_id}"
+            //         [new_meta, fastqs]
+            //     }
+            //     .set { split_fastqs_ch }
+            // } else {
+            //     split_fastqs_ch = reads_to_qc
+            // }
+            split_fastqs_ch = reads_to_qc
 
-        // Decide whether we clip the beginning and/or end of the reads or nothing
-        if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            TRIMBAM(bam_after_umi_correction, params.left_clip, params.right_clip)            
-            bam_to_align = TRIMBAM.out.bam
+            FASTQTOBAM(split_fastqs_ch)
+
+            // Optional UMI correction when known UMI files are provided per sample
+            FASTQTOBAM.out.bam
+                .branch { meta, bam ->
+                    correct: meta.umi_file
+                    passthrough: true
+                }
+                .set { ch_fastqtobam }
+
+            CORRECTUMIS(
+                ch_fastqtobam.correct.map { meta, bam -> [meta, bam, file(meta.umi_file)] },
+                params.correct_umis_max_mismatches,
+                params.correct_umis_min_distance
+            )
+
+            bam_after_umi_correction = CORRECTUMIS.out.bam.mix(ch_fastqtobam.passthrough)
+
+            // Decide whether we clip the beginning and/or end of the reads or nothing
+            if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
+                TRIMBAM(bam_after_umi_correction, params.left_clip, params.right_clip)            
+                bam_to_align = TRIMBAM.out.bam
+            } else {
+                bam_to_align = bam_after_umi_correction
+            }
+
+
+            // MODULE: Align with bwa mem
+            ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
+
+            aligned_preconsensus_bam = ALIGNRAWBAM.out.bam
+            aligned_preconsensus_bai = ALIGNRAWBAM.out.bai
         } else {
-            bam_to_align = bam_after_umi_correction
+            RETAGFROMCRAM(
+                INPUT_CHECK.out.reads,
+                ch_ref_fasta
+            )
+
+            aligned_preconsensus_bam = RETAGFROMCRAM.out.bam
+            aligned_preconsensus_bai = RETAGFROMCRAM.out.bai
         }
-
-
-        // MODULE: Align with bwa mem
-        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
 
         if (params.perform_qcs) {
-            QUALIMAPQCRAW(ALIGNRAWBAM.out.bam, ch_targetsfile)
+            QUALIMAPQCRAW(aligned_preconsensus_bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
-
+        
         // Combine sorted BAMs with the flag and branch
-        ALIGNRAWBAM.out.bam
+        aligned_preconsensus_bam
             .combine(INPUT_CHECK.out.splitted_input)
             .branch { meta, bam, flag ->
                 split: flag == true
@@ -253,7 +265,7 @@ workflow DEEPUMICALLER {
 
         // Handle normal mode (no splitting)
         aligned_raw_bam_normal = branched_bams.normal
-            .join(ALIGNRAWBAM.out.bai)
+            .join(aligned_preconsensus_bai)
 
         // Handle split mode (with merging)
         branched_bams.split
@@ -310,7 +322,7 @@ workflow DEEPUMICALLER {
     // Run fgumi Duplex consensus pipeline
     //
 
-    if (params.step in ['mapping', 'groupreadsbyumi']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi']) {
 
         // ASSIGN pre_consensus_bams = to our input bam
         if (params.step == 'groupreadsbyumi') {
@@ -385,7 +397,7 @@ workflow DEEPUMICALLER {
         
     }
     
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus']) {
 
         if (params.step == 'unmapped_consensus') {
             UNMAPBAM(INPUT_CHECK.out.reads)
@@ -425,7 +437,7 @@ workflow DEEPUMICALLER {
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
 
         if (params.step == 'allmoleculesfile') {
             all_molecules_bam_complete_n_index = INPUT_CHECK.out.reads
@@ -450,7 +462,7 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus']) {
 
         if (params.step == 'filterconsensus') {
             duplex_filtered_init_bam = INPUT_CHECK.out.reads
@@ -492,7 +504,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMAMHQ.out.bam
-        .join( SORTBAMAMHQ.out.csi )
+        .join( SORTBAMAMHQ.out.bai )
         .set { bam_n_index_duplex_clean }
 
         if (params.perform_qcs){
@@ -516,7 +528,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCONS.out.bam
-        .join( SORTBAMDUPLEXCONS.out.csi )
+        .join( SORTBAMDUPLEXCONS.out.bai )
         .set { cons_duplex_bam }
 
         // Quality check
@@ -543,7 +555,7 @@ workflow DEEPUMICALLER {
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus', 'calling']) {
     
         // Initialize variables for calling step entry point
         if (params.step == 'calling') {

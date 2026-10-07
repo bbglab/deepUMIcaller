@@ -49,10 +49,10 @@
             "properties": {
                 "step": {
                     "type": "string",
-                    "description": "Choose from which process start. Options: 'mapping' (default), 'filterconsensus', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'calling'.",
+                    "description": "Choose from which process start. Options: 'mapping' (default), 'preprocessed_crams', 'filterconsensus', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'calling'.",
                     "default": "mapping",
                     "fa_icon": "fas fa-book",
-                    "help_text": "With this parameter, you can execute only the calling, for example. You would include bam files in your input csv."
+                    "help_text": "Use this parameter to start from intermediate entry points (e.g. preprocessed_crams, groupreadsbyumi, calling) with the corresponding input columns."
                 },
                 "perform_qcs": {
                     "type": "boolean",
@@ -92,7 +92,7 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-dna",
                     "description": "Enable splitting of BAM files by chromosome.",
-                    "help_text": "Enables chromosome-based parallelization for improved performance. Only applicable when --step is 'mapping'. Ignored for other entry points."
+                    "help_text": "Enables chromosome-based parallelization for improved performance. Applicable when --step is 'mapping' or 'preprocessed_crams'. Ignored for other entry points."
                 }
             }
         },

@@ -18,7 +18,7 @@ process FGUMI_FASTQTOBAM {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def read_structure = "${meta.read_structure}"
-    def inputs = fastqs.collect { it.toString() }.join(' ')
+    def inputs = fastqs.collect { f -> f.toString() }.join(' ')
     """
 
     fgumi extract \

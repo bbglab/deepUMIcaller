@@ -220,7 +220,7 @@ workflow DEEPUMICALLER {
 
             // Optional UMI correction when known UMI files are provided per sample
             FASTQTOBAM.out.bam
-                .branch { meta, bam ->
+                .branch { meta, _bam ->
                     correct: meta.umi_file
                     passthrough: true
                 }
@@ -425,8 +425,6 @@ workflow DEEPUMICALLER {
 
         // MODULE: Align with bwa mem
         ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, ch_ref_fasta)
-
-        SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
 
         if (params.split_by_chrom) {
 

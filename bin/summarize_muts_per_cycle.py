@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 
-# TODO
-# pending to add some parsing of the confidence level to the outputs
 
 mutation_types = ['C>A', 'C>G', 'C>T', 'T>A', 'T>C', 'T>G']
 available_changes = mutation_types + ['all']
@@ -30,10 +28,12 @@ snv_color = {
 def compute_ratios(df_valid, number_of_initial_positions):
     df_valid["all"] = df_valid[mutation_types].sum(axis = 1)
     ratios = {}
+    first_positions_weight = df_valid["Count_percent"][:number_of_initial_positions]
+    rest_weight = df_valid["Count_percent"][number_of_initial_positions:]
     for col in available_changes:
         values = df_valid[col].values
-        first_positions = values[:number_of_initial_positions]
-        rest = values[number_of_initial_positions:]
+        first_positions = values[:number_of_initial_positions] / first_positions_weight
+        rest = values[number_of_initial_positions:] / rest_weight
         mean_first_positions = first_positions.mean()
         mean_rest = rest.mean() if len(rest) > 0 else 0
         if mean_rest == 0:

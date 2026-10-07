@@ -132,6 +132,8 @@ workflow DEEPUMICALLER {
         ch_ref_fasta = file(params.ref_fasta, checkIfExists: true)
         ch_ref_fasta_dict = file("${ch_ref_fasta.parent/ch_ref_fasta.baseName}.dict", checkIfExists: true)
         ch_ref_index_dir = ch_ref_fasta.parent
+        // check if index is present
+        __ch_ref_index = file("${ch_ref_fasta.parent/ch_ref_fasta.name}.amb", checkIfExists: true)
     } else {
         log.error "No reference FASTA was specified (--ref_fasta)."
         exit 1
@@ -186,24 +188,33 @@ workflow DEEPUMICALLER {
             
             ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
-            // // Optional: Include fastqs split
-            // if (params.run_splitfastq) {
-            //     SPLITFASTQ ( reads_to_qc )
-            //     SPLITFASTQ.out.split_fastqs
-            //     .transpose()
-            //     .map { meta, fastqs -> 
-            //         def new_meta = meta.clone()
-            //         // Extract part ID from FASTQ filename using regex, e.g. "sample1_L001_R1_001.fastq.gz" -> "sample1"
-            //         def match = fastqs[0].name =~ /^([^. _-]+)/
-            //         def part_id = match ? match[0][1] : "unknown"
-            //         new_meta.id = "${meta.id}_${part_id}"
-            //         [new_meta, fastqs]
-            //     }
-            //     .set { split_fastqs_ch }
-            // } else {
-            //     split_fastqs_ch = reads_to_qc
-            // }
+        // Optional: Split FASTQs into parts for parallelisation
+        if (params.run_splitfastq) {
+            SPLITFASTQ ( reads_to_qc )
+            SPLITFASTQ.out.split_fastqs
+                .flatMap { meta, files ->
+                    // Group files by part number (seqkit names them *.part_NNN.*)
+                    def byPart = [:]
+                    files.each { f ->
+                        def m = (f.name =~ /\.part_(\d+)\./)
+                        if (m) {
+                            def part = m[0][1]
+                            if (!byPart[part]) byPart[part] = []
+                            byPart[part] << f
+                        }
+                    }
+                    // Emit one [meta, [R1, R2]] tuple per part; sort files so R1 precedes R2
+                    byPart.sort { a, b -> a.key <=> b.key }.collect { part, partFiles ->
+                        def new_meta = meta.clone()
+                        new_meta.id = "${meta.id}_part${part}"
+                        // meta.sample is preserved so MERGEBAM can group parts back together
+                        [new_meta, partFiles.sort { f -> f.name }]
+                    }
+                }
+                .set { split_fastqs_ch }
+        } else {
             split_fastqs_ch = reads_to_qc
+        }
 
             FASTQTOBAM(split_fastqs_ch)
 
@@ -233,7 +244,7 @@ workflow DEEPUMICALLER {
 
 
             // MODULE: Align with bwa mem
-            ALIGNRAWBAM(bam_to_align, ch_ref_index_dir)
+            ALIGNRAWBAM(bam_to_align, ch_ref_index_dir,  ch_ref_fasta)
 
             aligned_preconsensus_bam = ALIGNRAWBAM.out.bam
             aligned_preconsensus_bai = ALIGNRAWBAM.out.bai
@@ -251,10 +262,16 @@ workflow DEEPUMICALLER {
             QUALIMAPQCRAW(aligned_preconsensus_bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
-        
+
+        // When FASTQs were split internally, all resulting BAMs must be merged regardless
+        // of whether the original samplesheet indicated pre-split input
+        def ch_is_split = params.run_splitfastq ?
+            channel.value(true) :
+            INPUT_CHECK.out.splitted_input
+
         // Combine sorted BAMs with the flag and branch
         aligned_preconsensus_bam
-            .combine(INPUT_CHECK.out.splitted_input)
+            .combine(ch_is_split)
             .branch { meta, bam, flag ->
                 split: flag == true
                     return tuple(meta, bam)
@@ -407,7 +424,9 @@ workflow DEEPUMICALLER {
         }
 
         // MODULE: Align with bwa mem
-        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir)
+        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, ch_ref_fasta)
+
+        SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
 
         if (params.split_by_chrom) {
 

@@ -8,6 +8,7 @@ process ALIGN_BAM {
     input:
     tuple val(meta), path(unmapped_bam)
     path index_dir
+    path ref_fasta
 
     output:
     tuple val(meta), path("*.mapped.bam")       , emit: bam
@@ -22,9 +23,10 @@ process ALIGN_BAM {
     prefix = "${meta.id}${prefix}"
     def memory_gb = task.memory.toGiga() / 2
     def sort_cpus = task.cpus.intdiv(2) + 1
+    def reference_filename = ref_fasta.name
     """
     # The real path to the FASTA
-    FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
+    FASTA=`find -L ./ -name "${reference_filename}.amb" | sed 's/.amb//'`
 
     mkdir temp_sort_directory
 

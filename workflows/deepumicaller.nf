@@ -94,13 +94,11 @@ include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL               } fr
 
 include { PICARD_MERGESAMFILES              as MERGEBAMS                    } from '../modules/nf-core/picard/mergesamfiles/main'
 
-
-// Sorting
-include { SAMTOOLS_SORT                     as SORTBAMRAWTEMPCOORDINATE     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED            } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMMERGED                } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMHQ                  } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } from '../modules/nf-core/samtools/sort/main'
+include { FGUMI_SORT                        as SORTBAMRAWTEMPCOORDINATE     } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMFILTERED            } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMMERGED                } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMHQ                  } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMDUPLEXCONS            } from '../modules/local/fgumi/sort/main'
 
 include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
@@ -506,7 +504,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMAMHQ.out.bam
-        .join( SORTBAMAMHQ.out.csi )
+        .join( SORTBAMAMHQ.out.bai )
         .set { bam_n_index_duplex_clean }
 
         if (params.perform_qcs){
@@ -530,7 +528,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCONS.out.bam
-        .join( SORTBAMDUPLEXCONS.out.csi )
+        .join( SORTBAMDUPLEXCONS.out.bai )
         .set { cons_duplex_bam }
 
         // Quality check

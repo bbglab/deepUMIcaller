@@ -28,6 +28,7 @@ process FGUMI_FASTQTOBAM {
         --sample ${meta.sample} \
         --library ${meta.sample} \
         --threads ${task.cpus} \
+        --deadlock-recover true \
         $args
 
     cat <<-END_VERSIONS > versions.yml

@@ -32,7 +32,8 @@ process FGUMI_GROUPREADSBYUMI {
         --input $taggedbam \
         --output ${prefix}_umi-grouped.bam \
         --metrics ${prefix}_umi-grouped \
-        --threads ${task.cpus}
+        --threads ${task.cpus} \
+        --deadlock-recover true
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

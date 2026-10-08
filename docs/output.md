@@ -30,6 +30,8 @@ This document describes the output produced by the pipeline.
 │   │   ├── familymetricsontarget
 │   │   │   ├── <sample>.duplex.pdf
 │   │   │   └── metrics_summary.tsv
+│   │   ├── umicollisions
+│   │   │   └── umi_collisions_summary.tsv
 │   │   └── groupreadsbyumi
 │   ├── coverage_n_depth
 │   │   ├── duplex

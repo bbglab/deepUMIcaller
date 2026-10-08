@@ -1,6 +1,6 @@
 process FGUMI_SORT {
     tag "$meta.id"
-    label 'consensus_filter'
+    label 'bam_sort_compress'
 
     conda "bioconda::fgumi"
     label 'fgumi_tools' 

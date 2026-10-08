@@ -225,7 +225,7 @@
                     "minimum": 0,
                     "description": "The maximum number of Ns in a consensus read",
                     "fa_icon": "fas fa-book",
-                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgbio's FilterConsensusReads."
+                    "help_text": "The maximum proportion of Ns in a consensus read for it to be kept when filtering using fgumi filter."
                 },
                 "filter_strand_agreement": {
                     "type": "boolean",

@@ -243,8 +243,8 @@ nextflow run main.nf \
 
 **Requirements:**
 
-- BAM files must be **template-coordinate sorted** (`samtools sort --template-coordinate`); this is the sort order required by `fgbio GroupReadsByUmi`
-- BAM files must contain UMI information stored in the `RX` BAM tag (as produced by `fgbio FastqToBam`)
+- BAM files must be **template-coordinate sorted** (`samtools sort --template-coordinate`); this is the sort order required by `fgumi group`
+- BAM files must contain UMI information stored in the `RX` BAM tag (as produced by `fgumi fastq`)
 - Files must be accessible from compute nodes
 
 **Expected Output:**

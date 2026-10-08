@@ -2,8 +2,8 @@ process ALIGN_BAM {
     tag "$meta.id"
     label 'alignment_intensive'
 
-    conda "bioconda::fgumi bioconda::bwa-mem3=0.7.0"
-    container 'community.wave.seqera.io/library/bwa-mem3_fgumi:5aca5b92362ee0b5'
+    conda "bioconda::fgumi=0.7.0 bioconda::bwa-mem3=0.14.0"
+    container 'community.wave.seqera.io/library/bwa-mem3_fgumi:ab0c353b848ba934'
 
     input:
     tuple val(meta), path(unmapped_bam)
@@ -24,6 +24,7 @@ process ALIGN_BAM {
     def memory_gb = task.memory.toGiga() / 2
     def sort_cpus = task.cpus.intdiv(2) + 1
     def reference_filename = ref_fasta.name
+    def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "${reference_filename}.amb" | sed 's/.amb//'`
@@ -41,7 +42,7 @@ process ALIGN_BAM {
             --output ${prefix}.mapped.bam \
             --max-memory ${memory_gb}GiB \
             --memory-per-thread false \
-            --memory-reserve 2GiB \
+            --memory-reserve ${reserve_memory_gb}GiB \
             --order coordinate \
             --write-index true \
             --sort-threads ${sort_cpus} \

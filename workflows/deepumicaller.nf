@@ -103,8 +103,6 @@ include { FGUMI_SORT                        as SORTBAMDUPLEXCONS            } fr
 include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
 include { FGUMI_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgumi/callduplexconsensusreads/main'
-// include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
-// include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
 
 
 // Postprocessing of the BAM and the VCF

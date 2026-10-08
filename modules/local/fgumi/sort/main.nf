@@ -22,7 +22,7 @@ process FGUMI_SORT {
         prefix = prefix.replace(".sorted", ".resorted")
     }
     if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
-    def memory_gb = task.memory.toGiga().intdiv(2) + task.memory.toGiga().intdiv(3) + 1
+    def memory_gb = task.memory.toGiga().intdiv(2) + 1
     def sort_cpus = task.cpus.intdiv(2) + 1
     def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
     """

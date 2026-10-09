@@ -24,12 +24,15 @@ This document describes the output produced by the pipeline.
 │   └── <sample>.sorted.bam.csi
 ├── metrics
 │   ├── duplex
-│   │   ├── fgbio_seqmetrics
-│   │   ├── fgbio_seqmetricsontarget
+│   │   ├── fgumi_seqmetrics
+│   │   ├── fgumi_seqmetricsontarget
 │   │   ├── familymetrics
-│   │   └── familymetricsontarget
-│   │       ├── <sample>.duplex.pdf
-│   │       └── metrics_summary.tsv
+│   │   ├── familymetricsontarget
+│   │   │   ├── <sample>.duplex.pdf
+│   │   │   └── metrics_summary.tsv
+│   │   ├── umicollisions
+│   │   │   └── umi_collisions_summary.tsv
+│   │   └── groupreadsbyumi
 │   ├── coverage_n_depth
 │   │   ├── duplex
 │   │   │   ├── computedepth

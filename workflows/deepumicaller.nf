@@ -5,10 +5,10 @@
 */
 
 
-include { paramsSummaryMap          } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { process_bams              } from '../modules/local/utils'
-
+include { paramsSummaryMap      } from 'plugin/nf-schema'
+include { paramsSummaryMultiqc  } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { process_bams          } from '../modules/local/utils'
+include { clean_chr_names       } from '../modules/local/utils'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -24,7 +24,9 @@ include { EXPAND_PANEL                                                          
 
 include { SPLITFASTQ                                                            } from '../modules/local/splitfastq/main'
 
-include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgbio/fastqtobam/main'
+include { FGUMI_FASTQTOBAM                  as FASTQTOBAM                       } from '../modules/local/fgumi/fastqtobam/main'
+include { FGUMI_CORRECTUMIS                 as CORRECTUMIS                      } from '../modules/local/fgumi/correctumis/main'
+include { FGUMI_RETAGFROMCRAM               as RETAGFROMCRAM                    } from '../modules/local/fgumi/retag/main'
 
 include { ALIGN_BAM                         as ALIGNRAWBAM                      } from '../modules/local/align_bam/main'
 include { ALIGN_BAM                         as ALIGNCONSENSUSBAM                } from '../modules/local/align_bam/main'
@@ -33,8 +35,10 @@ include { MERGEBAM                                                              
 include { MERGEBAM                          as MERGEBAMCHROM                    } from '../modules/local/mergebam/main'
 include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
-include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgbio/collectduplexseqmetrics/main'
-include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgbio/collectduplexseqmetrics/main'
+include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgumi/collectduplexseqmetrics/main'
+include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgumi/collectduplexseqmetrics/main'
+
+include { UMICOLLISIONS                                                         } from '../modules/local/umicollisions/main'
 
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
 include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
@@ -43,11 +47,11 @@ include { UNMAP_BAM                         as UNMAPBAM                         
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
 include { ASMINUSXS                         as ASMINUSXS                        } from '../modules/local/filter_reads/asminusxs/main'
 
-include { FGBIO_CLIPBAM                     as CLIPBAM                          } from '../modules/local/clipbam/main'
-include { FGBIO_CLIPBAM                     as CLIPBAMAM                        } from '../modules/local/clipbam/main'
+include { FGUMI_CLIPBAM                     as CLIPBAM                          } from '../modules/local/fgumi/clipbam/main'
+include { FGUMI_CLIPBAM                     as CLIPBAMAM                        } from '../modules/local/fgumi/clipbam/main'
 
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgbio/filterconsensusreads/main'
-include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgbio/filterconsensusreads/main'
+include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSAM           } from '../modules/local/fgumi/filterconsensusreads/main'
+include { FGUMI_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADSDUPLEX       } from '../modules/local/fgumi/filterconsensusreads/main'
 
 include { CREATEBED_FROM_TSV                as CREATEBED                        } from '../modules/local/createbed/main'
 
@@ -92,23 +96,15 @@ include { BEDTOOLS_COVERAGE                 as COVERAGEGLOBAL               } fr
 
 include { PICARD_MERGESAMFILES              as MERGEBAMS                    } from '../modules/nf-core/picard/mergesamfiles/main'
 
+include { FGUMI_SORT                        as SORTBAMRAWTEMPCOORDINATE     } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMFILTERED            } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMMERGED                } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMAMHQ                  } from '../modules/local/fgumi/sort/main'
+include { FGUMI_SORT                        as SORTBAMDUPLEXCONS            } from '../modules/local/fgumi/sort/main'
 
-// Sorting
-include { SAMTOOLS_SORT                     as SORTBAMRAW                   } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMRAWTEMPCOORDINATE     } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMALLMOLECULES          } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMFILTERED            } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMMERGED                } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMAMHQ                  } from '../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_SORT                     as SORTBAMDUPLEXCONS            } from '../modules/nf-core/samtools/sort/main'
+include { FGUMI_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgumi/groupreadsbyumi/main'
 
-// include { FGBIO_FASTQTOBAM                  as FASTQTOBAM                  } from '../modules/nf-core/fgbio/fastqtobam/main'
-
-include { FGBIO_GROUPREADSBYUMI             as GROUPREADSBYUMI              } from '../modules/nf-core/fgbio/groupreadsbyumi/main'
-
-include { FGBIO_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgbio/callduplexconsensusreads/main'
-// include { FGBIO_FILTERCONSENSUSREADS        as FILTERCONSENSUSREADS        } from '../modules/nf-core/fgbio/filterconsensusreads/main'
-// include { FGBIO_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS     } from '../modules/nf-core/fgbio/collectduplexseqmetrics/main'
+include { FGUMI_CALLDUPLEXCONSENSUSREADS    as CALLCONSENSUSREADS           } from '../modules/nf-core/fgumi/callduplexconsensusreads/main'
 
 
 // Postprocessing of the BAM and the VCF
@@ -166,30 +162,31 @@ workflow DEEPUMICALLER {
         params.step
     )
 
-    if (params.step == 'mapping') {
+    if (params.step in ['mapping', 'preprocessed_crams']) {
 
-        // READ PREPROCESSING
-        if (params.trim_adapters){
-            PRETRIMFASTQC(
-                INPUT_CHECK.out.reads
+        if (params.step == 'mapping') {
+            // READ PREPROCESSING
+            if (params.trim_adapters){
+                PRETRIMFASTQC(
+                    INPUT_CHECK.out.reads
+                )
+                // MODULE: Run TRIMREADS
+                TRIMREADS(INPUT_CHECK.out.reads,
+                                [], // we are not using any adapter fastas at the moment
+                                false,
+                                false)
+                
+                reads_to_qc = TRIMREADS.out.reads
+            } else {
+                reads_to_qc = INPUT_CHECK.out.reads
+            }
+
+            // MODULE: Run FastQC
+            FASTQC (
+                reads_to_qc
             )
-            // MODULE: Run TRIMREADS
-            TRIMREADS(INPUT_CHECK.out.reads,
-                            [], // we are not using any adapter fastas at the moment
-                            false,
-                            false)
             
-            reads_to_qc = TRIMREADS.out.reads
-        } else {
-            reads_to_qc = INPUT_CHECK.out.reads
-        }
-
-        // MODULE: Run FastQC
-        FASTQC (
-            reads_to_qc
-        )
-        
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it -> it[1]}.ifEmpty([]))
 
         // Optional: Split FASTQs into parts for parallelisation
         if (params.run_splitfastq) {
@@ -219,29 +216,50 @@ workflow DEEPUMICALLER {
             split_fastqs_ch = reads_to_qc
         }
 
-        FASTQTOBAM(split_fastqs_ch)
+            FASTQTOBAM(split_fastqs_ch)
+
+            // Optional UMI correction when known UMI files are provided per sample
+            FASTQTOBAM.out.bam
+                .branch { meta, _bam ->
+                    correct: meta.umi_file
+                    passthrough: true
+                }
+                .set { ch_fastqtobam }
+
+            CORRECTUMIS(
+                ch_fastqtobam.correct.map { meta, bam -> [meta, bam, file(meta.umi_file)] },
+                params.correct_umis_max_mismatches,
+                params.correct_umis_min_distance
+            )
+
+            bam_after_umi_correction = CORRECTUMIS.out.bam.mix(ch_fastqtobam.passthrough)
+
+            // Decide whether we clip the beginning and/or end of the reads or nothing
+            if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
+                TRIMBAM(bam_after_umi_correction, params.left_clip, params.right_clip)            
+                bam_to_align = TRIMBAM.out.bam
+            } else {
+                bam_to_align = bam_after_umi_correction
+            }
 
 
-        // Decide whether we clip the beginning and/or end of the reads or nothing
-        if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-            TRIMBAM(FASTQTOBAM.out.bam, params.left_clip, params.right_clip)            
-            bam_to_align = TRIMBAM.out.bam
+            // MODULE: Align with bwa mem
+            ALIGNRAWBAM(bam_to_align, ch_ref_index_dir,  ch_ref_fasta)
+
+            aligned_preconsensus_bam = ALIGNRAWBAM.out.bam
+            aligned_preconsensus_bai = ALIGNRAWBAM.out.bai
         } else {
-            bam_to_align = FASTQTOBAM.out.bam
+            RETAGFROMCRAM(
+                INPUT_CHECK.out.reads,
+                ch_ref_fasta
+            )
+
+            aligned_preconsensus_bam = RETAGFROMCRAM.out.bam
+            aligned_preconsensus_bai = RETAGFROMCRAM.out.bai
         }
 
-
-        // MODULE: Align with bwa mem
-        // TODO
-        // test with real samples whether we could change the "false" here into "true"
-        // this would activate sorting the files
-        // and would reduce the size of the files stored in the work directory.
-        // it works with the test samples
-        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, ch_ref_fasta, false)
-
-        SORTBAMRAW(ALIGNRAWBAM.out.bam)
         if (params.perform_qcs) {
-            QUALIMAPQCRAW(SORTBAMRAW.out.bam, ch_targetsfile)
+            QUALIMAPQCRAW(aligned_preconsensus_bam, ch_targetsfile)
             ch_multiqc_files = ch_multiqc_files.mix(QUALIMAPQCRAW.out.results.map{it -> it[1]}.collect())
         }
 
@@ -252,7 +270,7 @@ workflow DEEPUMICALLER {
             INPUT_CHECK.out.splitted_input
 
         // Combine sorted BAMs with the flag and branch
-        SORTBAMRAW.out.bam
+        aligned_preconsensus_bam
             .combine(ch_is_split)
             .branch { meta, bam, flag ->
                 split: flag == true
@@ -264,7 +282,7 @@ workflow DEEPUMICALLER {
 
         // Handle normal mode (no splitting)
         aligned_raw_bam_normal = branched_bams.normal
-            .join(SORTBAMRAW.out.csi)
+            .join(aligned_preconsensus_bai)
 
         // Handle split mode (with merging)
         branched_bams.split
@@ -307,7 +325,7 @@ workflow DEEPUMICALLER {
                         }
                 )
                 .map { meta, bam -> [meta, bam] } // Ensure correct structure
-        }else {
+        } else {
             // The BAI index is dropped here because downstream processes only require the BAM file and its metadata.  
             def drop_bai_index = { meta, bam, _bai -> tuple(meta, bam) }  
             aligned_raw_bam = aligned_raw_bam.map(drop_bai_index)  
@@ -318,22 +336,22 @@ workflow DEEPUMICALLER {
         pre_consensus_bams = SORTBAMRAWTEMPCOORDINATE.out.bam
     }
     //
-    // Run fgbio Duplex consensus pipeline
+    // Run fgumi Duplex consensus pipeline
     //
 
-    if (params.step in ['mapping', 'groupreadsbyumi']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi']) {
 
         // ASSIGN pre_consensus_bams = to our input bam
         if (params.step == 'groupreadsbyumi') {
             pre_consensus_bams = INPUT_CHECK.out.reads
         }
 
-        // MODULE: Run fgbio GroupReadsByUmi
+        // MODULE: Run fgumi group
         // requires input template coordinate sorted
-        GROUPREADSBYUMI(pre_consensus_bams, "Paired")
+        GROUPREADSBYUMI(pre_consensus_bams, "paired")
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it -> it[1]}.collect())
 
-        // MODULE: Run fgbio CollecDuplexSeqMetrics
+        // MODULE: Run fgumi CollecDuplexSeqMetrics
         COLLECTSEQMETRICS(GROUPREADSBYUMI.out.bam, [])
         
         // Extract family_sizes file directly from dedicated output
@@ -341,18 +359,7 @@ workflow DEEPUMICALLER {
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {
-            family_sizes_metrics = family_sizes_metrics
-                .map { meta, file -> 
-                    // Extract original sample name (remove chromosome suffix like "_chr1", "_chr2", "_unknown")
-                    def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, file)
-                }
-                .groupTuple(by: 0)  // Group by original sample name
-                .map { sample, files -> 
-                    // Create new meta with original sample name
-                    def new_meta = [id: sample, sample: sample]
-                    tuple(new_meta, files.sort { it -> it.name })
-                }
+            family_sizes_metrics = clean_chr_names(family_sizes_metrics)
         }
         
         // Plot the family size metrics
@@ -362,7 +369,7 @@ workflow DEEPUMICALLER {
         FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
 
 
-        // MODULE: Run fgbio CollecDuplexSeqMetrics only on target
+        // MODULE: Run fgumi CollecDuplexSeqMetrics only on target
         COLLECTSEQMETRICSONTARGET(GROUPREADSBYUMI.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
         
         // Extract family_sizes file directly from dedicated output
@@ -370,33 +377,36 @@ workflow DEEPUMICALLER {
         
         // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
         if (params.split_by_chrom) {
-            family_sizes_metrics_ontarget = family_sizes_metrics_ontarget
-                .map { meta, file -> 
-                    // Extract original sample name (remove chromosome suffix)
-                    def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
-                    tuple(original_sample, file)
-                }
-                .groupTuple(by: 0)  // Group by original sample name
-                .map { sample, files -> 
-                    // Create new meta with original sample name
-                    def new_meta = [id: sample, sample: sample]
-                    tuple(new_meta, files.sort { it -> it.name })
-                }
+            family_sizes_metrics_ontarget = clean_chr_names(family_sizes_metrics_ontarget)
         }
 
+        clean_chr_names(GROUPREADSBYUMI.out.position_group_info)
+        .join(clean_chr_names(COLLECTSEQMETRICSONTARGET.out.umi_counts))
+        .join(clean_chr_names(COLLECTSEQMETRICSONTARGET.out.duplex_umi_counts))
+        .set{ umi_collisions_input }
+
+        
         // Plot the family size metrics
         FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
 
         FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
         FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
 
+        UMICOLLISIONS(umi_collisions_input)
 
-        // MODULE: Run fgbio CallDuplexConsensusReads
+        UMICOLLISIONS.out.tsv.map{it -> it[1]}.collectFile(
+            name: "umi_collisions_summary.tsv",
+            storeDir: "${params.outdir}/metrics/duplex/umicollisions",
+            skip: 1,
+            keepHeader: true
+        )
+
+        // MODULE: Run fgumi CallDuplexConsensusReads
         CALLCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
         
     }
     
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus']) {
 
         if (params.step == 'unmapped_consensus') {
             UNMAPBAM(INPUT_CHECK.out.reads)
@@ -406,14 +416,12 @@ workflow DEEPUMICALLER {
         }
 
         // MODULE: Align with bwa mem
-        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, ch_ref_fasta, false)
-
-        SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
+        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, ch_ref_fasta)
 
         if (params.split_by_chrom) {
 
             // Group BAMs by original sample name
-            SORTBAMALLMOLECULES.out.bam
+            ALIGNCONSENSUSBAM.out.bam
             .map { meta, bam -> 
                 def sample = meta.sample
                 tuple(sample, meta, bam)
@@ -432,13 +440,13 @@ workflow DEEPUMICALLER {
             MERGEBAMCHROM(bam_n_index_all_molecules)
             all_molecules_bam_complete_n_index = MERGEBAMCHROM.out.bam_bai
         } else {
-            SORTBAMALLMOLECULES.out.bam
-            .join( SORTBAMALLMOLECULES.out.csi )
+            ALIGNCONSENSUSBAM.out.bam
+            .join( ALIGNCONSENSUSBAM.out.bai )
             .set { all_molecules_bam_complete_n_index }
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile']) {
 
         if (params.step == 'allmoleculesfile') {
             all_molecules_bam_complete_n_index = INPUT_CHECK.out.reads
@@ -463,7 +471,7 @@ workflow DEEPUMICALLER {
 
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus']) {
 
         if (params.step == 'filterconsensus') {
             duplex_filtered_init_bam = INPUT_CHECK.out.reads
@@ -505,7 +513,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMAMHQ.out.bam
-        .join( SORTBAMAMHQ.out.csi )
+        .join( SORTBAMAMHQ.out.bai )
         .set { bam_n_index_duplex_clean }
 
         if (params.perform_qcs){
@@ -522,7 +530,6 @@ workflow DEEPUMICALLER {
 
         // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
         CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
-        
 
         // MODULE: Sort BAM file
         SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
@@ -530,7 +537,7 @@ workflow DEEPUMICALLER {
         // join the bam and the bamindex channels to have
         // the ones from the same samples together
         SORTBAMDUPLEXCONS.out.bam
-        .join( SORTBAMDUPLEXCONS.out.csi )
+        .join( SORTBAMDUPLEXCONS.out.bai )
         .set { cons_duplex_bam }
 
         // Quality check
@@ -557,7 +564,7 @@ workflow DEEPUMICALLER {
         }
     }
 
-    if (params.step in ['mapping', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus', 'calling']) {
+    if (params.step in ['mapping', 'preprocessed_crams', 'groupreadsbyumi', 'unmapped_consensus', 'allmoleculesfile', 'filterconsensus', 'calling']) {
     
         // Initialize variables for calling step entry point
         if (params.step == 'calling') {

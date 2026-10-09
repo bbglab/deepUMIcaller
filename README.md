@@ -32,21 +32,20 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Fastq to BAM, extracting UMIs ([`fgbio FastqToBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FastqToBam.html))
-3. Hard-clip read ends to remove low-quality bases ([`bamutil trimBam`](https://genome.sph.umich.edu/wiki/BamUtil:_trimBam); defaults: 10 bp from the 5' end, 0 bp from the 3' end)
-4. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgbio ZipperBam`](http://fulcrumgenomics.github.io/fgbio/tools/latest/ZipperBam.html)), and template-coordinate sort ([`samtools sort`](http://www.htslib.org/doc/samtools.html))
-5. Group reads by UMI ([`fgbio GroupReadsByUmi`](http://fulcrumgenomics.github.io/fgbio/tools/latest/GroupReadsByUmi.html))
-6. Call [duplex consensus][duplex-seq-link] reads ([`fgbio CallDuplexConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CallDuplexConsensusReads.html))
-      1. Collect duplex sequencing specific metrics ([`fgbio CollectDuplexSeqMetrics`](http://fulcrumgenomics.github.io/fgbio/tools/latest/CollectDuplexSeqMetrics.html))
+2. Fastq to BAM, extracting UMIs ([`fgumi extract`](https://github.com/fulcrumgenomics/fgumi))
+3. Align ([`bwa mem`](https://github.com/lh3/bwa)), reformat ([`fgumi zipper`](https://github.com/fulcrumgenomics/fgumi)), and coordinate sort ([`fgumi sort`](https://github.com/fulcrumgenomics/fgumi))
+4. Group reads by UMI ([`fgumi group`](https://github.com/fulcrumgenomics/fgumi))
+5. Call [duplex consensus][duplex-seq-link] reads ([`fgumi duplex`](https://github.com/fulcrumgenomics/fgumi))
+      1. Collect duplex sequencing specific metrics ([`fgumi duplex-metrics`](https://github.com/fulcrumgenomics/fgumi))
       2. In house plotting of single strand consensus reads family size distribution.
-7. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
-8. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
-9. Filter consensus reads ([`fgbio FilterConsensusReads`](http://fulcrumgenomics.github.io/fgbio/tools/latest/FilterConsensusReads.html)).
-10. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
-11. Variant calling postprocessing. Called variants are further processed to recompute allele depths from the duplex and all-molecules pileups (yielding duplex, all-molecules and no-duplex VAFs), to flag positions with a high proportion of Ns, and to add filter flags for low-mappability, low-complexity, and (human only) NanoSeq SNP/noise regions. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
-12. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.
-13. (optional) Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
-14. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
+6. Align consensus reads([`bwa mem`](https://github.com/lh3/bwa))
+7. Filter out reads with potential ambiguous mapping. (using AS-XS criteria)
+8. Filter consensus reads ([`fgumi filter`](https://github.com/fulcrumgenomics/fgumi)).
+9. Variant calling ([`VarDict`](https://github.com/AstraZeneca-NGS/VarDictJava)).
+10. Variant calling postprocessing. Called variants are further processed to contain more information on pileup-based recounting of allele depths, proportion of Ns per position filters and optionally filtering mutations per position. All filters are annotated in the FILTER field but no variant is discarded from the VCF.
+11. Plotting of somatic variants. Plotting mutations per position in read as a QC to look for enrichment and plotting mutational profile as well.
+12. (optional) Variant annotation ([`Ensembl VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html)).
+13. Present QC for all the metrics computed in the process ([`MultiQC`](http://multiqc.info/)).
 
 ## Initial requirements
 
@@ -74,7 +73,7 @@ Find a detailed explanation of the deepUMIcaller pipeline and its use within the
 >
 > protocols.io (2026) https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2
 
-For information on the [read structures](https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures) as required in the input sample sheet, check this link.
+For information on read structures as required in the input sample sheet, check the [fgumi read structure guide](https://github.com/fulcrumgenomics/fgumi/blob/main/docs/src/guide/read-structures.md).
 
 ## Acknowledgements
 

@@ -18,6 +18,7 @@ logger = logging.getLogger()
 
 requirementsDict = { "mapping": ["fastq_1" , "fastq_2", "read_structure"],
                     "groupreadsbyumi": ["bam"],
+                    "preprocessed_crams": ["preprocessed_cram"],
                     "unmapped_consensus": ["bam"],
                     "filterconsensus": ["bam"],
                     "calling": ["duplexbam", "csi"],
@@ -189,7 +190,7 @@ def sniff_format(handle):
         # Manual header validation for common cases
         first_line = peek.split('\n')[0] if peek else ""
         # Check if first line looks like a header (contains expected column names)
-        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'duplexbam', 'csi']
+        expected_headers = ['sample', 'bam', 'fastq_1', 'fastq_2', 'read_structure', 'umi_file', 'duplexbam', 'csi', 'preprocessed_cram']
         if any(header in first_line.lower() for header in expected_headers):
             logger.warning("CSV sniffer failed to detect header, but header appears valid based on column names.")
         else:
@@ -295,7 +296,7 @@ def parse_args(argv=None):
         "-s",
         "--step",
         help="The desired step (default WARNING).",
-        choices=("mapping", "groupreadsbyumi", "unmapped_consensus", "allmoleculesfile", "filterconsensus", "calling"),
+        choices=("mapping", "groupreadsbyumi", "preprocessed_crams", "unmapped_consensus", "allmoleculesfile", "filterconsensus", "calling"),
         default="mapping",
     )
     return parser.parse_args(argv)

@@ -1,79 +1,60 @@
 process ALIGN_BAM {
     tag "$meta.id"
     label 'alignment_intensive'
-    
-    conda "bioconda::fgbio=2.0.2 bioconda::bwa=0.7.17 bioconda::samtools=1.16.1" 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? 
-        'https://depot.galaxyproject.org/singularity/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' : 
-        'biocontainers/mulled-v2-69f5207f538e4de9ef3bae6f9a95c5af56a88ab8:82d3ec41f9f1227f7183d344be46f73365efa704-0' }"
+
+    conda "bioconda::fgumi=0.7.0 bioconda::bwa-mem3=0.14.0"
+    container 'community.wave.seqera.io/library/bwa-mem3_fgumi:ab0c353b848ba934'
 
     input:
     tuple val(meta), path(unmapped_bam)
     path index_dir
     path ref_fasta
-    val sort
 
     output:
-    tuple val(meta), path("*.mapped.bam"), emit: bam
-    path "versions.yml"                  , topic: versions
+    tuple val(meta), path("*.mapped.bam")       , emit: bam
+    tuple val(meta), path("*.mapped.bam.bai")   , emit: bai
+    path "versions.yml"                         , topic: versions
 
 
     script:
-    def samtools_fastq_args = task.ext.samtools_fastq_args ?: ''
-    def samtools_sort_args = task.ext.samtools_sort_args ?: ''
     def bwa_args = task.ext.bwa_args ?: ''
-    def fgbio_args = task.ext.fgbio_args ?: ''
+    def fgumi_fastq_args = task.ext.fgumi_fastq_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def fgbio_mem_gb = 4
-
-    if (!task.memory) {
-        log.info '[fgbio ZipperBams] Available memory not known - defaulting to 4GB. Specify process memory requirements to change this.'
-    } else if (fgbio_mem_gb > task.memory.giga) {
-        if (task.memory.giga < 2) {
-            fgbio_mem_gb = 1
-        } else {
-            fgbio_mem_gb = task.memory.giga - 1
-        }
-    }
-    if (sort) {
-        fgbio_zipper_bams_output = "/dev/stdout"
-        fgbio_zipper_bams_compression = 0 // do not compress if samtools is consuming it
-        extra_command = " | samtools sort "
-        extra_command += samtools_sort_args
-        extra_command += " --template-coordinate"
-        extra_command += " --threads "+ task.cpus
-        extra_command += " -o " + prefix + ".mapped.bam"
-    } else {
-        fgbio_zipper_bams_output = prefix + ".mapped.bam"
-        fgbio_zipper_bams_compression = 1
-        extra_command = ""
-    }
+    def memory_gb = task.memory.toGiga() / 2
+    def sort_cpus = task.cpus.intdiv(2) + 1
     def reference_filename = ref_fasta.name
+    def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "${reference_filename}.amb" | sed 's/.amb//'`
 
-    samtools fastq ${samtools_fastq_args} ${unmapped_bam} \\
-        | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
-        | fgbio -Xmx${fgbio_mem_gb}g \\
-            --compression ${fgbio_zipper_bams_compression} \\
-            --async-io=true \\
-            ZipperBams \\
-            --input /dev/stdin \\
-            --unmapped ${unmapped_bam} \\
-            --ref \$FASTA \\
-            --output ${fgbio_zipper_bams_output} \\
-            --tags-to-reverse Consensus \\
-            --tags-to-revcomp Consensus \\
-            ${fgbio_args} \\
-            ${extra_command};
+    mkdir temp_sort_directory
+
+    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} ${fgumi_fastq_args} \\
+        | bwa-mem3 mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
+        | fgumi zipper \
+            --input /dev/stdin \
+            --unmapped ${unmapped_bam} \
+            --reference \$FASTA \
+            --threads ${task.cpus} \\
+        | fgumi sort --input /dev/stdin \
+            --output ${prefix}.mapped.bam \
+            --max-memory ${memory_gb}GiB \
+            --memory-per-thread false \
+            --memory-reserve ${reserve_memory_gb}GiB \
+            --order coordinate \
+            --write-index true \
+            --sort-threads ${sort_cpus} \
+            --merge-threads ${task.cpus} \
+            --tmp-dir temp_sort_directory/
+
+    rm -rf temp_sort_directory
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        bwa-mem3: \$(bwa-mem3 version 2>&1 | head -1)
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
 
@@ -85,10 +66,9 @@ process ALIGN_BAM {
     touch ${prefix}.mapped.bam
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        bwa: \$(echo \$(bwa 2>&1) | sed 's/^.*Version: //; s/Contact:.*\$//')
-        fgbio: \$( echo \$(fgbio --version 2>&1 | tr -d '[:cntrl:]' ) | sed -e 's/^.*Version: //;s/\\[.*\$//')
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        bwa-mem3: \$(bwa-mem3 version 2>&1 | head -1)
+        fgumi: \$(fgumi --version | sed 's/^fgumi //')
     END_VERSIONS
     """
-    
+
 }

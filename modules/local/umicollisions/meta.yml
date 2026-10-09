@@ -1,0 +1,63 @@
+name: umi_collisions
+description: Estimates UMI collision probabilities from fgumi group and fgumi duplex-metrics outputs.
+keywords:
+  - metrics
+  - duplex
+  - umi
+  - collisions
+tools:
+  - python:
+      description:
+      homepage:
+      documentation:
+      licence:
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - position_group_sizes:
+      type: file
+      description: |
+        One or more `*.position_group_sizes.txt` files produced by FGUMI_GROUPREADSBYUMI,
+        describing how many fragments share each position group.
+      pattern: "*.position_group_sizes.txt"
+  - umi_counts:
+      type: file
+      description: |
+        The `*.umi_counts.txt` file produced by FGUMI_COLLECTDUPLEXSEQMETRICS with the
+        distribution of single UMI observations.
+      pattern: "*.umi_counts.txt"
+  - duplex_umi_counts:
+      type: file
+      description: |
+        The `*.duplex_umi_counts.txt` file produced by FGUMI_COLLECTDUPLEXSEQMETRICS with the
+        distribution of duplex UMI observations.
+      pattern: "*.duplex_umi_counts.txt"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - tsv:
+      type: file
+      description: |
+        TSV file with the UMI collision summary statistics for the sample
+        (effective UMI diversity, fragments lost to collisions, etc.).
+      pattern: "*.umi_collisions.tsv"
+  - plot:
+      type: file
+      description: |
+        Optional PDF plot of the UMI frequency distributions.
+      pattern: "*.umi_collisions.pdf"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@bbglab"

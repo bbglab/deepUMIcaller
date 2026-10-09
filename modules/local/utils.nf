@@ -15,3 +15,19 @@ def process_bams(meta, bams) {
     }
     return results
 }
+
+def clean_chr_names(meta_file_pairs) {
+    def sample_grouped_file_pairs
+    sample_grouped_file_pairs = meta_file_pairs.map { meta, file -> 
+                    // Extract original sample name (remove chromosome suffix)
+                    def original_sample = meta.sample ?: meta.id.replaceAll(/_(chr[^_]+|unknown)$/, '')
+                    tuple(original_sample, file)
+                }
+                .groupTuple(by: 0)  // Group by original sample name
+                .map { sample, files -> 
+                    // Create new meta with original sample name
+                    def new_meta = [id: sample, sample: sample]
+                    tuple(new_meta, files.sort { it -> it.name })
+                }
+    return sample_grouped_file_pairs
+}

@@ -219,7 +219,14 @@ def compute_umi_collisions(sample_name, position_group_sizes_files, umi_counts_f
 
     sample_count_df = read_position_group_sizes(position_group_sizes_files)
 
-    mapping_observed_repeats_to_original_cuts = compute_original_fragments_per_sample(sample_count_df, prob_vector)
+    try:
+        mapping_observed_repeats_to_original_cuts = compute_original_fragments_per_sample(sample_count_df, prob_vector)
+    except Exception as e:
+        print(f"Error computing original fragments for {sample_name}: {e}")
+        summary_stats_df = pd.DataFrame(columns=["sample", "unique_tags_number", "unique_tags_number_duplex", "D_eff", "lost_fragments", "lost_proportion"])
+        summary_stats_df.to_csv(output_file, sep="\t", index=False)
+        print(f"{sample_name}: summary written to {output_file}")
+        return None
 
     sample_count_df["original_fragments_per_cutsite"] = sample_count_df["position_group_size"].map(mapping_observed_repeats_to_original_cuts)
     sample_count_df["original_fragments"] = sample_count_df["original_fragments_per_cutsite"] * sample_count_df["count"]

@@ -18,6 +18,8 @@ process UMICOLLISIONS {
 
     // Handle single file or multiple files (list/collection), e.g. when split_by_chrom is enabled
     def position_group_files = [position_group_sizes].flatten().collect { file -> "--position-group-sizes ${file}" }.join(' ')
+    def umi_counts_files = [umi_counts].flatten().collect { file -> "--umi-counts ${file}" }.join(' ')
+    def duplex_umi_counts_files = [duplex_umi_counts].flatten().collect { file -> "--duplex-umi-counts ${file}" }.join(' ')
 
     def plot_arg = task.ext.plot ? "--plot" : ""
 
@@ -25,8 +27,8 @@ process UMICOLLISIONS {
     compute_umi_collisions.py \\
         --sample-name ${meta.id} \\
         ${position_group_files} \\
-        --umi-counts ${umi_counts} \\
-        --duplex-umi-counts ${duplex_umi_counts} \\
+        ${umi_counts_files} \\
+        ${duplex_umi_counts_files} \\
         --output-file ${prefix}.umi_collisions.tsv \\
         ${plot_arg} \\
         ${args}

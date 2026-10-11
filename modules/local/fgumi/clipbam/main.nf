@@ -20,7 +20,6 @@ process FGUMI_CLIPBAM {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def manual_clipping = task.ext.extra_clipping ?: ""
-    // FIXME : this should be switched to fgumi sort
     """
     fgumi sort \\
         --order queryname \

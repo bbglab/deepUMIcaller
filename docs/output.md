@@ -118,8 +118,8 @@ Metrics to assess the quality of the duplex library prep.
 
 ### Outputs
 
-- fgbio_seqmetrics
-- fgbio_seqmetricsontarget
+- fgumi_seqmetrics
+- fgumi_seqmetricsontarget
 
 - discardedcoverageglobal
 - discardedcoveragetargeted

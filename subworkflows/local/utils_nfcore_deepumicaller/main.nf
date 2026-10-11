@@ -208,9 +208,8 @@ def logo(monochrome_logs) {
 
 def citation(workflow) {
         return "If you use ${workflow.manifest.name} for your analysis please cite:\n\n" +
-            // TODO nf-core: Add Zenodo DOI for pipeline after first release
-            //"* The pipeline\n" +
-            //"  https://doi.org/10.5281/zenodo.XXXXXXX\n\n" +
+            "* The pipeline\n" +
+            "  https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2\n\n" +
             "* The nf-core framework\n" +
             "  https://doi.org/10.1038/s41587-020-0439-x\n\n" +
             "* Software dependencies\n" +

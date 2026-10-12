@@ -24,7 +24,6 @@ process SAMTOOLS_FILTER {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    //def memory_per_cpu = Math.floor(task.memory.toGiga() / task.cpus) as Integer
     def file_type = args.contains("--output-fmt sam") ? "sam" :
                     args.contains("--output-fmt bam") ? "bam" :
                     args.contains("--output-fmt cram") ? "cram" :
@@ -61,12 +60,3 @@ process SAMTOOLS_FILTER {
     END_VERSIONS
     """
 }
-    // samtools \\
-    //     view \\
-    //     --threads ${task.cpus-1} \\
-    //     $args \\
-    //     ${reference} \\
-    //     ${readnames} \\
-    //     -o ${prefix}.${file_type} \\
-    //     $input \\
-    //     $args2

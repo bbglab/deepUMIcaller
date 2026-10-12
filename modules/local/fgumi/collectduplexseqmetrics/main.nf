@@ -24,10 +24,11 @@ process FGUMI_COLLECTDUPLEXSEQMETRICS {
     def coords_file = intervals_file ? "--intervals ${intervals_file}" : ""
 
     """
-    fgumi duplex-metrics \
+    fgumi duplex-metrics \\
         --input $grouped_bam \
         --output ${prefix}.duplex_seq_metrics \
-        ${coords_file} \
+        ${coords_file} \\
+        --threads ${task.cpus} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

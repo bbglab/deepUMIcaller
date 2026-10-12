@@ -1,6 +1,6 @@
 process UNMAP_BAM {
     tag "$meta.id"
-    label 'bam_sort_compress'
+    label 'unmap_bam'
 
     conda "bioconda::samtools=1.20"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -42,12 +42,3 @@ process UNMAP_BAM {
     END_VERSIONS
     """
 }
-    // samtools \\
-    //     view \\
-    //     --threads ${task.cpus-1} \\
-    //     $args \\
-    //     ${reference} \\
-    //     ${readnames} \\
-    //     -o ${prefix}.${file_type} \\
-    //     $input \\
-    //     $args2

@@ -236,7 +236,7 @@ workflow DEEPUMICALLER {
 
             // Decide whether we clip the beginning and/or end of the reads or nothing
             if ( (params.left_clip > 0) || (params.right_clip > 0) ) {
-                TRIMBAM(bam_after_umi_correction, params.left_clip, params.right_clip)            
+                TRIMBAM(bam_after_umi_correction)
                 bam_to_align = TRIMBAM.out.bam
             } else {
                 bam_to_align = bam_after_umi_correction

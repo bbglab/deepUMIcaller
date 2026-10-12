@@ -70,7 +70,7 @@ def get_single_umi_probabilities_vector(umi_counts_files, verbose=False):
     init_val = 1
     i = 0
     diff = 0
-    while diff < (init_val / 2):
+    while diff < (init_val / 2) and i < len(umi_counts_data):
         new_val = umi_counts_data.loc[i, "fraction_unique_observations"]
         if verbose:
             print(i, new_val, init_val)
@@ -157,7 +157,7 @@ def compute_original_fragments_per_sample(counts_df, vector_of_probabilities):
     if 1 in n_repeats_observed:
         n_repeats_observed.remove(1)
 
-    mapping_observed_repeats_to_original_cuts = {1: posterior_expectation_one_repeat(vector_of_probabilities).item()}
+    mapping_observed_repeats_to_original_cuts = {1: posterior_expectation_one_repeat(vector_of_probabilities)}
 
     for n_repeats in n_repeats_observed:
         N_solution = find_N(vector_of_probabilities, n_repeats)

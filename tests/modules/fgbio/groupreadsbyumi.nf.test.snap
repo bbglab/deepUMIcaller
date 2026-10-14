@@ -1,0 +1,48 @@
+{
+    "real run on B5 subset matches snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5_umi-grouped.bam:md5,5f73f7212ce5518599f2996d9b3643df"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5_umi_histogram.txt:md5,aa1347d9cb78cf65f0f45e163c8882d3"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,ae90118fee7a38f55ff8aa2f847be3b4"
+                ],
+                "bam": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5_umi-grouped.bam:md5,5f73f7212ce5518599f2996d9b3643df"
+                    ]
+                ],
+                "histogram": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5_umi_histogram.txt:md5,aa1347d9cb78cf65f0f45e163c8882d3"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-08-13T23:15:01.800526328",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

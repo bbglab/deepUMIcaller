@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process MERGE_VARDICT_RESULTS"
+    script "../../../modules/local/calling_vardict/merge_vardict_results/main.nf"
+    config "../nextflow.config"
+    process "MERGE_VARDICT_RESULTS"
+
+    tag "modules"
+    tag "local"
+    tag "vardict"
+    tag "merge_vardict_results"
+
+    test("stub run emits merged VCF and raw TSV") {
+        tag "stub"
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [id: 'B5'],
+                    [
+                        file(params.module_testdata_base + '/B5_chunk_1.genome.vcf', checkIfExists: true),
+                        file(params.module_testdata_base + '/B5_chunk_2.genome.vcf', checkIfExists: true)
+                    ],
+                    [
+                        file(params.module_testdata_base + '/B5_chunk_1.raw.tsv', checkIfExists: true),
+                        file(params.module_testdata_base + '/B5_chunk_2.raw.tsv', checkIfExists: true)
+                    ]
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.vcf.size() == 1 },
+                { assert process.out.genome_vcf.size() == 1 },
+                { assert file(process.out.vcf[0][1]).name == 'B5.vcf' },
+                { assert file(process.out.genome_vcf[0][1]).name == 'B5.genome.vcf.gz' },
+                { assert process.out.versions.size() == 1 }
+            )
+        }
+    }
+}

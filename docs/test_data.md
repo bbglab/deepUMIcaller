@@ -141,3 +141,56 @@ sed -i 's|/data/bbg/nobackup2/scratch/fcalvet/fetch_duplex_fastqs|/my/data/fastq
     tests/test_data/input/*.csv
 ```
 
+---
+
+## Real fixtures for module-level unit tests
+
+The process-level unit tests in `tests/modules/` (see [tests/README.md](../tests/README.md))
+each have a `real_data`-tagged variant that runs the real tool (not `-stub`) on
+a small, real slice of sample B5 and compares the output against a stored
+snapshot. This is what actually catches tool-behaviour regressions (e.g. a
+fgbio → fgumi swap changing UMI-grouping output), as opposed to the `-stub`
+tests, which only check process wiring.
+
+These real fixtures are **not** committed to the repo (they're real sequencing
+data, even if small) - generate them yourself on a host with access to the
+same source paths used above:
+
+```bash
+./tests/test_data/modules/generate_real_fixtures.sh
+```
+
+This truncates the B5 BAMs at each pipeline stage (`SORTBAMCLEAN`,
+`CALLDUPLEXCONSENSUSREADS`, `SORTBAMAMFILTERED`, `SORTBAMALLMOLECULES`,
+`SORTBAMDUPLEXCONS`) to their first ~4000 alignment records, so the resulting
+files stay small while keeping real reads. It intentionally does **not**
+slice by genomic region: 3 of the 5 stages aren't coordinate-sorted (so
+region queries don't even apply), and even for the 2 that are, a single
+narrow target-panel window can have zero real coverage at a given stage
+(e.g. after duplex consensus collapsing) - truncating from the start of the
+file is simpler and always non-empty. By default it reads from the same old
+reference run in fcalvet's scratch space used above; override `SRC_BASE`, `TARGET_BED` and
+`REF_FASTA` (as env vars) if your paths differ.
+
+### Using a fresh end-to-end run instead
+
+Three of those five processes (`SORTBAMRAWTEMPCOORDINATE` a.k.a.
+`SORTBAMCLEAN`, `CALLCONSENSUSREADS` a.k.a. `CALLDUPLEXCONSENSUSREADS`,
+`SORTBAMALLMOLECULES`) have `publishDir enabled: false` in
+`conf/modules.config` - they're intermediate and normally only live inside
+Nextflow's `work/` directory, not under `--outdir`. If you'd rather generate
+the real fixtures from your own fresh run (e.g. to test a specific pipeline
+version) instead of that old reference run, force-publish them with
+[tests/test_data/modules/publish_intermediates.config](../tests/test_data/modules/publish_intermediates.config):
+
+```bash
+nextflow run main.nf -profile test,singularity \
+    -c tests/nextflow.config -c tests/test_data/modules/publish_intermediates.config \
+    --input tests/test_data/input/input_test.csv \
+    --outdir /path/to/e2e_normal_out \
+    -work-dir /path/to/e2e_normal_work \
+    -resume
+
+SRC_BASE=/path/to/e2e_normal_out/bams ./tests/test_data/modules/generate_real_fixtures.sh
+```
+

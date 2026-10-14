@@ -23,7 +23,7 @@ workflow INPUT_CHECK {
         }
 
     emit:
-    reads                                     // channel: [ val(meta), [ reads ] ]
+    reads           = reads             // channel: [ val(meta), [ reads ] ]
     splitted_input  = is_splitted
 }
 

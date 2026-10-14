@@ -136,6 +136,8 @@ workflow DEEPUMICALLER {
         ch_ref_fasta = file(params.ref_fasta, checkIfExists: true)
         ch_ref_fasta_dict = file("${ch_ref_fasta.parent/ch_ref_fasta.baseName}.dict", checkIfExists: true)
         ch_ref_index_dir = ch_ref_fasta.parent
+        // check if index is present
+        __ch_ref_index = file("${ch_ref_fasta.parent/ch_ref_fasta.name}.amb", checkIfExists: true)
     } else {
         log.error "No reference FASTA was specified (--ref_fasta)."
         exit 1
@@ -235,7 +237,7 @@ workflow DEEPUMICALLER {
         // this would activate sorting the files
         // and would reduce the size of the files stored in the work directory.
         // it works with the test samples
-        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, false)
+        ALIGNRAWBAM(bam_to_align, ch_ref_index_dir, ch_ref_fasta, false)
 
         SORTBAMRAW(ALIGNRAWBAM.out.bam)
         if (params.perform_qcs) {
@@ -404,7 +406,7 @@ workflow DEEPUMICALLER {
         }
 
         // MODULE: Align with bwa mem
-        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, false)
+        ALIGNCONSENSUSBAM(called_consensus, ch_ref_index_dir, ch_ref_fasta, false)
 
         SORTBAMALLMOLECULES(ALIGNCONSENSUSBAM.out.bam)
 

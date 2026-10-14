@@ -10,6 +10,7 @@ process ALIGN_BAM {
     input:
     tuple val(meta), path(unmapped_bam)
     path index_dir
+    path ref_fasta
     val sort
 
     output:
@@ -48,10 +49,10 @@ process ALIGN_BAM {
         fgbio_zipper_bams_compression = 1
         extra_command = ""
     }
-
+    def reference_filename = ref_fasta.name
     """
     # The real path to the FASTA
-    FASTA=`find -L ./ -name "*.amb" | sed 's/.amb//'`
+    FASTA=`find -L ./ -name "${reference_filename}.amb" | sed 's/.amb//'`
 
     samtools fastq ${samtools_fastq_args} ${unmapped_bam} \\
         | bwa mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\

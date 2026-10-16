@@ -28,7 +28,6 @@ process FGUMI_COLLECTDUPLEXSEQMETRICS {
         --input $grouped_bam \
         --output ${prefix}.duplex_seq_metrics \
         ${coords_file} \\
-        --threads ${task.cpus} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml

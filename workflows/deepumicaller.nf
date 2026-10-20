@@ -150,7 +150,7 @@ workflow DEEPUMICALLER {
         channel.of([ [ id:"${original_targetsfile.getSimpleName()}" ], original_targetsfile ])
     )
     ch_targetsfile = EXPAND_PANEL.out.expanded_bed.first().map{it -> it[1]}
-    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : ch_targetsfile.first()
+    ch_global_exons_file = params.global_exons_file ? file(params.global_exons_file, checkIfExists: true) : original_targetsfile
 
     BEDTOINTERVAL(EXPAND_PANEL.out.expanded_bed, ch_ref_fasta_dict, [])
 

@@ -2,8 +2,8 @@ process FGUMI_RETAGFROMCRAM {
     tag "$meta.id"
     label 'groupreads_io'
 
-    conda "bioconda::fgumi bioconda::samtools=1.24"
-    container 'docker.io/ferriolcalvet/fgumi:v-retag'
+    conda "bioconda::fgumi=0.8.0 bioconda::samtools=1.24"
+    container 'community.wave.seqera.io/library/fgumi_samtools:f4eabe7668db9d70'
 
 
     input:

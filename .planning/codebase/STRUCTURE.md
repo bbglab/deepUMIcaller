@@ -185,7 +185,7 @@ deepUMIcaller/
 - Wire it: `include { <NAME> } from '../subworkflows/local/<name>/main'` in `workflows/deepumicaller.nf`
 
 **New Python Helper:**
-- Implementation: `bin/<snake_case>.py` (auto on PATH; add `click` if CLI-style, matching `bin/filtervcf.py`)
+- Implementation: `bin/<snake_case>.py` (auto on PATH; add `click` if CLI-style, matching `bin/recompute_depth.py`, or the argparse `parse_args(argv=None)` pattern matching `bin/filtervcf.py`/`bin/add_filter_from_bed.py`)
 - No registration needed; call by name in a process `script:` block
 
 **New Parameter:**

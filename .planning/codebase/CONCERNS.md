@@ -46,17 +46,19 @@ last_mapped_at: 2026-10-10
 
 ## Known Bugs
 
-**`bool(sys.argv[6])` misparses split flag in filtervcf:**
+**`bool(sys.argv[6])` misparses split flag in filtervcf:** — RESOLVED 2026-10-21
 - Symptoms: Any non-empty string argument — including `"false"` or `"0"` — evaluates to `True`, so `split_type` is enabled unintentionally when a 6th argument is passed.
 - Files: `bin/filtervcf.py` (lines 227-229)
 - Trigger: Invoking `filtervcf.py` with 6 positional args where the last is any string (e.g., `"false"`).
 - Workaround: Omit the 6th argument entirely (the `except` branch defaults to `False`).
+- Resolution: Migrated to argparse (`--split-type` store_true flag); splitting is now only enabled by the explicit flag. Call sites in `modules/local/filtervcf/main.nf` updated.
 
-**Bare `except:` clauses swallow all errors:**
+**Bare `except:` clauses swallow all errors:** — PARTIALLY RESOLVED 2026-10-21
 - Symptoms: `bin/family_size_plots.py` lines 91 and 154 use bare `except:` — a failed `np.argmax` silently sets `peak_size = 0`, and unreadable duplex metrics files are skipped with only a print (no non-zero exit). `bin/filtervcf.py` line 228 uses bare `except:` for argument parsing.
 - Files: `bin/family_size_plots.py`, `bin/filtervcf.py`
 - Trigger: Empty/NaN plot data; corrupt or missing metrics TSVs.
 - Workaround: None — outputs are silently degraded.
+- Resolution: The `filtervcf.py` bare `except:` (argument parsing) is gone after the argparse migration. The `family_size_plots.py` bare `except:` clauses remain open.
 
 **Broad `except Exception` blocks hide data problems:**
 - Symptoms: `bin/summarize_muts_per_cycle.py` has five broad exception handlers (lines 63, 85, 103, 120, 165) that skip malformed rows/files without failing.
@@ -124,11 +126,12 @@ last_mapped_at: 2026-10-10
 - Safe modification: Derive chromosomes from the BAM idxstats or a params-supplied list rather than species lookup.
 - Test coverage: Only human test data exercised.
 
-**Positional-argument Python entry points:**
+**Positional-argument Python entry points:** — RESOLVED 2026-10-21
 - Files: `bin/filtervcf.py` (6 positional args), `bin/VCF_Parser.py`, `bin/add_filter_from_bed.py`
 - Why fragile: Scripts parse `sys.argv` positionally with no argparse validation in some cases; argument order changes break callers silently (see the `bool(sys.argv[6])` bug above).
 - Safe modification: Migrate to argparse with named flags (pattern already used by `bin/check_samplesheet.py` `parse_args`).
 - Test coverage: None (no Python unit tests).
+- Resolution: `bin/filtervcf.py` and `bin/add_filter_from_bed.py` migrated to argparse with named flags (`parse_args` pattern); Nextflow call sites updated (`modules/local/filtervcf/main.nf`, `modules/local/filter/from_bed/main.nf`). `bin/VCF_Parser.py` needs no migration — it is a pure library (no `__main__`, no `sys.argv`), imported by `bin/count_muts_per_cycle.py`. Note `bin/compare_vcfs.py` still uses raw `sys.argv` (see CONVENTIONS.md Style 3) but was out of scope here.
 
 ## Scaling Limits
 
@@ -179,7 +182,7 @@ last_mapped_at: 2026-10-10
 ## Test Coverage Gaps
 
 **Zero unit tests for `bin/` Python scripts:**
-- What's not tested: All 3,113 lines across 12 scripts (`bin/recompute_depth.py` 682 lines, `bin/count_muts_per_cycle.py` 448, `bin/check_samplesheet.py` 318, `bin/compute_umi_collisions.py` 289, `bin/VCF_Parser.py` 258, `bin/filtervcf.py` 232, etc.). No `test_*.py` files exist anywhere in the repo. `bin/test_utilities/` holds ad-hoc comparison helpers (`compare_vcfs_detailed.py`, `validate_vcf_biology.py`), not a test suite.
+- What's not tested: All 3,187 lines across 12 scripts (`bin/recompute_depth.py` 682 lines, `bin/count_muts_per_cycle.py` 448, `bin/check_samplesheet.py` 318, `bin/compute_umi_collisions.py` 289, `bin/filtervcf.py` 271, `bin/VCF_Parser.py` 258, etc.). No `test_*.py` files exist anywhere in the repo. `bin/test_utilities/` holds ad-hoc comparison helpers (`compare_vcfs_detailed.py`, `validate_vcf_biology.py`), not a test suite.
 - Files: `bin/*.py`
 - Risk: The `bool(sys.argv[6])` bug and bare-except swallowing would be caught trivially by unit tests; logic regressions surface only as full-pipeline VCF diffs.
 - Priority: High — start with `filtervcf.py`, `recompute_depth.py`, `check_samplesheet.py`.

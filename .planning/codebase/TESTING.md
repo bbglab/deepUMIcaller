@@ -248,7 +248,7 @@ This tolerates non-deterministic ordering/metadata differences in VCFs while cat
 ## Gaps and Notes
 
 - **No CI:** `.github/workflows/` does not exist — tests are run manually on the IRB cluster; results CSVs are committed as records
-- **No Python unit tests:** `bin/*.py` (3,476 lines total) is only exercised indirectly through pipeline runs
+- **No Python unit tests:** `bin/*.py` (3,187 lines total) is only exercised indirectly through pipeline runs
 - **No module-level nf-test files:** local processes are only tested via full-pipeline runs
 - **Cluster-bound test data:** inputs/expected outputs reference `/data/bbg/...` paths; portability requires re-hosting data
 - **Duplicated assertion blocks:** the ~30-line precision-validation block is copy-pasted across all 11 tests in `tests/main.nf.test` — extract into a shared Groovy closure if adding tests

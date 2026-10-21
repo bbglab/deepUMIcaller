@@ -90,9 +90,9 @@ if __name__ == '__main__':
 
 (`bin/recompute_depth.py:585-598`)
 
-**Style 2: argparse (nf-core heritage scripts)** — `bin/check_samplesheet.py:270-303` uses `parse_args(argv=None)` with a `main(argv=None)` coordinator and `sys.exit(main())` entry point. `bin/count_muts_per_cycle.py:209` uses `ArgumentParser()` directly.
+**Style 2: argparse (nf-core heritage scripts)** — `bin/check_samplesheet.py:270-303` uses `parse_args(argv=None)` with a `main(argv=None)` coordinator and `sys.exit(main())` entry point. `bin/count_muts_per_cycle.py:209` uses `ArgumentParser()` directly. `bin/filtervcf.py:157-203` and `bin/add_filter_from_bed.py:165-201` follow the same `parse_args(argv=None)` pattern with named flags (migrated from raw `sys.argv` on 2026-10-21; `filtervcf.py` uses a `--split-type` store_true flag, `add_filter_from_bed.py` uses `--vcf/--bed/--output/--filter-name`).
 
-**Style 3: raw `sys.argv` (legacy, avoid in new code)** — `bin/add_filter_from_bed.py:164-168`, `bin/filtervcf.py:220-227`, `bin/compare_vcfs.py:39-43`.
+**Style 3: raw `sys.argv` (legacy, avoid in new code)** — `bin/compare_vcfs.py:39-43` is the only remaining user.
 
 **Do this for new scripts:** click with `click.Path(exists=True)` for inputs, short+long flags, `help=` on every option, and a thin `cli()` wrapper delegating to a testable `main()` function.
 
@@ -132,7 +132,7 @@ maxRetries    = 3
 **Python level:**
 - `sys.exit(1)` for validation failures, `sys.exit(2)` for missing input file (`bin/check_samplesheet.py:310`)
 - `logger.critical(...)` followed by `sys.exit(1)` for row-level samplesheet errors (`bin/check_samplesheet.py:247-249`)
-- `raise ValueError(...)` for structural problems (`bin/add_filter_from_bed.py:139-143`)
+- `raise ValueError(...)` for structural problems (`bin/add_filter_from_bed.py:131-133`)
 - `sys.stderr.write(...)` + `raise Exception` in third-party-derived code (`bin/count_muts_per_cycle.py:73-79`)
 - Test utilities never throw: they skip malformed lines silently to keep comparisons robust (`bin/test_utilities/compare_vcfs_detailed.py:96-99`)
 
@@ -141,7 +141,7 @@ maxRetries    = 3
 **Framework:** mixed — no single standard.
 - `logging` module with `[%(levelname)s] %(message)s` format and a `--log-level` flag: `bin/check_samplesheet.py:308`
 - `click.echo()` for user-facing output in click-based scripts (e.g., `bin/recompute_depth.py`, `bin/as_minus_xs.py`)
-- Plain `print()` in legacy scripts (`bin/add_filter_from_bed.py:164`)
+- Plain `print()` in legacy scripts (`bin/add_filter_from_bed.py:163`)
 - `sys.stderr.write()` for parser errors (`bin/count_muts_per_cycle.py:57-63`)
 
 **Pattern for new scripts:** use `click.echo()` for progress, `sys.stderr` for errors; add a `--verbose`/`-v` flag when step-by-step output helps debugging.

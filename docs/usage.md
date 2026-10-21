@@ -179,9 +179,9 @@ Here, samples CH_pat2a and CH_pat2b will be merged and the resulting variant cal
 
 ### Reference fasta file
 
-The reference fasta has to be **uncompressed** and it must contain it's own bwa index in the same directory. To make sure this happens you can follow the instructions below.
+The reference fasta has to be **uncompressed** and it must contain its own alignment index files in the same directory. The pipeline aligns reads with [bwa-mem3](https://github.com/fg-labs/bwa-mem3) (a faster re-implementation of BWA-MEM producing identical alignments), so the directory must contain the bwa-mem3 index and the `.fai`/`.dict` files are also required by downstream tools.
 
-We recommend to get the genome fasta from [UCSC downloads page](https://hgdownload.soe.ucsc.edu/downloads.html) and then run the following commands to generate the corresponding index files and dict file. We are showing an example with the mice genome below.
+We recommend to get the genome fasta from [UCSC downloads page](https://hgdownload.soe.ucsc.edu/downloads.html) and then run the following commands to generate all the required index files. We are showing an example with the mice genome below.
 
 for uncompressing:
 
@@ -189,16 +189,16 @@ for uncompressing:
 gunzip mm39.fa.gz
 ```
 
-generating the index file ([source](https://bio-bwa.sourceforge.net/bwa.shtml#:~:text=SYNOPSIS-,bwa%20index%20ref.fa,-bwa%20mem%20ref)):
+generating the bwa-mem3 index file (the aligner used by this pipeline; it creates the `mm39.fa.{amb,ann,bwt.2bit.64,pac,0123}` files):
 
 ```console
-bwa index mm39.fa
+bwa-mem3 index mm39.fa
 ```
 
 for `.dict` file:
 
 ```console
-gatk-launch CreateSequenceDictionary -R mm39.fa
+gatk CreateSequenceDictionary -R mm39.fa
 ```
 
 VarDict also requires to have a `.fai` index of the genome, for this you should run [samtools faidx](https://www.htslib.org/doc/samtools-faidx.html):
@@ -206,6 +206,54 @@ VarDict also requires to have a `.fai` index of the genome, for this you should 
 ```console
 samtools faidx mm39.fa
 ```
+
+In summary, for a generic `<genome>` the full list of commands is:
+
+```console
+gunzip <genome>.fa.gz
+samtools faidx <genome>.fa
+gatk CreateSequenceDictionary -R <genome>.fa
+bwa-mem3 index <genome>.fa
+```
+
+#### Generating the indices with containers
+
+Each of the tools above is available as a container, so the indices can be generated without installing anything locally. For example with Docker (add `-u $(id -u):$(id -g)` if you want the generated files to be owned by your user):
+
+```console
+# bwa-mem3 index (the aligner used by this pipeline)
+docker run --rm -v "$PWD":/work -w /work quay.io/biocontainers/bwa-mem3:0.15.0--h8d53bd0_0 bwa-mem3 index mm39.fa
+
+# samtools faidx
+docker run --rm -v "$PWD":/work -w /work quay.io/biocontainers/samtools:1.24--h9dcdb79_1 samtools faidx mm39.fa
+
+# sequence dictionary (.dict)
+docker run --rm -v "$PWD":/work -w /work broadinstitute/gatk:latest gatk CreateSequenceDictionary -R mm39.fa
+```
+
+The same commands can be run with Singularity/Apptainer, which mounts the current working directory by default, e.g.:
+
+```console
+singularity exec docker://quay.io/biocontainers/samtools:1.24--h9dcdb79_1 samtools faidx mm39.fa
+singularity exec docker://quay.io/biocontainers/bwa-mem3:0.15.0--h8d53bd0_0 bwa-mem3 index mm39.fa
+singularity exec docker://broadinstitute/gatk:latest gatk CreateSequenceDictionary -R mm39.fa
+```
+
+#### Generating the indices with conda
+
+Alternatively, all the tools can be installed together in a single environment from [Bioconda](https://bioconda.github.io/):
+
+```console
+conda create -y -n deepumicaller-indices -c conda-forge -c bioconda bwa-mem3 samtools gatk4
+conda activate deepumicaller-indices
+
+gunzip mm39.fa.gz
+samtools faidx mm39.fa
+gatk CreateSequenceDictionary -R mm39.fa
+bwa-mem3 index mm39.fa
+```
+
+> **Note:** building the bwa-mem3 index is memory-intensive: it requires roughly 30 times the genome size in RAM (about 90 GB for the human genome), so run it on a machine with enough memory.
 
 ### Targets BED file
 

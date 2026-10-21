@@ -127,6 +127,11 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS                                       } fr
 
 workflow DEEPUMICALLER {
 
+    take:
+
+    _none
+
+    main:
     
     if (params.ref_fasta) {
         ch_ref_fasta = file(params.ref_fasta, checkIfExists: true)
@@ -643,6 +648,9 @@ workflow DEEPUMICALLER {
     MULTIQC (
         ch_multiqc_files.collect()
     )
+
+    emit:
+    multiqc_report = MULTIQC.out.report
 }
 
 

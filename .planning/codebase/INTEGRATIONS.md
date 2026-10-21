@@ -59,13 +59,15 @@ last_mapped_at: 2026-10-10
 ## Notifications
 
 **Email (completion/failure):**
-- Implemented in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf` (`completionEmail` / `buildCompletionEmail`): renders the Groovy SimpleTemplate `assets/sendmail_template.txt` and sends via the local `sendmail -t` binary, falling back to `mail` (see lines ~294–316 of that file).
-- Triggered when `params.email` or `params.email_on_fail` is set (`subworkflows/local/utils_nfcore_deepumicaller/main.nf` lines ~94–98); HTML by default, plain text with `--plaintext_email`; MultiQC report attached if smaller than `params.max_multiqc_email_size` (default `25.MB`).
-- Template embeds the pipeline logo (`assets/nf-core-fastquorum_logo_light.png`, base64-inlined — note the fastquorum-era filename) as an inline MIME image.
-- Requires a functioning local MTA (`sendmail`/`mail`) on the execution host; no SMTP credentials are configured in the repo.
+- Implemented in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf` (`completionEmail`): renders the Groovy SimpleTemplate `assets/sendmail_template.txt` and sends via the local `sendmail -t` binary, falling back to `mail` (see lines ~294–316 of that file).
+- Wired up (2026-10-21): `main.nf` now invokes `PIPELINE_COMPLETION` after `DEEPUMICALLER`, passing `params.email`, `params.email_on_fail`, `params.plaintext_email`, `params.outdir`, `params.monochrome_logs`, and `DEEPUMICALLER.out.multiqc_report` (new `emit:` on the main workflow). `hook_url` is passed as `null` — webhook notifications are intentionally not wired.
+- Triggered when `params.email` or `params.email_on_fail` is set (`subworkflows/local/utils_nfcore_deepumicaller/main.nf` `PIPELINE_COMPLETION` onComplete); HTML by default, plain text with `--plaintext_email`; MultiQC report attached if smaller than `params.max_multiqc_email_size` (default `25.MB`).
+- Templates: `assets/email_template.txt` / `assets/email_template.html` (body text/HTML) and `assets/sendmail_template.txt` (MIME wrapper embedding `assets/bbglab_logo.png` as an inline base64 image — replaced the fastquorum-era logo reference on 2026-10-21).
+- Requires a functioning local MTA (`sendmail`/`mail`) on the execution host; no SMTP credentials are configured in the repo. `/usr/sbin/sendmail` exists on irbccn26, but whether it relays to external addresses is unverified — test with a real run using `--email`.
+- **Best-effort delivery (hardened 2026-10-21):** e-mail problems can never fail the run. `sendMailMessage` (in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf`) checks the send process exit status (a misconfigured MTA no longer logs a false "Sent" message), kills a hung MTA after a 60 s timeout, and surfaces stderr in the warning. Failures fall back sendmail → `mail` (HTML) and are finally caught with a `log.warn` at both the `completionEmail` level and the `PIPELINE_COMPLETION` onComplete handler, so `completionSummary` always runs. Also fixed: `--plaintext_email` was a no-op (exception was constructed but never thrown) and a stray `.sendmail_tmp.html` temp file was written but never used.
 
 **Webhooks/IM (Slack, MS Teams, etc.):**
-- `hook_url` parameter is declared in `subworkflows/local/utils_nfcore_deepumicaller/main.nf` (line ~86) but no webhook-sending code is wired up in this pipeline (nf-core template stub only).
+- `imNotification` is implemented in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf` (Slack/Teams JSON POST), but `main.nf` passes `null` for `hook_url` when invoking `PIPELINE_COMPLETION` — webhook notifications are intentionally not wired (2026-10-21).
 
 ## CI/CD & Deployment
 
@@ -96,7 +98,7 @@ last_mapped_at: 2026-10-10
 - None.
 
 **Outgoing:**
-- None (the `hook_url` param is an unwired nf-core template stub; email via local `sendmail` binary is the only outbound notification mechanism).
+- Completion email via the local `sendmail` binary when `--email`/`--email_on_fail` is set (see Notifications above). No other outbound webhooks/callbacks; `hook_url` is intentionally unwired.
 
 ---
 

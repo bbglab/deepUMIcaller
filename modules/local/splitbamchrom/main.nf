@@ -18,9 +18,6 @@ process SPLITBAMCHROM {
     tuple val(meta), path("*_filtering_stats.txt"), emit: filtering_stats
     path "versions.yml"                   , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

@@ -38,7 +38,7 @@ process FAMILYSIZEMETRICS {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     """
-    touch ${prefix}.family_sizes_plot_n_stats.pdf \ 
+    touch ${prefix}.family_sizes_plot_n_stats.pdf \
             ${prefix}.family_sizes_plot_n_stats.high.pdf
 
     cat <<-END_VERSIONS > versions.yml

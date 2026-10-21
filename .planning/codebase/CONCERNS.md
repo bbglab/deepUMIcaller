@@ -15,10 +15,11 @@ last_mapped_at: 2026-10-10
 - Fix approach: Identify the root cause of the COVERAGE failures, apply a targeted fix, then either delete this config or scope the ignore to a specific process with a logged warning.
 
 **Fork residue from nf-core/fastquorum:**
-- Issue: Pipeline is a fork of nf-core/fastquorum but branding/assets were not fully migrated. `assets/sendmail_template.txt` still references `nf-core-fastquorum_logo.png` / `nf-core-fastquorum_logo_light.png`, and `subworkflows/local/utils_nfcore_deepumicaller/main.nf` has unfilled citation/Zenodo placeholders (`TODO nf-core: Add Zenodo DOI for pipeline after first release`, lines 211-213).
-- Files: `assets/sendmail_template.txt`, `subworkflows/local/utils_nfcore_deepumicaller/main.nf`
-- Impact: Broken email notification assets if the fastquorum logo files are absent; missing citation/DOI metadata.
-- Fix approach: Replace logo references with deepUMIcaller assets, fill citation text, register a Zenodo DOI.
+- Issue: Pipeline is a fork of nf-core/fastquorum but branding/assets were not fully migrated. `subworkflows/local/utils_nfcore_deepumicaller/main.nf` has unfilled citation/Zenodo placeholders (`TODO nf-core: Add Zenodo DOI for pipeline after first release`, lines 211-213).
+- Files: `subworkflows/local/utils_nfcore_deepumicaller/main.nf`
+- Impact: Missing citation/DOI metadata.
+- Fix approach: Fill citation text, register a Zenodo DOI.
+- **RESOLVED (2026-10-21):** The sendmail-template fork residue is fixed — `assets/sendmail_template.txt` now embeds `assets/bbglab_logo.png` (copied from `docs/images/`), and the previously missing `assets/email_template.txt`/`.html` were created (deepUMIcaller-branded). Email notifications are now fully wired: `main.nf` invokes `PIPELINE_COMPLETION` with the MultiQC report. The Zenodo DOI is also filled: `nextflow.config` manifest now declares `doi = '10.5281/zenodo.19487799'` (which also removes the `nodoi_text` hint from MultiQC methods text), the README badge is active, and `citation()` in `subworkflows/local/utils_nfcore_deepumicaller/main.nf` lists it.
 
 **Stale CHANGELOG:**
 - Issue: `CHANGELOG.md` still shows `## v1.0dev - [date]` with a literal `[date]` placeholder, while `nextflow.config` manifest declares `version = 'v1.1.0 Montseny'` (line 288). Release history is not tracked.
@@ -85,6 +86,7 @@ last_mapped_at: 2026-10-10
 - Files: `assets/sendmail_template.txt`
 - Current mitigation: Unused code path.
 - Recommendations: Either wire up notification params or remove the template.
+- **RESOLVED (2026-10-21):** Notifications are now wired, not removed. `main.nf` invokes `PIPELINE_COMPLETION` (email + summary) after `DEEPUMICALLER`, passing `params.email`/`params.email_on_fail`/`params.plaintext_email` and the MultiQC report (new `emit:` on `DEEPUMICALLER`). Created the missing `assets/email_template.txt`/`.html` and re-pointed `assets/sendmail_template.txt` at `assets/bbglab_logo.png`. `hook_url` (webhook) intentionally left unwired (passed as `null`). Delivery is best-effort and fail-safe: sendmail exit status is checked, hung MTAs are killed after 60 s, and any delivery error only logs a warning — the run result is never affected. Caveat: actual delivery still depends on the host MTA relaying external mail — verify with a real `--email` run.
 
 ## Performance Bottlenecks
 
@@ -178,6 +180,7 @@ last_mapped_at: 2026-10-10
 **Pipeline DOI/citation:**
 - Problem: Zenodo DOI placeholder unfilled in `subworkflows/local/utils_nfcore_deepumicaller/main.nf` (lines 211-213).
 - Blocks: Proper citation of released versions.
+- **RESOLVED (2026-10-21):** DOI `10.5281/zenodo.19487799` set in the `nextflow.config` manifest, README badge, `citation()` helper, and `CITATIONS.md`.
 
 ## Test Coverage Gaps
 

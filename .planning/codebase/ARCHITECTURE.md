@@ -56,7 +56,7 @@ last_mapped_at: 2026-10-10
 |-----------|----------------|------|
 | `main.nf` | Entry point; wires initialisation + main workflow | `main.nf` |
 | `PIPELINE_INITIALISATION` | Version banner, help text, param validation (nf-schema), config checks | `subworkflows/local/utils_nfcore_deepumicaller/main.nf` |
-| `PIPELINE_COMPLETION` | onComplete hooks: email, summary, IM notification | `subworkflows/local/utils_nfcore_deepumicaller/main.nf` |
+| `PIPELINE_COMPLETION` | onComplete hooks: email, summary, IM notification. **Invoked from `main.nf` (2026-10-21)** with email params + `DEEPUMICALLER.out.multiqc_report`; `hook_url` passed as `null` | `subworkflows/local/utils_nfcore_deepumicaller/main.nf` |
 | `DEEPUMICALLER` | Main orchestration; all channel wiring and step gating | `workflows/deepumicaller.nf` |
 | `INPUT_CHECK` | Samplesheet validation + meta-map construction per `params.step` | `subworkflows/local/input_check.nf` |
 | `SAMPLESHEET_CHECK` | Schema validation of samplesheet CSV | `modules/local/samplesheet_check.nf` |
@@ -236,7 +236,7 @@ Samplesheet columns differ per step (`fastq_1/fastq_2/read_structure`, `preproce
 
 ## Cross-Cutting Concerns
 
-**Logging:** Nextflow native logging; banner/logo via `logo()` in `subworkflows/local/utils_nfcore_deepumicaller/main.nf:57`; completion email/summary/IM via `PIPELINE_COMPLETION` hooks.
+**Logging:** Nextflow native logging; banner/logo via `logo()` in `subworkflows/local/utils_nfcore_deepumicaller/main.nf:57`; completion email/summary via `PIPELINE_COMPLETION` hooks, invoked from `main.nf` (2026-10-21). IM/webhook notification exists upstream but `hook_url` is passed as `null` (unwired).
 
 **Validation:** Samplesheet validated against `assets/schema_input.json` by `SAMPLESHEET_CHECK` (`modules/local/samplesheet_check.nf`); pipeline params validated by `nf-schema` against `nextflow_schema.json` (`subworkflows/local/utils_nfcore_deepumicaller/main.nf:63-71`).
 

@@ -11,7 +11,7 @@ last_mapped_at: 2026-10-10
 **Primary:**
 - **Nextflow (DSL2)** - Pipeline orchestration language. Entry point `main.nf` (`nextflow.enable.dsl = 2`). All workflows in `workflows/deepumicaller.nf`, subworkflows in `subworkflows/local/` and `subworkflows/nf-core/`, processes in `modules/local/` and `modules/nf-core/`.
 - **Python 3** - Helper scripts in `bin/` (e.g., `bin/check_samplesheet.py`, `bin/count_muts_per_cycle.py`, `bin/compute_umi_collisions.py`, `bin/family_size_plots.py`, `bin/as_minus_xs.py`, `bin/filtervcf.py`, `bin/VCF_Parser.py`). Scripts use shebangs `#!/usr/bin/env python` or `#!/usr/bin/env python3` and are executed inside containers, not on the host.
-- **Groovy** - Nextflow config files (`nextflow.config`, `conf/*.config`) and the sendmail template rendering in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf`.
+- **Groovy** - Nextflow config files (`nextflow.config`, `conf/*.config`) and the email/sendmail template rendering in `subworkflows/nf-core/utils_nfcore_pipeline/main.nf` (templates: `assets/email_template.txt`/`.html`, `assets/sendmail_template.txt`).
 
 **Secondary:**
 - **Shell/Bash** - Process scripts inside `.nf` modules; `process.shell = ['/bin/bash', '-euo', 'pipefail']` enforced in `nextflow.config`.

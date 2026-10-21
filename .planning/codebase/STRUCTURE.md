@@ -110,7 +110,7 @@ deepUMIcaller/
 
 **`assets/`:**
 - Purpose: static pipeline assets
-- Contains: `schema_input.json` (samplesheet schema), `multiqc_config.yml`, `samplesheet.csv` (example), `sendmail_template.txt`, `generate_low_complex_rep_bed.py`, `images/`
+- Contains: `schema_input.json` (samplesheet schema), `multiqc_config.yml`, `samplesheet.csv` (example), `email_template.txt`/`email_template.html` (completion email body), `sendmail_template.txt` (MIME wrapper, embeds `bbglab_logo.png`), `bbglab_logo.png`, `generate_low_complex_rep_bed.py`, `images/`
 - Key files: `assets/schema_input.json`
 
 **`tests/`:**

@@ -222,6 +222,28 @@ def getSingleReport(multiqc_reports) {
 }
 
 //
+// Send an e-mail message via the given command and verify delivery.
+// Writes the message to the command's stdin, waits (with a timeout) for the
+// process to exit and raises an exception on non-zero exit or timeout, so
+// callers can fall back to another method or warn without failing the run.
+//
+def sendMailMessage(cmd, message, email_address, method, colors) {
+    def proc   = cmd.execute()
+    def stderr = new StringBuilder()
+    proc.consumeProcessErrorStream(stderr)
+    proc.out.withWriter { w -> w << message }
+    proc.waitForOrKill(60000)
+    if (proc.exitValue() != 0) {
+        def err_tail = stderr.toString().trim()
+        if (err_tail.size() > 200) {
+            err_tail = err_tail.substring(0, 200) + '...'
+        }
+        throw new RuntimeException("'${method}' exited with status ${proc.exitValue()}${err_tail ? ': ' + err_tail : ''}")
+    }
+    log.info("-${colors.purple}[${workflow.manifest.name}]${colors.green} Sent summary e-mail to ${email_address} (${method})-")
+}
+
+//
 // Construct and send completion email
 //
 def completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs=true, multiqc_report=null) {
@@ -298,26 +320,29 @@ def completionEmail(summary_params, email, email_on_fail, plaintext_email, outdi
     def sendmail_template      = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html          = sendmail_template.toString()
 
-    // Send the HTML e-mail
+    // Send the e-mail (best-effort: delivery problems must never fail the run)
     def colors = logColours(monochrome_logs) as Map
     if (email_address) {
         try {
             if (plaintext_email) {
-                new org.codehaus.groovy.GroovyException('Send plaintext e-mail, not HTML')
+                // Send plain text e-mail using sendmail
+                sendMailMessage(['sendmail', '-t'], "To: ${email_address}\nSubject: ${subject}\n\n${email_txt}", email_address, 'sendmail', colors)
             }
-            // Try to send HTML e-mail using sendmail
-            def sendmail_tf = new File(workflow.launchDir.toString(), ".sendmail_tmp.html")
-            sendmail_tf.withWriter { w -> w << sendmail_html }
-            ['sendmail', '-t'].execute() << sendmail_html
-            log.info("-${colors.purple}[${workflow.manifest.name}]${colors.green} Sent summary e-mail to ${email_address} (sendmail)-")
+            else {
+                try {
+                    // Try to send HTML e-mail using sendmail
+                    sendMailMessage(['sendmail', '-t'], sendmail_html, email_address, 'sendmail', colors)
+                }
+                catch (Exception msg) {
+                    log.debug(msg.toString())
+                    log.debug("Trying with mail instead of sendmail")
+                    // Catch failures and try with mail
+                    sendMailMessage(['mail', '-s', subject, '--content-type=text/html', email_address], email_html, email_address, 'mail', colors)
+                }
+            }
         }
-        catch (Exception msg) {
-            log.debug(msg.toString())
-            log.debug("Trying with mail instead of sendmail")
-            // Catch failures and try with plaintext
-            def mail_cmd = ['mail', '-s', subject, '--content-type=text/html', email_address]
-            mail_cmd.execute() << email_html
-            log.info("-${colors.purple}[${workflow.manifest.name}]${colors.green} Sent summary e-mail to ${email_address} (mail)-")
+        catch (Exception e) {
+            log.warn("-${colors.purple}[${workflow.manifest.name}]${colors.yellow} Could not send summary e-mail to ${email_address} (${e.class.simpleName}: ${e.message ?: 'no message'}). Pipeline results are not affected; check the local MTA (sendmail) configuration.-")
         }
     }
 

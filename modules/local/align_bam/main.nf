@@ -21,7 +21,7 @@ process ALIGN_BAM {
     def fgumi_fastq_args = task.ext.fgumi_fastq_args ?: ''
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
-    def memory_gb = task.memory.toGiga() / 2
+    def memory_gb = task.memory.toGiga().intdiv(2)
     def sort_cpus = task.cpus.intdiv(2) + 1
     def reference_filename = ref_fasta.name
     def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
@@ -31,10 +31,13 @@ process ALIGN_BAM {
 
     mkdir temp_sort_directory
 
-    fgumi fastq --input ${unmapped_bam} --threads ${task.cpus} ${fgumi_fastq_args} \\
+    fgumi fastq --input ${unmapped_bam} \\
+            --threads ${task.cpus} ${fgumi_fastq_args} \
+            --max-memory ${reserve_memory_gb}GiB \
+            --memory-per-thread false \\
         | bwa-mem3 mem ${bwa_args} -t $task.cpus -p -Y \$FASTA - \\
         | fgumi zipper \
-            --input /dev/stdin \
+            --input /dev/stdin \\
             --unmapped ${unmapped_bam} \
             --reference \$FASTA \
             --threads ${task.cpus} \\
@@ -42,7 +45,6 @@ process ALIGN_BAM {
             --output ${prefix}.mapped.bam \
             --max-memory ${memory_gb}GiB \
             --memory-per-thread false \
-            --memory-reserve ${reserve_memory_gb}GiB \
             --order coordinate \
             --write-index true \
             --threads ${task.cpus} \

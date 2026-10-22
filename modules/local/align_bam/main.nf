@@ -45,6 +45,7 @@ process ALIGN_BAM {
             --memory-reserve ${reserve_memory_gb}GiB \
             --order coordinate \
             --write-index true \
+            --threads ${task.cpus} \
             --sort-threads ${sort_cpus} \
             --merge-threads ${task.cpus} \
             --tmp-dir temp_sort_directory/

@@ -17,9 +17,6 @@ process CALLING_VARDICT_CHUNK {
     tuple val(meta), path("*.raw.tsv")  , emit: raw
     path  "versions.yml"                 , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def filter_args = task.ext.filter_args ?: ''

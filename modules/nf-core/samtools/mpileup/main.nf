@@ -36,13 +36,3 @@ process SAMTOOLS_MPILEUP {
     END_VERSIONS
     """
 }
-// samtools mpileup 
-//         --no-BAQ
-//         --max-depth 0
-//         --fasta-ref $reference_fasta 
-//         --positions merged_bedfile
-//         --min-BQ 2
-//         --no-output-ends 
-//         $file
-//         | \
-//         bgzip > $samp.output_pileup.allowNs.notoverlapping.gz;

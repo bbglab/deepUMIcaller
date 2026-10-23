@@ -95,7 +95,13 @@ workflow PIPELINE_COMPLETION {
     //
     workflow.onComplete {
         if (email || email_on_fail) {
-            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
+            // Notification is best-effort: never let an e-mail problem fail the run
+            try {
+                completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
+            }
+            catch (Exception e) {
+                log.warn("[${workflow.manifest.name}] Could not send the completion e-mail (${e.class.simpleName}: ${e.message ?: 'no message'}) - pipeline results are not affected")
+            }
         }
 
         completionSummary(monochrome_logs)
@@ -208,9 +214,10 @@ def logo(monochrome_logs) {
 
 def citation(workflow) {
         return "If you use ${workflow.manifest.name} for your analysis please cite:\n\n" +
-            // TODO nf-core: Add Zenodo DOI for pipeline after first release
-            //"* The pipeline\n" +
-            //"  https://doi.org/10.5281/zenodo.XXXXXXX\n\n" +
+            "* The pipeline\n" +
+            "  https://doi.org/10.5281/zenodo.19487799\n\n" +
+            "* The DeepClone protocol\n" +
+            "  https://dx.doi.org/10.17504/protocols.io.dm6gp1jodgzp/v2\n\n" +
             "* The nf-core framework\n" +
             "  https://doi.org/10.1038/s41587-020-0439-x\n\n" +
             "* Software dependencies\n" +

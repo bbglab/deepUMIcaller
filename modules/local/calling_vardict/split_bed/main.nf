@@ -9,8 +9,6 @@ process SPLIT_BED {
     tuple val(meta), path("*_chunk_*"), emit: chunks
     path "versions.yml"                , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def prefix = "${meta.id}"

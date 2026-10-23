@@ -30,10 +30,10 @@ process FILTER_FROM_BED {
     # If there is nothing in the intersection, just copy the VCF
     if [ -s ${bedfile} ]; then
         add_filter_from_bed.py \\
-            ${vcf_file} \\
-            ${bedfile} \\
-            ${outfile} \\
-            ${filter_name}
+            --vcf ${vcf_file} \\
+            --bed ${bedfile} \\
+            --output ${outfile} \\
+            --filter-name ${filter_name}
     else
         cp ${vcf_file} ${outfile}
     fi

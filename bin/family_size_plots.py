@@ -29,11 +29,11 @@ def wrap_family_size_curves(data_sscs):
     return pivot_df.reset_index()
 
 
-def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidence = '2 1 1', confidence_name = 'low'):
+def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidence = '2,1,1', confidence_name = 'low'):
     '''
     this function computes the family size metrics curve
     '''
-    confidence_list = [int(x) for x in confidence.split(' ')]
+    confidence_list = [int(x) for x in confidence.split(',')]
     min_reads = confidence_list[0]
     strand1 = confidence_list[1]
     strand2 = confidence_list[2]
@@ -142,12 +142,17 @@ def compute_family_sizes_curve(sample, duplex_fam_data, prefix_figure, confidenc
 
 
 
-def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence = '4 2 2'):
+def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence = '4,2,2'):
     
     # compute family size distributions from duplex stats data
     if isinstance(duplex_metrics_files, list):
         # Read and aggregate multiple files
-        dfs = [pd.read_table(f) for f in duplex_metrics_files]
+        dfs = []
+        for file in duplex_metrics_files:
+            try:
+                dfs.append(pd.read_table(file))
+            except:
+                print(f"File {file} could not be read.")
         data_duplex_families = pd.concat(dfs, ignore_index=True)[['ab_size', 'ba_size', 'count']]
         data_duplex_families = data_duplex_families.groupby(['ab_size', 'ba_size'], as_index=False)['count'].sum()
     else:
@@ -161,7 +166,7 @@ def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence 
                                                                                     confidence = confidence, confidence_name = 'duplex')
     sample_data_low, data_family_size_curve_low = compute_family_sizes_curve(sample, data_duplex_families, 
                                                                                     prefix_figure = output_prefix,
-                                                                                    confidence = '2 1 1', confidence_name = 'allm')
+                                                                                    confidence = '2,1,1', confidence_name = 'allm')
 
     sample_data = pd.concat((sample_data_duplex, sample_data_low), axis = 0)
     sample_data.to_csv(f"{output_prefix}.sample_data.tsv",
@@ -183,7 +188,7 @@ def stats_fam_size2plot(sample, duplex_metrics_files, output_prefix, confidence 
 @click.option('--sample-name', '-n', required=True, type=str, help='Name of the sample.')
 @click.option('--input-file', '-i', required=True, multiple=True, type=click.Path(exists=True), help='Path to the input file(s). Can be specified multiple times for aggregation.')
 @click.option('--output-file', '-o', required=True, type=click.Path(), help='Path to the output file.')
-@click.option('--confidence-level', '-c', default='4 2 2', show_default=True, type=str, help='Confidence level for the analysis.')
+@click.option('--confidence-level', '-c', default='4,2,2', show_default=True, type=str, help='Confidence level for the analysis.')
 def main(sample_name, input_file, output_file, confidence_level):
     """
     Main function to process the input file(s) and generate plots.

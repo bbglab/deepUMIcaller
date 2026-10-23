@@ -23,15 +23,15 @@ process FILTERMUTATIONS {
     prefix = "${meta.id}${prefix}"
     def vaf_filter = task.ext.vaf_filter ?: ''
     def filters = task.ext.filters ?: ''
-    def splitting = task.ext.splitting ?: ''
+    def splitting = task.ext.splitting == 'True' ? '--split-type' : ''
     """
     filtervcf.py \\
-                ${prefix} \\
-                ${vcf} \\
-                ${filters} \\
-                ${vaf_filter} \\
-                ${prefix} \\
-                ${splitting}
+        --sample ${prefix} \\
+        --vcf ${vcf} \\
+        --filters ${filters} \\
+        --vaf-threshold ${vaf_filter} \\
+        --output-prefix ${prefix} \\
+        ${splitting}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

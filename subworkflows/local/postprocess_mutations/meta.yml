@@ -1,31 +1,42 @@
-# TODO
-# fill this with the correct information
-name: bam_filter_reads
+name: postprocess_mutations
 description: |
-  Generates a list of names of all the reads that are mapped in the target regions given a BAM (or SAM or CRAM) file and a BED file indicating the regions.
+  Post-process raw VarDict mutation calls: intersect with the target BED,
+  recompute depth, apply BED- and N-rich filters, and compute the
+  mutations-per-position statistics.
 keywords:
-  - fgbio
+  - bedtools
   - samtools
-  - bam
-  - sam
+  - vardict
+  - mutations
   - filter
+  - bed
 
 tools:
-  - fgbio:
-      description: A set of tools for working with genomic and high throughput sequencing data, including UMIs
-      homepage: http://fulcrumgenomics.github.io/fgbio/
-      documentation: http://fulcrumgenomics.github.io/fgbio/tools/latest/
-      tool_dev_url: https://github.com/fulcrumgenomics/fgbio
-      doi: ""
-      licence: ["MIT"]
+  - bedtools:
+      description: |
+        A powerful toolset for genome arithmetic: intersect, merge, subtract
+        and other operations on genomic intervals.
+      homepage: https://bedtools.readthedocs.io/
+      documentation: https://bedtools.readthedocs.io/
+      tool_dev_url: https://github.com/arq5x/bedtools2
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["GPL-2.0-or-later"]
   - samtools:
       description: |
         SAMtools is a set of utilities for interacting with and post-processing
-        short DNA sequence read alignments in the SAM, BAM and CRAM formats, written by Heng Li.
-        These files are generated as output by short read aligners like BWA.
+        short DNA sequence read alignments in the SAM, BAM and CRAM formats.
       homepage: http://www.htslib.org/
-      documentation: hhttp://www.htslib.org/doc/samtools.html
-      doi: 10.1093/bioinformatics/btp352
+      documentation: http://www.htslib.org/doc/samtools.html
+      doi: "10.1093/bioinformatics/btp352"
+      licence: ["MIT"]
+  - vardict:
+      description: |
+        VarDict is a variant caller for SNVs, MNVs, indels and fusions from
+        targeted sequencing data.
+      homepage: https://github.com/AstraZeneca-NGS/VarDictJava
+      documentation: https://github.com/AstraZeneca-NGS/VarDictJava
+      tool_dev_url: https://github.com/AstraZeneca-NGS/VarDictJava
+      doi: ""
       licence: ["MIT"]
 input:
   - meta:
@@ -33,22 +44,14 @@ input:
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
-  - unmapped_bam:
+  - vcf:
       type: file
-      description: the unmapped BAM/SAM/CRAM file.
-      pattern: "*.{bam,cram,sam}"
-  - fasta:
+      description: Raw VarDict VCF calls to post-process
+      pattern: "*.{vcf,vcf.gz}"
+  - bed:
       type: file
-      description: FASTA reference file
-      pattern: "*.{fasta,fa}"
-  - index:
-      type: file
-      description: BWA genome index files
-      pattern: "Directory containing BWA index *.{amb,ann,bwt,pac,sa}"
-  - sort:
-      type: bool
-      description: True to sort the output in template-coordinate order, otherwise don't sort
-      pattern: "{true,false}"
+      description: BED file with the target regions used for filtering
+      pattern: "*.{bed,bed.gz}"
 
 output:
   - meta:
@@ -56,14 +59,14 @@ output:
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
-  - version:
+  - vcf:
       type: file
-      description: File containing software version
-      pattern: "*.{version.yml}"
-  - bam:
+      description: Filtered and annotated VCF
+      pattern: "*.{vcf,vcf.gz}"
+  - versions:
       type: file
-      description: Mapped bam (unsorted)
-      pattern: "*.{bam}"
+      description: File containing software versions
+      pattern: "versions.yml"
 
 authors:
-  - "@nh13"
+  - "@bbglab"

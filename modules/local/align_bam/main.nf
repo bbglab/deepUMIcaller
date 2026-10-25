@@ -26,7 +26,7 @@ process ALIGN_BAM {
     def sort_cpus = task.cpus.intdiv(2) + 1
     def reference_filename = ref_fasta.name
     def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
-    def in_n_out_task_cpus = task.cpus.intdiv(5) + 1
+    def in_n_out_task_cpus = 1
     """
     # The real path to the FASTA
     FASTA=`find -L ./ -name "${reference_filename}.amb" | sed 's/.amb//'`

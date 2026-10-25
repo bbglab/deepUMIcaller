@@ -533,10 +533,8 @@ workflow DEEPUMICALLER {
     
         FILTERCONSENSUSREADSDUPLEX(duplex_filtered_bam, ch_ref_fasta)
 
-        // MODULE: Hard clipping read pairs that overlap, and that go beyond the pair starting point
         CLIPBAM(FILTERCONSENSUSREADSDUPLEX.out.bam, ch_ref_fasta)
 
-        // MODULE: Sort BAM file
         SORTBAMDUPLEXCONS(CLIPBAM.out.bam)
 
         // join the bam and the bamindex channels to have
@@ -589,9 +587,7 @@ workflow DEEPUMICALLER {
         .join( CREATEBED.out.bed )
         .set { cons_duplex_bam_bed }
 
-        // Mutation calling for all reads using parallel VarDict subworkflow
-        // Set vardict_chunks=1 for single-node processing if needed
-        
+        // Mutation calling using VarDict
         BAM_CALL_VARDICT_PARALLEL(
             cons_duplex_bam_bed,
             ch_ref_fasta,

@@ -32,9 +32,11 @@ process FGUMI_SORT {
             --max-memory ${memory_gb}GiB \
             --memory-per-thread false \
             --memory-reserve ${reserve_memory_gb}GiB \\
+            --threads ${task.cpus} \
             --sort-threads ${sort_cpus} \
             --merge-threads ${task.cpus} \
             --tmp-dir temp_sort_directory/ \\
+            --sort-stats \\
             ${args}
 
     cat <<-END_VERSIONS > versions.yml

@@ -1,8 +1,6 @@
 process FILTERMUTATIONS {
     tag "$meta.id"
     
-    // TODO
-    // update this in the nfcore format once the container is available in biocontainers and galaxy singularity
     conda "anaconda::seaborn=0.12.2"
     container "biocontainers/seaborn:0.12.2_cv1"
 

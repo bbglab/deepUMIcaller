@@ -2,8 +2,8 @@ process ALIGN_BAM {
     tag "$meta.id"
     label 'alignment_intensive'
 
-    conda "bioconda::fgumi=0.8.0 bioconda::bwa-mem3=0.15.0"
-    container 'community.wave.seqera.io/library/bwa-mem3_fgumi:6069fbf2f2bcec9f'
+    conda "bioconda::fgumi=0.9.0 bioconda::bwa-mem3=0.15.0"
+    container 'community.wave.seqera.io/library/bwa-mem3_fgumi:994f8e61f03990f1'
 
     input:
     tuple val(meta), path(unmapped_bam)

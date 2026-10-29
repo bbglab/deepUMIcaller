@@ -26,8 +26,8 @@ directive) and hosts it on `community.wave.seqera.io`.
 
 | Container | Used by | Conda spec | Build page |
 |---|---|---|---|
-| `community.wave.seqera.io/library/bwa-mem3_fgumi:6069fbf2f2bcec9f` | `ALIGN_BAM` (`modules/local/align_bam/main.nf`) | `bioconda::fgumi=0.7.0 bioconda::bwa-mem3=0.14.0` | https://wave.seqera.io/view/builds/bd-6069fbf2f2bcec9f_1 |
-| community.wave.seqera.io/library/fgumi_samtools:f4eabe7668db9d70 | `retag` | `bioconda::fgumi=0.8.0 bioconda::samtools=1.24` | https://wave.seqera.io/view/builds/bd-f4eabe7668db9d70_1 |
+| `community.wave.seqera.io/library/bwa-mem3_fgumi:994f8e61f03990f1` | `ALIGN_BAM` (`modules/local/align_bam/main.nf`) | `bioconda::fgumi=0.7.0 bioconda::bwa-mem3=0.14.0` | https://wave.seqera.io/view/builds/bd-994f8e61f03990f1_1 |
+| `community.wave.seqera.io/library/fgumi_samtools:0b67f288c26fc2c0` | `retag` | `bioconda::fgumi=0.8.0 bioconda::samtools=1.24` | https://wave.seqera.io/view/builds/bd-0b67f288c26fc2c0_1 |
 
 ### BBGLab Docker Hub containers (`docker.io/bbglab/...`)
 
@@ -60,7 +60,7 @@ overrides any `container` directive in the module itself.
 
 | Label | Container | Used by |
 |---|---|---|
-| `fgumi_tools` | `quay.io/biocontainers/fgumi:0.7.0--h54198d6_0` | `FGUMI_CLIPBAM`, `FGUMI_COLLECTDUPLEXSEQMETRICS`, `FGUMI_CORRECTUMIS`, `FGUMI_FASTQTOBAM`, `FGUMI_FILTERCONSENSUSREADS`, `FGUMI_RETAGFROMCRAM`*, `FGUMI_SORT` (all `modules/local/fgumi/*`), `FGUMI_GROUPREADSBYUMI`, `FGUMI_CALLDUPLEXCONSENSUSREADS` (`modules/nf-core/fgumi/*`) |
+| `fgumi_tools` | `quay.io/biocontainers/fgumi:0.9.0--h54198d6_0` | `FGUMI_CLIPBAM`, `FGUMI_COLLECTDUPLEXSEQMETRICS`, `FGUMI_CORRECTUMIS`, `FGUMI_FASTQTOBAM`, `FGUMI_FILTERCONSENSUSREADS`, `FGUMI_RETAGFROMCRAM`*, `FGUMI_SORT` (all `modules/local/fgumi/*`), `FGUMI_GROUPREADSBYUMI`, `FGUMI_CALLDUPLEXCONSENSUSREADS` (`modules/nf-core/fgumi/*`) |
 | `samtools_module` | `https://depot.galaxyproject.org/singularity/samtools:1.17--h00cdaf9_0` | **None currently** — no process in the codebase carries the `samtools_module` label. This override is dead configuration and can be removed or re-purposed. |
 
 \* `FGUMI_RETAGFROMCRAM` also declares its own `container` directive
@@ -68,7 +68,7 @@ overrides any `container` directive in the module itself.
 so the per-module container is effectively unused.
 
 The `fgumi` biocontainers image is the standard BioContainers build of the
-bioconda package (`fgumi=0.7.0`), matching the `conda "bioconda::fgumi"`
+bioconda package (`fgumi=0.9.0`), matching the `conda "bioconda::fgumi"`
 directive present in all these modules.
 
 ---

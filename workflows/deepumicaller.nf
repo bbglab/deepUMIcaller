@@ -35,13 +35,7 @@ include { MERGEBAM                                                              
 include { MERGEBAM                          as MERGEBAMCHROM                    } from '../modules/local/mergebam/main'
 include { SPLITBAMCHROM                                                         } from '../modules/local/splitbamchrom/main'
 
-include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICS                } from '../modules/local/fgumi/collectduplexseqmetrics/main'
-include { FGUMI_COLLECTDUPLEXSEQMETRICS     as COLLECTSEQMETRICSONTARGET        } from '../modules/local/fgumi/collectduplexseqmetrics/main'
-
-include { UMICOLLISIONS                                                         } from '../modules/local/umicollisions/main'
-
-include { FAMILYSIZEMETRICS                 as FAMILYMETRICS                    } from '../modules/local/familymetrics/main'
-include { FAMILYSIZEMETRICS                 as FAMILYMETRICSONTARGET            } from '../modules/local/familymetrics/main'
+include { DUPLEX_METRICS                                                        } from '../subworkflows/local/duplex_metrics/main'
 
 include { UNMAP_BAM                         as UNMAPBAM                         } from '../modules/local/unmap/main'
 include { SAMTOOLS_FILTER                   as SAMTOOLSFILTERALLMOLECULES       } from '../modules/local/filter_reads/samtools/main'
@@ -356,57 +350,12 @@ workflow DEEPUMICALLER {
         GROUPREADSBYUMI(pre_consensus_bams, "paired")
         ch_multiqc_files = ch_multiqc_files.mix(GROUPREADSBYUMI.out.histogram.map{it -> it[1]}.collect())
 
-        // MODULE: Run fgumi CollecDuplexSeqMetrics
-        COLLECTSEQMETRICS(GROUPREADSBYUMI.out.bam, [])
-        
-        // Extract family_sizes file directly from dedicated output
-        family_sizes_metrics = COLLECTSEQMETRICS.out.family_sizes
-        
-        // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
-        if (params.split_by_chrom) {
-            family_sizes_metrics = clean_chr_names(family_sizes_metrics)
-        }
-        
-        // Plot the family size metrics
-        FAMILYMETRICS(family_sizes_metrics)
-
-        FAMILYMETRICS.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
-        FAMILYMETRICS.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetrics", skip: 1, keepHeader: true)
-
-
-        // MODULE: Run fgumi CollecDuplexSeqMetrics only on target
-        COLLECTSEQMETRICSONTARGET(GROUPREADSBYUMI.out.bam, BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]} )
-        
-        // Extract family_sizes file directly from dedicated output
-        family_sizes_metrics_ontarget = COLLECTSEQMETRICSONTARGET.out.family_sizes
-        
-        // When split_by_chrom is enabled, aggregate chromosome-specific files by sample
-        if (params.split_by_chrom) {
-            family_sizes_metrics_ontarget = clean_chr_names(family_sizes_metrics_ontarget)
-        }
-
-        clean_chr_names(GROUPREADSBYUMI.out.position_group_info)
-        .join(clean_chr_names(COLLECTSEQMETRICSONTARGET.out.umi_counts))
-        .join(clean_chr_names(COLLECTSEQMETRICSONTARGET.out.duplex_umi_counts))
-        .set{ umi_collisions_input }
-
-        
-        // Plot the family size metrics
-        FAMILYMETRICSONTARGET(family_sizes_metrics_ontarget)
-
-        FAMILYMETRICSONTARGET.out.sample_data.map{it -> it[1]}.collectFile(name: "metrics_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
-        FAMILYMETRICSONTARGET.out.curve_data.map{it -> it[1]}.collectFile(name: "curves_summary.tsv", storeDir:"${params.outdir}/metrics/duplex/familymetricsontarget", skip: 1, keepHeader: true)
-
-        UMICOLLISIONS(umi_collisions_input)
-
-        UMICOLLISIONS.out.tsv.map{it -> it[1]}.collectFile(
-            name: "umi_collisions_summary.tsv",
-            storeDir: "${params.outdir}/metrics/duplex/umicollisions",
-            skip: 1,
-            keepHeader: true
+        DUPLEX_METRICS(
+            GROUPREADSBYUMI.out.bam,
+            GROUPREADSBYUMI.out.position_group_info,
+            BEDTOINTERVAL.out.interval_list.first().map{it -> it[1]}
         )
-
-        // MODULE: Run fgumi CallDuplexConsensusReads
+        
         CALLCONSENSUSREADS(GROUPREADSBYUMI.out.bam)
         
     }

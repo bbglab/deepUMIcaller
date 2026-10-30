@@ -22,7 +22,7 @@ process FAMILYSIZEMETRICS {
     // Handle single file or multiple files (list/collection)
     def input_files = [duplex_metrics].flatten().collect { file -> "--input-file ${file}" }.join(' ')    
     """
-    family_size_plots.py \\
+    metrics_family_size.py \\
                 --sample-name ${sample_name} \\
                 ${input_files} \\
                 --output-file ${prefix}.family_sizes_plot_n_stats \\

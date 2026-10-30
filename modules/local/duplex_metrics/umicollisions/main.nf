@@ -24,7 +24,7 @@ process UMICOLLISIONS {
     def plot_arg = task.ext.plot ? "--plot" : ""
 
     """
-    compute_umi_collisions.py \\
+    metrics_umi_collisions.py \\
         --sample-name ${meta.id} \\
         ${position_group_files} \\
         ${umi_counts_files} \\

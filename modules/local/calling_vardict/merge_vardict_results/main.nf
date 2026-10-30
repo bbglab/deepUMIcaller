@@ -61,4 +61,18 @@ process MERGE_VARDICT_RESULTS {
         gzip: \$(echo \$(gzip --version 2>&1) | sed 's/^.*gzip //; s/ .*\$//')
     END_VERSIONS
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: ""
+    prefix = "${meta.id}${prefix}"
+    """
+    touch ${prefix}.vcf
+    touch ${prefix}.genome.vcf.gz
+    touch ${prefix}.raw.tsv.gz
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        gzip: "1.12"
+    END_VERSIONS
+    """
 }

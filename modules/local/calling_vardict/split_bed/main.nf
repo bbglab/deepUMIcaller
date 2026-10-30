@@ -31,4 +31,18 @@ process SPLIT_BED {
         coreutils: \$(echo \$(split --version 2>&1) | sed 's/^.*coreutils) //; s/ .*\$//')
     END_VERSIONS
     """
+
+    stub:
+    def prefix = "${meta.id}"
+    def num_chunks = params.vardict_chunks
+    """
+    for i in \$(seq 1 ${num_chunks}); do
+        touch ${prefix}_chunk_\${i}
+    done
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        coreutils: "9.1"
+    END_VERSIONS
+    """
 }

@@ -7,7 +7,7 @@
                         {
                             "id": "B5"
                         },
-                        "B5.filtered.bam:md5,782222a4f3c899ab2c29145e868f6f54"
+                        "B5.filtered.bam:md5,1bc91912ea2b9c242c0a58f856986deb"
                     ]
                 ],
                 "1": [
@@ -18,12 +18,12 @@
                         {
                             "id": "B5"
                         },
-                        "B5.filtered.bam:md5,782222a4f3c899ab2c29145e868f6f54"
+                        "B5.filtered.bam:md5,1bc91912ea2b9c242c0a58f856986deb"
                     ]
                 ]
             }
         ],
-        "timestamp": "2026-08-14T18:36:26.042953317",
+        "timestamp": "2026-10-30T11:34:55.97718544",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

@@ -28,7 +28,7 @@
                         {
                             "id": "B5"
                         },
-                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,4f73859f0a44518190a0be70992654fd"
+                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,3191d7a16bb7c81ba8b47933ce6bf71d"
                     ]
                 ],
                 "3": [
@@ -60,12 +60,12 @@
                         {
                             "id": "B5"
                         },
-                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,4f73859f0a44518190a0be70992654fd"
+                        "B5.duplex_seq_metrics.duplex_qc.pdf:md5,3191d7a16bb7c81ba8b47933ce6bf71d"
                     ]
                 ]
             }
         ],
-        "timestamp": "2026-08-14T18:36:04.736675389",
+        "timestamp": "2026-10-30T11:34:33.440248916",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

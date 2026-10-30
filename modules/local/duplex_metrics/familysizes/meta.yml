@@ -1,0 +1,42 @@
+name: metrics_familysize
+description: Computes family size metrics.
+keywords:
+  - metrics
+  - duplex
+tools:
+  - python:
+      description: 
+      homepage: 
+      documentation: 
+      licence: 
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false, collapse:false ]
+  - bam:
+      type: file
+      description: |
+        The input SAM or BAM file to be sorted.
+      pattern: "*.{bam,sam}"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - bam:
+      type: file
+      description: |
+        Output SAM or BAM file.
+      pattern: "*.{bam,sam}"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@sruthipsuresh"

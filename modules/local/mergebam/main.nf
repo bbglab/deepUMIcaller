@@ -14,8 +14,6 @@ process MERGEBAM {
     tuple val(meta), path("*.merged.bam"), path("*.merged.bam.bai"), emit: bam_bai  // Changed from bam_and_index to bam_bai
     path "versions.yml", emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

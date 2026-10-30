@@ -2,10 +2,6 @@ process MUTS_PER_POS {
     tag "$meta.id"
     label 'pileup_extreme'
     
-    // conda "bioconda::pysam=0.21.0--py38h15b938a_1"
-    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-    //     'https://depot.galaxyproject.org/singularity/pysam:0.21.0--py38h15b938a_1' :
-    //     'biocontainers/pysam:0.21.0--py38h15b938a_1' }"
     container 'docker.io/ferriolcalvet/pysam'
 
     input:

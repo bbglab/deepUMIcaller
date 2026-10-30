@@ -11,4 +11,6 @@ diff*
 # NF-test related
 .nf-test.log
 tests/.nf-test.log
+tests/202*results.csv
 .nf-test/
+.planning/

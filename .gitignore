@@ -12,3 +12,8 @@ diff*
 .nf-test.log
 tests/.nf-test.log
 .nf-test/
+
+# Real (non-placeholder) fixtures for module-level real_data tests - generated
+# locally per-host via tests/test_data/modules/generate_real_fixtures.sh, not
+# committed (real sequencing data, even if small - see docs/test_data.md)
+tests/test_data/modules/real/

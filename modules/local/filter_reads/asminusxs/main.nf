@@ -37,9 +37,11 @@ process ASMINUSXS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: ""
+    def threshold = task.ext.threshold ?: "50"
+    def prefix = task.ext.prefix ?: ".filtered.AS-XS_${threshold}"
     prefix = "${meta.id}${prefix}"
-    def prefix_discard = task.ext.prefix_discard ?: "${meta.id}"
+    def prefix_discard = task.ext.prefix_discard ?: ".discarded_AS-XS_${threshold}"
+    prefix_discard = "${meta.id}${prefix_discard}"
     """
     touch ${prefix}.bam
     touch ${prefix}.cram

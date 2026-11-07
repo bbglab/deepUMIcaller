@@ -69,7 +69,7 @@ workflow BAM_CALL_VARDICT_PARALLEL {
             clean_meta.remove('chunk_name')
             [clean_meta, vcf]
         }
-        .groupTuple()  // Group all chunks from same sample
+        .groupTuple(size: params.vardict_chunks)  // Group all chunks from same sample
         .set { grouped_vcf_chunks }
 
     // Also group raw TSV chunks by sample
@@ -79,7 +79,7 @@ workflow BAM_CALL_VARDICT_PARALLEL {
             clean_meta.remove('chunk_name')
             [clean_meta, raw]
         }
-        .groupTuple()
+        .groupTuple(size: params.vardict_chunks)
         .set { grouped_raw_chunks }
 
     // Join grouped VCF chunks and RAW chunks by meta

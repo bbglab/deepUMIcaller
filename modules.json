@@ -40,48 +40,6 @@
                             "modules"
                         ]
                     },
-                    "fgbio/callduplexconsensusreads": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "fgbio/callmolecularconsensusreads": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "fgbio/fastqtobam": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "fgbio/filterconsensusreads": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "fgbio/groupreadsbyumi": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "fgbio/zipperbams": {
-                        "branch": "master",
-                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "90aef30f432332bdf0ce9f4b9004aa5d5c4960bb",

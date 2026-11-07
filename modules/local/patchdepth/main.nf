@@ -45,8 +45,3 @@ process PATCH_DEPTH {
     END_VERSIONS
     """
 }
-
-    // recompute_depth.py \\
-    //         --mpileup_file ${pileup_mutations} \\
-    //         --vcf_file ${vcf} \\
-    //         --output ${prefix}.readjusted.vcf

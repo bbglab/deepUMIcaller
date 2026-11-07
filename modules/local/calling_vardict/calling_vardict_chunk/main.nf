@@ -17,9 +17,6 @@ process CALLING_VARDICT_CHUNK {
     tuple val(meta), path("*.raw.tsv")  , emit: raw
     path  "versions.yml"                 , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def filter_args = task.ext.filter_args ?: ''
@@ -60,7 +57,7 @@ process CALLING_VARDICT_CHUNK {
             } 
             printf "\\n"; 
         }' ${chunk_name}.raw.tsv | var2vcf_valid.pl \
-            -N ${prefix} -A -E -f 0.0 -p 0 -m 20 -v 2 \
+            -N ${prefix} $filter_args \
             > ${chunk_name}.genome.vcf
     fi
     echo "Done processing chunk ${chunk_name}."

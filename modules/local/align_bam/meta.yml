@@ -1,43 +1,34 @@
-name: fgbio_fastqtobam
+name: align_bam
 description: |
-  Generates an unmapped BAM (or SAM or CRAM) file from fastq files.
+  Converts an unmapped BAM to FASTQ, aligns it with bwa-mem3, re-zips the
+  UMI tags with fgumi and coordinate-sorts the result.
 keywords:
-  - fgbio
-  - samtools
-  - zipperbams
-  - mem
-  - bwa
+  - fgumi
+  - bwa-mem3
   - alignment
   - map
   - fastq
   - bam
-  - sam
-  -
+  - zipperbams
 tools:
-  - bwa:
+  - fgumi:
       description: |
-        BWA is a software package for mapping DNA sequences against
-        a large reference genome, such as the human genome.
-      homepage: http://bio-bwa.sourceforge.net/
-      documentation: http://www.htslib.org/doc/samtools.html
-      arxiv: arXiv:1303.3997
-      licence: ["GPL-3.0-or-later"]
-  - fgbio:
-      description: A set of tools for working with genomic and high throughput sequencing data, including UMIs
-      homepage: http://fulcrumgenomics.github.io/fgbio/
-      documentation: http://fulcrumgenomics.github.io/fgbio/tools/latest/
-      tool_dev_url: https://github.com/fulcrumgenomics/fgbio
+        Fulcrum Genomics UMI toolkit: a set of tools for working with
+        genomic and high throughput sequencing data, including UMIs.
+      homepage: https://github.com/fulcrumgenomics/fgumi
+      documentation: https://github.com/fulcrumgenomics/fgumi
+      tool_dev_url: https://github.com/fulcrumgenomics/fgumi
       doi: ""
       licence: ["MIT"]
-  - samtools:
+  - bwa-mem3:
       description: |
-        SAMtools is a set of utilities for interacting with and post-processing
-        short DNA sequence read alignments in the SAM, BAM and CRAM formats, written by Heng Li.
-        These files are generated as output by short read aligners like BWA.
-      homepage: http://www.htslib.org/
-      documentation: hhttp://www.htslib.org/doc/samtools.html
-      doi: 10.1093/bioinformatics/btp352
-      licence: ["MIT"]
+        bwa-mem3 is a short-read alignment tool that is a faster re-implementation
+        of the BWA-MEM algorithm, producing identical alignments.
+      homepage: https://github.com/lh3/bwa
+      documentation: https://github.com/lh3/bwa
+      tool_dev_url: https://github.com/lh3/bwa
+      doi: "10.1093/bioinformatics/btaa787"
+      licence: ["GPL-3.0-or-later"]
 input:
   - meta:
       type: map
@@ -46,20 +37,16 @@ input:
         e.g. [ id:'test', single_end:false ]
   - unmapped_bam:
       type: file
-      description: the unmapped BAM/SAM/CRAM file.
+      description: The unmapped BAM/SAM/CRAM file.
       pattern: "*.{bam,cram,sam}"
-  - fasta:
+  - index_dir:
+      type: directory
+      description: Directory containing the bwa-mem3 index files
+      pattern: "Directory containing bwa-mem3 index *.{amb,ann,bwt.2bit.64,pac,0123}"
+  - ref_fasta:
       type: file
       description: FASTA reference file
-      pattern: "*.{fasta,fa}"
-  - index:
-      type: file
-      description: BWA genome index files
-      pattern: "Directory containing BWA index *.{amb,ann,bwt,pac,sa}"
-  - sort:
-      type: bool
-      description: True to sort the output in template-coordinate order, otherwise don't sort
-      pattern: "{true,false}"
+      pattern: "*.{fasta,fa,fna}"
 
 output:
   - meta:
@@ -67,14 +54,18 @@ output:
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
-  - version:
-      type: file
-      description: File containing software version
-      pattern: "*.{version.yml}"
   - bam:
       type: file
-      description: Mapped bam (unsorted)
-      pattern: "*.{bam}"
+      description: Coordinate-sorted mapped BAM
+      pattern: "*.mapped.bam"
+  - bai:
+      type: file
+      description: Index of the mapped BAM
+      pattern: "*.mapped.bam.bai"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
 
 authors:
-  - "@nh13"
+  - "@bbglab"

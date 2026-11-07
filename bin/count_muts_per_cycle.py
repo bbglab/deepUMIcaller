@@ -359,6 +359,7 @@ def main():
         plt.bar(x=plotX[o.threshold:], height=plotY[o.threshold:])
         plt.xlabel("Number of Mismatches")
         plt.ylabel("Number of Reads")
+        plt.yscale('log')
         plt.title(o.inFile)
         fig.savefig(f"{o.outPrefix}.mutsPerRead.png", bbox_inches='tight')
     if o.output_good:
@@ -371,78 +372,81 @@ def main():
     df['Base'] = range(1, len(df) + 1)
     df['Count_percent'] = df['Count'] / df['Count'].sum()
     df['Count_percent'] = df['Count_percent'] / df['Count_percent'].max()
-
-    if o.out_chart:
-        # Plot with Ns
-        fig, ax = plt.subplots(figsize=(20, 14))
-        margin_bottom = np.zeros(len(df['Base'].drop_duplicates()))
-        colors = {"C>A": '#5abdeb', "C>G": '#050708', "C>T": '#d43c32', "T>A": '#cbcacb', "T>C": '#aacb72',
-                  "T>G": '#e7c9c6', "C>N": "#4B0082", "T>N": "#4B0082", "": 'w'}
-
-        for xIter in ["C>T", "C>A", "C>G", "T>A", "T>C", "T>G", "C>N", "T>N"]:
-            df.plot.bar(x="Base", y=xIter, ax=ax, bottom=margin_bottom, color=colors[xIter]).set_ylabel("Count",
-                                                                                                        fontsize=40)
-            margin_bottom += df[xIter]
-
-        labels = ax.get_xticklabels()
-
-        for i, l in enumerate(labels):
-            val = int(l.get_text())
-            if val % 5 != 0:
-                labels[i] = ''
-            plt.gca().set_xticklabels(labels)
-
-        ax.legend(fontsize=25)
-        plt.xlabel("Cycle", fontsize=40)
-        plt.yticks(fontsize=25)
-        plt.xticks(fontsize=20)
-        ax2 = ax.twinx()
-        ax2.set_ylabel("Fraction of Total Reads", fontsize=40)
-        ax2.set_title(o.inFile.split('/')[-1], fontsize=35)  # Not portable to Windows platform
-        plt.plot(df["Base"], df['Count_percent'], color="black")
-        plt.ylim(0, 1.02)
-        plt.yticks(fontsize=25)
-        fig.savefig(f"{o.outPrefix}_BasePerPosInclNs.png")
-
-        # Plot without Ns
-        fig, ax = plt.subplots(figsize=(20, 14))
-        margin_bottom = np.zeros(len(df['Base'].drop_duplicates()))
-        colors = {"C>A": '#5abdeb', "C>G": '#050708', "C>T": '#d43c32', "T>A": '#cbcacb', "T>C": '#aacb72',
-                  "T>G": '#e7c9c6', "C>N": "#4B0082", "T>N": "#4B0082", "": 'w'}
-
-        for xIter in ["C>T", "C>A", "C>G", "T>A", "T>C", "T>G"]:
-            df.plot.bar(x="Base", y=xIter, ax=ax, bottom=margin_bottom, color=colors[xIter]).set_ylabel("Count",
-                                                                                                        fontsize=40)
-            margin_bottom += df[xIter]
-
-        labels = ax.get_xticklabels()
-
-        for i, l in enumerate(labels):
-            val = int(l.get_text())
-            if val % 5 != 0:
-                labels[i] = ''
-            plt.gca().set_xticklabels(labels)
-
-        ax.legend(fontsize=25)
-        plt.xlabel("Cycle", fontsize=40)
-        plt.yticks(fontsize=25)
-        plt.xticks(fontsize=20)
-        ax2 = ax.twinx()
-        ax2.set_ylabel("Fraction of Total Reads", fontsize=40)
-        ax2.set_title(o.inFile.split('/')[-1], fontsize=35)  # Not portable to Windows platform
-        plt.plot(df["Base"], df['Count_percent'], color="black")
-        plt.ylim(0, 1.02)
-        plt.yticks(fontsize=25)
-
-        fig.savefig(f"{o.outPrefix}_BasePerPosWithoutNs.png")
     df = df[[
         "C>T", "C>A", "C>G",
         "T>A", "T>C", "T>G",
         "C>N", "T>N",
         "Count", "Base", "Count_percent"
     ]]
+
+    # Save the counts to a CSV file
     df.to_csv(f"{o.outPrefix}_MutsPerCycle.dat.csv")
 
+
+
+    if o.out_chart:
+        colors = {"C>A": '#5abdeb', "C>G": '#050708', "C>T": '#d43c32', "T>A": '#cbcacb', "T>C": '#aacb72',
+                  "T>G": '#e7c9c6', "C>N": "#4B0082", "T>N": "#4B0082", "": 'w'}
+
+        # # Plot with Ns
+        # fig, ax = plt.subplots(figsize=(20, 14))
+        # margin_bottom = np.zeros(len(df['Base'].drop_duplicates()))
+
+        # for xIter in ["C>T", "C>A", "C>G", "T>A", "T>C", "T>G", "C>N", "T>N"]:
+        #     df.plot.bar(x="Base", y=xIter, ax=ax, bottom=margin_bottom, color=colors[xIter]).set_ylabel("Count",
+        #                                                                                                 fontsize=40)
+        #     margin_bottom += df[xIter]
+
+        # labels = ax.get_xticklabels()
+
+        # for i, l in enumerate(labels):
+        #     val = int(l.get_text())
+        #     if val % 5 != 0:
+        #         labels[i] = ''
+        #     plt.gca().set_xticklabels(labels)
+
+        # ax.legend(fontsize=25)
+        # plt.xlabel("Cycle", fontsize=40)
+        # plt.yticks(fontsize=25)
+        # plt.xticks(fontsize=20)
+        # ax2 = ax.twinx()
+        # ax2.set_ylabel("Fraction of Total Reads", fontsize=40)
+        # ax2.set_title(o.inFile.split('/')[-1], fontsize=35)  # Not portable to Windows platform
+        # plt.plot(df["Base"], df['Count_percent'], color="black")
+        # plt.ylim(0, 1.02)
+        # plt.yticks(fontsize=25)
+        # fig.savefig(f"{o.outPrefix}_BasePerPos.InclNs.png")
+
+        # Plot without Ns
+        fig, ax = plt.subplots(figsize=(20, 14))
+        margin_bottom = np.zeros(len(df['Base'].drop_duplicates()))
+
+        for xIter in ["C>T", "C>A", "C>G", "T>A", "T>C", "T>G"]:
+            df.plot.bar(x="Base", y=xIter, ax=ax, bottom=margin_bottom,
+                        color=colors[xIter]
+                        ).set_ylabel("Count",fontsize=40)
+            margin_bottom += df[xIter]
+
+        labels = ax.get_xticklabels()
+
+        for i, l in enumerate(labels):
+            val = int(l.get_text())
+            if val % 5 != 0:
+                labels[i] = ''
+            plt.gca().set_xticklabels(labels)
+
+        ax.legend(fontsize=25)
+        plt.xlabel("Cycle", fontsize=40)
+        plt.yticks(fontsize=25)
+        plt.xticks(fontsize=20)
+        ax2 = ax.twinx()
+        ax2.set_ylabel("Fraction of Total Reads", fontsize=40)
+        ax2.set_title(o.inFile.split('/')[-1], fontsize=35)  # Not portable to Windows platform
+        plt.plot(df["Base"], df['Count_percent'], color="black")
+        plt.ylim(0, 1.02)
+        plt.yticks(fontsize=25)
+
+        fig.savefig(f"{o.outPrefix}_BasePerPos.png")
 
 if __name__ == "__main__":
     main()

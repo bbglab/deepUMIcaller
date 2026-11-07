@@ -43,11 +43,15 @@ def create_input_channel(LinkedHashMap row, step) {
     def input_meta = []
     if (step=='mapping'){
         meta.read_structure = row.read_structure
+        meta.umi_file = (row.containsKey('umi_file') && row.umi_file) ? row.umi_file : null
         if (!file(row.fastq_1).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
         }
         if (!file(row.fastq_2).exists()) {
             exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
+        }
+        if (meta.umi_file && !file(meta.umi_file).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> UMI file does not exist!\n${meta.umi_file}"
         }
         input_meta = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
     }
@@ -60,6 +64,12 @@ def create_input_channel(LinkedHashMap row, step) {
             exit 1, "ERROR: Please check input samplesheet -> Csi file does not exist!\n${row.csi}"
         }
         input_meta = [ meta, [ file(row.duplexbam) ], [ file(row.csi) ] ]
+    }
+    else if (step=='preprocessed_crams'){
+        if (!file(row.preprocessed_cram).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Preprocessed CRAM file does not exist!\n${row.preprocessed_cram}"
+        }
+        input_meta = [ meta, [ file(row.preprocessed_cram) ] ]
     }
 
     // Only the bam is required to the meta map for the other steps (e.g. filterconsensus)

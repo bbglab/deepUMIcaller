@@ -1,15 +1,15 @@
-name: fgbio_sortbam
-description: Sorts a SAM or BAM file. Several sort orders are available, including coordinate, queryname, random, and randomquery.
+name: filtervcf
+description: Filters VCF mutations and annotates them in the FILTER field, optionally splitting purine/pyrimidine.
 keywords:
-  - sort
-  - bam
-  - sam
+  - vcf
+  - filter
+  - mutations
 tools:
-  - fgbio:
-      description: Tools for working with genomic and high throughput sequencing data.
-      homepage: https://github.com/fulcrumgenomics/fgbio
-      documentation: http://fulcrumgenomics.github.io/fgbio/
-      licence: ["MIT"]
+  - python:
+      description: Python is a programming language used for scripting the filter.
+      homepage: https://www.python.org/
+      documentation: https://www.python.org/doc/
+      licence: ["PSF"]
 
 input:
   - meta:

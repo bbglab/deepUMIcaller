@@ -5,11 +5,12 @@
 # vcf_derived_bed is the file generated from the coordinates of the mutations, extending them +5 bp in the edges and with the variant id in the format chr;pos;ref;alt
 # bedtools intersect -a vcf_derived_bed -b unmappable_file -u  > unmappable_muts_file.bed
 
-# usage: python3 add_filter_from_bed.py vcf_file unmappable_muts_file.bed output_filename filter_name
+# usage: python3 add_filter_from_bed.py --vcf vcf_file --bed unmappable_muts_file.bed --output output_filename --filter-name filter_name
 # use filter_name = "low_mappability"
 
+import argparse
+
 import pandas as pd
-import sys
 import numpy as np
 
 def update_filter_field(row, filter_name) -> pd.Series:
@@ -161,9 +162,43 @@ def main(vcf_file, bed_file, output_filename, filter_name):
     # Print a success message or return a result if needed
     print(f"{output_filename} VCF file created successfully.")
 
+def parse_args(argv=None):
+    """Define and immediately parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Add a FILTER value to VCF variants located in regions "
+        "given by a BED4 intersection file.",
+        epilog="Example: add_filter_from_bed.py --vcf sample.vcf --bed "
+        "unmappable_muts_file.bed --output sample.filtered.vcf "
+        "--filter-name low_mappability",
+    )
+    parser.add_argument(
+        "--vcf",
+        metavar="VCF",
+        required=True,
+        help="Path to the VCF file to be updated.",
+    )
+    parser.add_argument(
+        "--bed",
+        metavar="BED",
+        required=True,
+        help="Path to the BED4 file containing the bedtools intersection "
+        "between the VCF mutations and the filter regions.",
+    )
+    parser.add_argument(
+        "--output",
+        metavar="OUTPUT",
+        required=True,
+        help="Name path for the resulting updated VCF.",
+    )
+    parser.add_argument(
+        "--filter-name",
+        metavar="FILTER_NAME",
+        required=True,
+        help="Name to be added in the FILTER column (e.g. low_mappability).",
+    )
+    return parser.parse_args(argv)
+
+
 if __name__ == '__main__':
-    vcf_file = sys.argv[1]
-    bed_file = sys.argv[2]
-    output_filename = sys.argv[3]
-    filter_name = sys.argv[4]
-    main(vcf_file, bed_file, output_filename, filter_name)
+    args = parse_args()
+    main(args.vcf, args.bed, args.output, args.filter_name)

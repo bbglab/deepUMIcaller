@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import argparse
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -153,6 +154,54 @@ def read_from_vardict_VCF_all(sample,
 
 
 
+def parse_args(argv=None):
+    """Define and immediately parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Filter a VarDict VCF by FILTER tags and germline VAF, "
+        "optionally splitting output by purine/pyrimidine reference base.",
+        epilog="Example: filtervcf.py --sample Bsample --vcf Bsample.vcf "
+        "--filters no_pileup_support,low_mappability --vaf-threshold 0.35 "
+        "--output-prefix Bsample [--split-type]",
+    )
+    parser.add_argument(
+        "--sample",
+        metavar="SAMPLE",
+        required=True,
+        help="Sample name used for plot titles and messages.",
+    )
+    parser.add_argument(
+        "--vcf",
+        metavar="VCF",
+        required=True,
+        help="Input VCF file from VarDict (tab-separated, one sample).",
+    )
+    parser.add_argument(
+        "--filters",
+        metavar="FILTERS",
+        required=True,
+        help="Comma-separated list of FILTER tags to remove variants by.",
+    )
+    parser.add_argument(
+        "--vaf-threshold",
+        metavar="VAF_THRESHOLD",
+        type=float,
+        required=True,
+        help="Variants with VAF above this germline threshold are removed.",
+    )
+    parser.add_argument(
+        "--output-prefix",
+        metavar="OUTPUT_PREFIX",
+        required=True,
+        help="Prefix for the output files (<prefix>.filter_mutations.vcf).",
+    )
+    parser.add_argument(
+        "--split-type",
+        action="store_true",
+        help="Additionally write purine/pyrimidine-split VCFs.",
+    )
+    return parser.parse_args(argv)
+
+
 def main(sample, vcf_file, filter_str, vaf_germline, output_prefix, split_type = False):
     """
     Your script's main function.
@@ -217,16 +266,6 @@ def main(sample, vcf_file, filter_str, vaf_germline, output_prefix, split_type =
 
 
 if __name__ == '__main__':
-    sample = sys.argv[1]
-    vcf_file = sys.argv[2]
-    filters = sys.argv[3]
-    vaf_threshold = float(sys.argv[4])
-    vcf_file_prefix = sys.argv[5]
-
-    try:
-        split_type = bool(sys.argv[6])
-    except:
-        split_type = False
-
-    main(sample, vcf_file, filters, vaf_threshold, vcf_file_prefix, split_type)
+    args = parse_args()
+    main(args.sample, args.vcf, args.filters, args.vaf_threshold, args.output_prefix, args.split_type)
 

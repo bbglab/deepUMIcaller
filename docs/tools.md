@@ -17,15 +17,15 @@ This should be taken into account when setting the clipping parameters, but also
 
 ## Internal panel expansion (EXPAND_PANEL)
 
-The first process executed in every run pads the user-supplied `--targetsfile` BED by ±250 bp on each side. The expanded BED is then used for downstream coverage/capture/calling steps, including the on-target version of `fgbio CollectDuplexSeqMetrics`. Users should provide their raw targeted regions; pre-extending the BED is not necessary and would result in double-padding.
+The first process executed in every run pads the user-supplied `--targetsfile` BED by ±250 bp on each side. The expanded BED is then used for downstream coverage/capture/calling steps, including the on-target version of `fgumi duplex-metrics`. Users should provide their raw targeted regions; pre-extending the BED is not necessary and would result in double-padding.
 
 ## Two-pass depth recomputation (PATCHDP / PATCHDPALL)
 
 VarDict's depth fields are unreliable for duplex consensus data. After calling, deepUMIcaller replaces them with counts obtained from `samtools mpileup`. A first pass is run over the duplex BAM (`PATCHDP`); a second pass is run over the all-molecules BAM (`PATCHDPALL`) to add depth/VAF information for non-duplex reads. The final VCF therefore carries information to compute four VAF values per mutation: `VAF_vd` (VarDict), `VAF` (duplex), `VAF_AM` (all-molecules) and `VAF_ND` (no-duplex).
 
-## fgbio FilterConsensusReads — two stringencies
+## fgumi filter — two stringencies
 
-The pipeline runs `fgbio FilterConsensusReads` twice on the same all-molecules BAM:
+The pipeline runs `fgumi filter` twice on the same all-molecules BAM:
 
-- **All-molecules filter** (`FILTERCONSENSUSREADSAM`, default `--min-reads 2 1 0`, no strand agreement required) — keeps both duplex and single-strand consensus reads (with at least 2 copies in a single strand); produces the BAM used to compute `VAF_AM` and `VAF_ND` at postprocessing time.
-- **Duplex filter** (`FILTERCONSENSUSREADSDUPLEX`, default `--min-reads 4 2 2`, `--require-single-strand-agreement true`) — keeps only high-quality duplex consensus reads; produces the BAM used for variant calling.
+- **All-molecules filter** (`FILTERCONSENSUSREADSAM`, default `--min-reads 2,1,0`, no strand agreement required) — keeps both duplex and single-strand consensus reads (with at least 2 copies in a single strand); produces the BAM used to compute `VAF_AM` and `VAF_ND` at postprocessing time.
+- **Duplex filter** (`FILTERCONSENSUSREADSDUPLEX`, default `--min-reads 4,2,2`, `--require-single-strand-agreement true`) — keeps only high-quality duplex consensus reads; produces the BAM used for variant calling.

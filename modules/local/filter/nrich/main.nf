@@ -2,8 +2,8 @@
 
 process FILTER_N_RICH {
     tag "$meta.id"
-    label 'process_memory_intensive'
-    
+    label 'variant_filtering'
+
     conda "conda-forge::pandas=2.3.2 conda-forge::click"
     container 'docker.io/bbglab/pysam-0.23.3:latest'
 

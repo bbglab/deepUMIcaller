@@ -16,7 +16,8 @@ nextflow.enable.dsl = 2
 */
 
 include { PIPELINE_INITIALISATION   } from './subworkflows/local/utils_nfcore_deepumicaller'
-include { DEEPUMICALLER             } from './workflows/deepumicaller'
+include { PIPELINE_COMPLETION       } from './subworkflows/local/utils_nfcore_deepumicaller'
+include { DEEPUMICALLER             } from './workflows/deepumicaller.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,7 +42,20 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    DEEPUMICALLER()
+    DEEPUMICALLER(1)
+
+    //
+    // SUBWORKFLOW: Run completion tasks (email notification, summary log)
+    //
+    PIPELINE_COMPLETION (
+        params.email,
+        params.email_on_fail,
+        params.plaintext_email,
+        params.outdir,
+        params.monochrome_logs,
+        null,                       // hook_url: webhook notifications not wired up
+        DEEPUMICALLER.out.multiqc_report,
+    )
 
 }
 

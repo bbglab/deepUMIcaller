@@ -469,7 +469,7 @@ nextflow_pipeline {
         - split_by_chrom = false (default)
     
     Expected Behavior:
-        - Starts processing from fgbio GroupReadsByUmi module
+        - Starts processing from fgumi group module
         - Groups reads by UMI for consensus calling
         - Generates duplex consensus reads and calls variants
         - Produces same quality VCF output as full pipeline

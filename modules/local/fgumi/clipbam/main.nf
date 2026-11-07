@@ -20,11 +20,21 @@ process FGUMI_CLIPBAM {
     def prefix = task.ext.prefix ?: ""
     prefix = "${meta.id}${prefix}"
     def manual_clipping = task.ext.extra_clipping ?: ""
+    def memory_gb = task.memory.toGiga().intdiv(2) + 1
+    def sort_cpus = task.cpus.intdiv(2) + 1
+    def reserve_memory_gb = task.memory.toGiga().intdiv(5) + 1
     """
+    mkdir temp_sort_directory;
     fgumi sort \\
-        --order queryname \
-        --threads ${task.cpus} \
         --input $bam --output - \\
+        --order queryname \\
+        --max-memory ${memory_gb}GiB \
+        --memory-per-thread false \
+        --memory-reserve ${reserve_memory_gb}GiB \\
+        --threads ${task.cpus} \
+        --sort-threads ${sort_cpus} \
+        --merge-threads ${task.cpus} \\
+        --tmp-dir temp_sort_directory/ \\
         | fgumi clip \\
             --input /dev/stdin \
             --reference ${fasta} \

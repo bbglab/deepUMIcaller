@@ -22,10 +22,18 @@ process MERGEBAM {
     """
     # Create sorted list of input BAMs
     ls *.bam | sort > bam_list.txt
-    
-    # Merge using the file list
-    samtools merge $args -@ $task.cpus -b bam_list.txt ${prefix}.merged.bam
-    samtools index -@ $task.cpus ${prefix}.merged.bam
+    n_bams=\$(wc -l < bam_list.txt)
+
+    if [ "\$n_bams" -eq 1 ]; then
+        # Single input (already coordinate-sorted): nothing to merge, so avoid a
+        # full decompress/recompress pass and just link it and index it.
+        ln -s "\$(readlink -f \$(cat bam_list.txt))" ${prefix}.merged.bam
+        samtools index -@ $task.cpus ${prefix}.merged.bam
+    else
+        # Merge using the file list; the index is written in the same pass
+        samtools merge $args -@ $task.cpus --write-index -b bam_list.txt \\
+            -o ${prefix}.merged.bam##idx##${prefix}.merged.bam.bai
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -47,17 +47,17 @@ process FGBIO_COLLECTDUPLEXSEQMETRICS {
     """
 
     stub:
-    prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
+    def prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
     """
-    touch $prefix.duplex_seq_metrics.duplex_qc.pdf
-    touch $prefix.duplex_seq_metrics.duplex_umi_counts.txt
-    touch $prefix.duplex_seq_metrics.umi_counts.txt
-    touch $prefix.duplex_seq_metrics.duplex_yield_metrics.txt
-    touch $prefix.duplex_seq_metrics.duplex_family_sizes.txt
-    touch $prefix.duplex_seq_metrics.family_sizes.txt
+    touch ${prefix}.duplex_seq_metrics.duplex_qc.pdf
+    touch ${prefix}.duplex_seq_metrics.duplex_umi_counts.txt
+    touch ${prefix}.duplex_seq_metrics.umi_counts.txt
+    touch ${prefix}.duplex_seq_metrics.duplex_yield_metrics.txt
+    touch ${prefix}.duplex_seq_metrics.duplex_family_sizes.txt
+    touch ${prefix}.duplex_seq_metrics.family_sizes.txt
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        qualimap: \$(echo \$(qualimap 2>&1) | sed 's/^.*QualiMap v.//; s/Built.*\$//')
+        fgbio: "2.1.0"
     END_VERSIONS
     """
 

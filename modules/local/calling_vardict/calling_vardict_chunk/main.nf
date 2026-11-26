@@ -82,4 +82,16 @@ process CALLING_VARDICT_CHUNK {
         vardict-java: 1.8.3
     END_VERSIONS
     """
+
+    stub:
+    def chunk_name = chunk_file.simpleName
+    """
+    touch ${chunk_name}.genome.vcf
+    touch ${chunk_name}.raw.tsv
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        vardict-java: "1.8.3"
+    END_VERSIONS
+    """
 }

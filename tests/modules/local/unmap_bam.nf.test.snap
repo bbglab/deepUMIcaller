@@ -1,0 +1,32 @@
+{
+    "real run on B5 subset matches snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.queryname.noPG.bam:md5,876299ea77c445532baee9315497d8ed"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,28ba93318bfb09d180440ba61a9fcbe0"
+                ],
+                "bam": [
+                    [
+                        {
+                            "id": "B5"
+                        },
+                        "B5.queryname.noPG.bam:md5,876299ea77c445532baee9315497d8ed"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-08-13T23:15:42.571044716",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

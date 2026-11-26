@@ -495,7 +495,6 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip mapping, start from UMI grouping
                 step = "groupreadsbyumi"
-                left_clip = 0
                 
                 // Default parameters for intermediate step validation
                 // split_by_chrom = false (default)
@@ -575,7 +574,6 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip mapping and grouping, start from consensus filtering
                 step = "filterconsensus"
-                left_clip = 0
                 
                 // Default parameters for consensus filtering validation
                 // split_by_chrom = false (default)
@@ -738,7 +736,6 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: skip grouping, start from consensus alignment
                 step = "unmapped_consensus"
-                left_clip = 0
                 
                 // Default parameters for unmapped consensus validation
                 
@@ -821,7 +818,6 @@ nextflow_pipeline {
                 
                 // Pipeline entry point: generate molecule-level metrics and call variants
                 step = "allmoleculesfile"
-                left_clip = 0
                 
                 // Default parameters for all molecules file validation
                 
